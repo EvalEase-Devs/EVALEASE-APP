@@ -46,12 +46,12 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { sub_id, class_name, batch_no, is_subject_incharge, course, type } = body;
+        const { sub_id, sub_name, class_name, batch_no, is_subject_incharge, course, type } = body;
 
         // Validate required fields
-        if (!sub_id || !class_name || !type) {
+        if (!sub_id || !sub_name || !class_name || !type) {
             return NextResponse.json(
-                { error: 'Missing required fields: sub_id, class_name, type' },
+                { error: 'Missing required fields: sub_id, sub_name, class_name, type' },
                 { status: 400 }
             );
         }
@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
             .insert({
                 teacher_id: teacher.teacher_id,
                 sub_id,
+                sub_name,
                 class_name,
                 batch_no: batch_no || null,
                 is_subject_incharge: is_subject_incharge || false,

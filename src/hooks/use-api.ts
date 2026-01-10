@@ -7,6 +7,7 @@ export interface Allotment {
     allotment_id: number;
     teacher_id: number;
     sub_id: string;
+    sub_name: string;
     class_name: string;
     batch_no: number | null;
     is_subject_incharge: boolean;
@@ -314,4 +315,93 @@ export function useStudentTask(taskId: number) {
     };
 
     return { task, loading, error, fetchTask, submitMCQ };
+}
+
+// Fetch Experiments
+export interface Experiment {
+    sub_id: string;
+    exp_no: number;
+    exp_name: string;
+}
+
+export function useExperiments(subId: string) {
+    const [experiments, setExperiments] = useState<Experiment[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchExperiments = useCallback(async () => {
+        if (!subId) {
+            setExperiments([]);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const res = await fetch(`/api/experiments?sub_id=${subId}`);
+            if (!res.ok) throw new Error('Failed to fetch experiments');
+            const data = await res.json();
+            setExperiments(data);
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An error occurred');
+            setExperiments([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [subId]);
+
+    useEffect(() => {
+        fetchExperiments();
+    }, [fetchExperiments]);
+
+    return { experiments, loading, error, fetchExperiments };
+}
+
+// Fetch COs for a specific experiment
+export interface ExperimentCO {
+    co_no: number;
+    co?: {
+        co_no: number;
+        co_description: string;
+    };
+}
+
+export function useExperimentCOs(subId: string, expNo: string | number | null) {
+    const [cos, setCos] = useState<ExperimentCO[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchExperimentCOs = useCallback(async () => {
+        if (!subId || !expNo) {
+            setCos([]);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const url = `/api/experiments/${subId}?exp_no=${expNo}`;
+            console.log('Fetching COs from:', url);
+            const res = await fetch(url);
+            if (!res.ok) {
+                throw new Error(`Failed to fetch experiment COs: ${res.status}`);
+            }
+            const data = await res.json();
+            console.log('Fetched COs data:', data);
+            setCos(data);
+            setError(null);
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+            console.error('Error in useExperimentCOs:', errorMsg);
+            setError(errorMsg);
+            setCos([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [subId, expNo]);
+
+    useEffect(() => {
+        fetchExperimentCOs();
+    }, [fetchExperimentCOs]);
+
+    return { cos, loading, error, fetchExperimentCOs };
 }

@@ -41,6 +41,14 @@ export function SubjectFilterBar({ onAllot, onClose }: SubjectFilterBarProps) {
         return selectedSubject.split(' ')[0];
     };
 
+    // Extract subject name from selection
+    const getSubjectName = (): string => {
+        // Format: "CSC501 Data Structures (Lab)" -> Extract "Data Structures"
+        const withoutType = selectedSubject.replace(/\s*\([^)]*\)$/, ''); // Remove (Lab) or (Lec)
+        const parts = withoutType.split(' ');
+        return parts.slice(1).join(' '); // Everything after the code
+    };
+
     const handleAllot = async () => {
         if (!selectedSemester || !selectedSubject || !selectedClass || !selectedBatch) {
             toast.error("Please fill all fields");
@@ -52,6 +60,7 @@ export function SubjectFilterBar({ onAllot, onClose }: SubjectFilterBarProps) {
             await onAllot({
                 semester: selectedSemester,
                 subject: selectedSubject,
+                subjectName: getSubjectName(),
                 class: selectedClass,
                 batch: selectedBatch,
                 isIncharge,

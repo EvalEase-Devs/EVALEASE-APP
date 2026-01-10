@@ -34,7 +34,7 @@ import type { AllottedSubject } from "./create-assignment-content";
 import { parseSubject } from "@/app/teacher/assignments/create/utils";
 import TaskModal from "./task-modal";
 import TasksListModal from "./tasks-list-modal";
-import { useTasks, Task as APITask } from "@/hooks/use-api";
+import { useTasks, Task as APITask, useExperiments } from "@/hooks/use-api";
 import { Task as FormTask } from "@/lib/types";
 
 interface AllottedSubjectsListProps {
@@ -56,6 +56,9 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
 
     // Use API hook for tasks
     const { tasks: allTasks, loading: tasksLoading, createTask, deleteTask, fetchTasks } = useTasks();
+
+    // Use API hook for experiments (fetch when subject is selected)
+    const { experiments, loading: experimentsLoading } = useExperiments(selectedSubjectForTask?.sub_id || '');
 
     // 1. Group the subjects by "Semester - Class"
     const groupedSubjects = subjects.reduce((acc, subject) => {
@@ -174,11 +177,11 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                                             <div className="flex items-start justify-between">
                                                 <div>
                                                     {/* Subject Name */}
-                                                    <h4 className="font-bold text-lg leading-tight line-clamp-1" title={allotment.subject}>
-                                                        {allotment.subject}
+                                                    <h4 className="font-bold text-lg leading-tight line-clamp-1" title={allotment.subjectName}>
+                                                        {allotment.subjectName}
                                                     </h4>
                                                     <p className="text-xs text-muted-foreground font-mono mt-1">
-                                                        {parsed.code}
+                                                        {allotment.sub_id}
                                                     </p>
                                                 </div>
                                             </div>
@@ -191,12 +194,12 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                                                 {/* Type Badge (Lec/Lab) */}
                                                 <Badge
                                                     variant="outline"
-                                                    className={`text-[10px] uppercase font-bold border ${parsed.type.toLowerCase().includes('lab')
+                                                    className={`text-[10px] uppercase font-bold border ${allotment.type === 'Lab'
                                                         ? 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400'
                                                         : 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400'
                                                         }`}
                                                 >
-                                                    {parsed.type}
+                                                    {allotment.type}
                                                 </Badge>
 
                                                 {/* Batch Badge */}
@@ -283,9 +286,15 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                         setSelectedSubjectForTask(null);
                     }}
                     onAdd={handleAddTask}
-                    currentSubject={parseSubject(selectedSubjectForTask.subject)}
+                    currentSubject={{
+                        code: selectedSubjectForTask.sub_id,
+                        fullName: selectedSubjectForTask.subjectName,
+                        type: selectedSubjectForTask.type
+                    }}
                     currentClass={selectedSubjectForTask.class}
                     currentBatch={selectedSubjectForTask.batch}
+                    experiments={experiments}
+                    experimentsLoading={experimentsLoading}
                 />
             )}
 

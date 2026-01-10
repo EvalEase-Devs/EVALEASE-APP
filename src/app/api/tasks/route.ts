@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
         let query = supabase
             .from('task')
-            .select('*, allotment:allotment_id(*), task_co_mapping(co_id, co:co_id(co_id, co_name))')
+            .select('*, allotment:allotment_id(*)')
             .in('allotment_id', allotmentIds)
             .order('created_at', { ascending: false });
 

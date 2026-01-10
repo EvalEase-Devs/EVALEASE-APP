@@ -16,6 +16,7 @@ export interface AllottedSubject {
     allotment_id: number;
     semester: Semester;
     subject: string;
+    subjectName: string;
     class: string;
     batch: string;
     isIncharge: boolean;
@@ -39,7 +40,8 @@ export function CreateAssignmentContent() {
         id: a.allotment_id,
         allotment_id: a.allotment_id,
         semester: getSemesterFromClass(a.class_name),
-        subject: a.sub_id, // You might want to fetch full subject names
+        subject: a.sub_id, // Just the subject code
+        subjectName: a.sub_name, // Full subject name
         class: a.class_name,
         batch: a.batch_no ? `Batch ${a.batch_no}` : 'All',
         isIncharge: a.is_subject_incharge,
@@ -51,6 +53,7 @@ export function CreateAssignmentContent() {
         try {
             await createAllotment({
                 sub_id: allotment.sub_id || allotment.subject.split(' - ')[0],
+                sub_name: allotment.subjectName,
                 class_name: allotment.class,
                 batch_no: allotment.batch === 'All' ? null : parseInt(allotment.batch.replace('Batch ', '')),
                 is_subject_incharge: allotment.isIncharge,
