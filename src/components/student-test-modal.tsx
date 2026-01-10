@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Clock, AlertTriangle, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, AlertTriangle, Loader2, Timer } from 'lucide-react';
 import { useStudentTask } from '@/hooks/use-api';
 import { toast } from 'sonner';
 
@@ -26,6 +26,71 @@ interface StudentTestModalProps {
     taskId: number;
 }
 
+// Countdown component
+function CountdownDisplay({ startTime, endTime }: { startTime: string | null; endTime: string | null }) {
+    const [timeText, setTimeText] = useState<string>('');
+    const [canStart, setCanStart] = useState(false);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const now = new Date();
+
+            if (startTime) {
+                const start = new Date(startTime);
+                if (start > now) {
+                    const diff = start.getTime() - now.getTime();
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    setTimeText(`Test starts in: ${hours}h ${minutes}m ${seconds}s`);
+                    setCanStart(false);
+                } else if (endTime) {
+                    const end = new Date(endTime);
+                    if (end > now) {
+                        const diff = end.getTime() - now.getTime();
+                        const hours = Math.floor(diff / (1000 * 60 * 60));
+                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                        setTimeText(`Time remaining: ${hours}h ${minutes}m ${seconds}s`);
+                        setCanStart(true);
+                    } else {
+                        setTimeText('Test has ended');
+                        setCanStart(false);
+                    }
+                } else {
+                    setTimeText('Test is active');
+                    setCanStart(true);
+                }
+            } else if (endTime) {
+                const end = new Date(endTime);
+                if (end > now) {
+                    const diff = end.getTime() - now.getTime();
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    setTimeText(`Time remaining: ${hours}h ${minutes}m ${seconds}s`);
+                    setCanStart(true);
+                } else {
+                    setTimeText('Test has ended');
+                    setCanStart(false);
+                }
+            } else {
+                setTimeText('No schedule set');
+                setCanStart(true);
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [startTime, endTime]);
+
+    return (
+        <div className="flex items-center gap-2">
+            <Timer className="h-5 w-5 text-blue-500" />
+            <span className="text-sm font-medium">{timeText}</span>
+        </div>
+    );
+}
+
 export default function StudentTestModal({ isOpen, onClose, taskId }: StudentTestModalProps) {
     const { task, loading, error, submitMCQ } = useStudentTask(taskId);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,6 +101,9 @@ export default function StudentTestModal({ isOpen, onClose, taskId }: StudentTes
         return (
             <Dialog open={isOpen} onOpenChange={onClose}>
                 <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Loading Test...</DialogTitle>
+                    </DialogHeader>
                     <div className="flex items-center justify-center py-12">
                         <Loader2 className="h-8 w-8 animate-spin" />
                     </div>
@@ -66,7 +134,15 @@ export default function StudentTestModal({ isOpen, onClose, taskId }: StudentTes
                         <DialogTitle>{task.title}</DialogTitle>
                         <DialogDescription>{task.message || 'You cannot attempt this test'}</DialogDescription>
                     </DialogHeader>
-                    {task.submission && (
+                    {task.testStatus === 'not_started' && task.scheduledTimes && (
+                        <div className="py-4 space-y-3">
+                            <CountdownDisplay
+                                startTime={task.scheduledTimes.startTime}
+                                endTime={task.scheduledTimes.endTime}
+                            />
+                        </div>
+                    )}
+                    {task.submission && task.submission.status === 'Submitted' && (
                         <div className="py-4">
                             <p className="text-lg font-semibold">
                                 Your Score: {task.submission.marks_obtained}/{task.max_marks}

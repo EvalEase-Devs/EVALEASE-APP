@@ -61,10 +61,10 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                         <div className="flex justify-between items-start">
                                             <CardTitle className="text-base line-clamp-1" title={task.title}>{task.title}</CardTitle>
                                             <div className="flex gap-1 flex-wrap justify-end">
-                                                {status === 'SCHEDULED' && <Badge variant="secondary" className="bg-blue-500 text-white hover:bg-blue-600">Scheduled</Badge>}
-                                                {status === 'ACTIVE' && <Badge variant="secondary" className="bg-green-500 text-white hover:bg-green-600">Active</Badge>}
-                                                {status === 'CLOSED' && <Badge variant="secondary" className="bg-gray-500 text-white hover:bg-gray-600">Closed</Badge>}
-                                                <Badge variant="outline" className={`${taskType === 'Lab' ? 'border-pink-500 text-pink-500' : 'border-purple-500 text-purple-500'}`}>
+                                                {status === 'SCHEDULED' && <Badge variant="secondary">Scheduled</Badge>}
+                                                {status === 'ACTIVE' && <Badge variant="default">Active</Badge>}
+                                                {status === 'CLOSED' && <Badge variant="outline">Closed</Badge>}
+                                                <Badge variant={taskType === 'Lab' ? 'secondary' : 'default'}>
                                                     {taskType}
                                                 </Badge>
                                             </div>

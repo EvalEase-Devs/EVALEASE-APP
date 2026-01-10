@@ -35,10 +35,6 @@ const data = {
           title: "Submitted",
           url: "/student/assignments/submitted",
         },
-        {
-          title: "Graded",
-          url: "/student/assignments/graded",
-        },
       ],
     },
     {

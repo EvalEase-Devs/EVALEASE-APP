@@ -137,6 +137,56 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Failed to create task' }, { status: 500 });
         }
 
+        // Auto-populate marks table for all students in the allotment's batch
+        try {
+            // Get allotment details (batch_no, class_name)
+            const { data: allotmentData } = await supabase
+                .from('allotment')
+                .select('batch_no, class_name')
+                .eq('allotment_id', allotment_id)
+                .single();
+
+            if (allotmentData) {
+                // Fetch all students in this batch and class
+                let studentQuery = supabase
+                    .from('student')
+                    .select('pid');
+
+                if (allotmentData.batch_no) {
+                    // student table uses 'batch' (not batch_no)
+                    studentQuery = studentQuery.eq('batch', allotmentData.batch_no);
+                }
+
+                studentQuery = studentQuery.eq('class_name', allotmentData.class_name);
+
+                const { data: students } = await studentQuery;
+
+                if (students && students.length > 0) {
+                    // Create marks entries for all students
+                    const markEntries = students.map((student: any) => ({
+                        stud_pid: student.pid,
+                        task_id: task.task_id,
+                        total_marks_obtained: 0,
+                        question_marks: null,
+                        status: 'Pending',
+                        submitted_at: null
+                    }));
+
+                    const { error: marksError } = await supabase
+                        .from('marks')
+                        .insert(markEntries);
+
+                    if (marksError) {
+                        console.error('Error creating marks entries:', marksError);
+                        // Don't fail the whole request, just log the error
+                    }
+                }
+            }
+        } catch (marksErr) {
+            console.error('Error in marks auto-population:', marksErr);
+            // Don't fail the whole request
+        }
+
         // Create CO mappings if provided
         if (mapped_cos && mapped_cos.length > 0) {
             const coMappings = mapped_cos.map((co_no: number) => ({

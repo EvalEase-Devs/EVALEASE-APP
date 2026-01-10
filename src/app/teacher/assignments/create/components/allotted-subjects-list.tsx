@@ -193,17 +193,14 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
 
                                                 {/* Type Badge (Lec/Lab) */}
                                                 <Badge
-                                                    variant="outline"
-                                                    className={`text-[10px] uppercase font-bold border ${allotment.type === 'Lab'
-                                                        ? 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400'
-                                                        : 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400'
-                                                        }`}
+                                                    variant={allotment.type === 'Lab' ? 'secondary' : 'default'}
+                                                    className="text-[10px] uppercase font-bold"
                                                 >
                                                     {allotment.type}
                                                 </Badge>
 
                                                 {/* Batch Badge */}
-                                                <Badge variant="secondary" className="text-[10px] font-medium border bg-muted text-muted-foreground">
+                                                <Badge variant="outline" className="text-[10px] font-medium">
                                                     Batch: {allotment.batch}
                                                 </Badge>
 
@@ -211,7 +208,7 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                                                 {allotment.isIncharge && (
                                                     <Badge
                                                         variant="default"
-                                                        className="text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1"
+                                                        className="text-[10px] font-bold flex items-center gap-1"
                                                     >
                                                         <Users className="h-3 w-3" /> Incharge
                                                     </Badge>

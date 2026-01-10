@@ -187,6 +187,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                 if (questions.length === 0) {
                     newErrors.questions = "Add at least one question";
                 }
+
+                // Check total MCQ marks
+                const totalMCQMarks = questions.reduce((sum, q) => sum + q.marks, 0);
+                if (totalMCQMarks <= 0) {
+                    newErrors.questions = "Total marks must be greater than 0";
+                }
             }
         }
 
@@ -282,18 +288,32 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
             finalTitle = `${currentSubject.code} - ${assessmentType} ${assessmentSubType === 'MCQ' ? '(MCQ)' : ''} - ${title}`;
         }
 
+        // Auto-calculate maxMarks for MCQ from sum of all question marks
+        let calculatedMaxMarks = maxMarks;
+        if (isMCQ) {
+            calculatedMaxMarks = questions.reduce((sum, q) => sum + q.marks, 0);
+        }
+
+        // Convert local time to IST ISO string (preserve the local time, just add IST offset)
+        const convertToIST = (localDateTime: string) => {
+            if (!localDateTime) return undefined;
+            // datetime-local gives us: "2026-01-10T20:00"
+            // We want to keep this time and explicitly mark it as IST: "2026-01-10T20:00:00+05:30"
+            return localDateTime.replace('T', 'T') + ':00+05:30';
+        };
+
         const newTask: Task = {
             id: Math.random().toString(36).substr(2, 9),
             title: finalTitle,
-            startTime: startTime,
-            endTime: endTime || undefined,
+            startTime: convertToIST(startTime),
+            endTime: endTime ? convertToIST(endTime) : undefined,
             type: currentSubject.type,
             experimentNumber: isLab ? parseInt(selectedExp) : undefined,
             assessmentType: !isLab ? assessmentType : undefined,
             assessmentSubType: (!isLab && assessmentType === 'ISE') ? assessmentSubType : undefined,
             mcqQuestions: (isMCQ) ? questions : undefined,
             subQuestions: (!isLab && assessmentType === 'MSE') ? mseQuestions : undefined,
-            maxMarks: maxMarks,
+            maxMarks: calculatedMaxMarks,
             mappedCOs: selectedCOs,
             subjectCode: currentSubject.code,
             classStr: currentClass,
@@ -349,25 +369,25 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
 
                         {/* LAB LOGIC */}
                         {isLab && (
-                            <div className="space-y-4 p-4 bg-gradient-to-br from-orange-50/50 to-amber-50/50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-lg border border-orange-200/30 dark:border-orange-800/30">
+                            <div className="space-y-4 p-4 bg-card rounded-lg border border-border">
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
-                                        <BookOpen className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                        <BookOpen className="h-5 w-5 text-primary" />
                                         <Label className="font-semibold text-base">Select Laboratory Experiment</Label>
                                     </div>
 
                                     {experimentsLoading ? (
-                                        <div className="flex h-10 w-full items-center justify-center rounded-lg border border-orange-200/50 bg-white/50 dark:bg-slate-900/30 px-3 py-2 text-sm text-muted-foreground animate-pulse">
+                                        <div className="flex h-10 w-full items-center justify-center rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground animate-pulse">
                                             Loading experiments...
                                         </div>
                                     ) : experiments.length > 0 ? (
                                         <>
                                             <div className="relative z-50">
                                                 <Select value={selectedExp} onValueChange={setSelectedExp}>
-                                                    <SelectTrigger className="h-11 border-orange-200/50 bg-white dark:bg-slate-900 hover:border-orange-300 dark:hover:border-orange-700 transition-colors">
+                                                    <SelectTrigger className="h-11">
                                                         <SelectValue placeholder="Choose an experiment..." />
                                                     </SelectTrigger>
-                                                    <SelectContent className="border-orange-200/50 z-[1000]">
+                                                    <SelectContent className="z-[1000]">
                                                         {experiments.map(exp => (
                                                             <SelectItem
                                                                 key={exp.exp_no}
@@ -375,7 +395,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                                 className="cursor-pointer"
                                                             >
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className="font-semibold text-orange-600 dark:text-orange-400">Exp {exp.exp_no}</span>
+                                                                    <span className="font-semibold">Exp {exp.exp_no}</span>
                                                                     <span className="text-muted-foreground">—</span>
                                                                     <span>{exp.exp_name}</span>
                                                                 </div>
@@ -387,11 +407,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
 
                                             {/* Display COs associated with selected experiment */}
                                             {selectedExp && (
-                                                <div className="mt-4 space-y-3 p-3 bg-white/50 dark:bg-slate-900/50 rounded-lg border border-orange-100/50 dark:border-orange-900/30">
+                                                <div className="mt-4 space-y-3 p-3 bg-muted rounded-md border border-border">
                                                     <Label className="text-sm font-medium text-foreground">Associated Course Outcomes</Label>
                                                     {cosLoading ? (
                                                         <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse">
-                                                            <div className="h-2 w-2 rounded-full bg-orange-400 animate-pulse"></div>
+                                                            <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
                                                             Fetching COs...
                                                         </div>
                                                     ) : experimentCOs.length > 0 ? (
@@ -399,7 +419,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                             {experimentCOs.map((co) => (
                                                                 <Badge
                                                                     key={co.co_no}
-                                                                    className="bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/60 transition-colors text-xs font-semibold px-3 py-1"
+                                                                    variant="secondary"
                                                                 >
                                                                     CO{co.co_no}
                                                                 </Badge>
@@ -412,7 +432,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                             )}
                                         </>
                                     ) : (
-                                        <div className="flex h-10 w-full items-center justify-center rounded-lg border border-dashed border-orange-200/50 bg-orange-50/30 dark:bg-orange-950/10 px-3 py-2 text-sm text-muted-foreground">
+                                        <div className="flex h-10 w-full items-center justify-center rounded-md border border-dashed border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
                                             No experiments available for this subject
                                         </div>
                                     )}
@@ -427,7 +447,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                 <div className="flex gap-4">
                                     <div className="w-1/2 space-y-2">
                                         <Label>Assessment Type</Label>
-                                        <div className="flex gap-4 bg-muted p-2 rounded-lg">
+                                        <div className="flex gap-4 bg-muted p-2 rounded-md">
                                             <label className="flex items-center gap-2 cursor-pointer">
                                                 <input
                                                     type="radio"
@@ -453,7 +473,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                     {assessmentType === 'ISE' && (
                                         <div className="w-1/2 space-y-2">
                                             <Label>Mode</Label>
-                                            <div className="flex gap-4 bg-muted p-2 rounded-lg">
+                                            <div className="flex gap-4 bg-muted p-2 rounded-md">
                                                 <label className="flex items-center gap-2 cursor-pointer">
                                                     <input
                                                         type="radio"
@@ -496,7 +516,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
 
                                 {/* MCQ BUILDER */}
                                 {isMCQ ? (
-                                    <div className="bg-muted/50 p-4 rounded-lg border">
+                                    <div className="bg-muted p-4 rounded-md border border-border">
                                         <h4 className="font-bold text-sm mb-2">Build MCQ Quiz</h4>
 
                                         {/* Questions Error */}
@@ -516,11 +536,16 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                         </Button>
                                                     </div>
                                                 ))}
+                                                {/* Total Marks Summary */}
+                                                <div className="mt-3 p-3 bg-primary/10 rounded-md border border-primary/20 flex justify-between items-center">
+                                                    <span className="text-sm font-semibold">Total MCQ Marks:</span>
+                                                    <span className="text-lg font-bold text-primary">{questions.reduce((sum, q) => sum + q.marks, 0)}</span>
+                                                </div>
                                             </div>
                                         )}
 
                                         {/* Add New Question Form */}
-                                        <div className="bg-background p-3 rounded border">
+                                        <div className="bg-background p-3 rounded border border-border">
                                             <FieldError field="currentQuestion" />
                                             <div className="flex gap-2 mb-2">
                                                 <Input
@@ -544,7 +569,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                         <span className="text-xs font-bold w-4">{String.fromCharCode(65 + idx)}.</span>
                                                         <Input
                                                             type="text"
-                                                            className={`h-7 text-xs ${currentCorrectOpt === idx ? 'border-green-500 ring-1 ring-green-500' : ''}`}
+                                                            className={`h-7 text-xs ${currentCorrectOpt === idx ? 'border-primary ring-1 ring-primary' : ''}`}
                                                             placeholder={`Option ${String.fromCharCode(65 + idx)}`}
                                                             value={opt}
                                                             onChange={(e) => updateOption(idx, e.target.value)}
@@ -560,14 +585,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                     </div>
                                                 ))}
                                             </div>
-                                            <Button variant="outline" size="sm" className="w-full text-green-600 hover:text-green-700 hover:bg-green-50" onClick={handleAddQuestion}>
+                                            <Button variant="outline" size="sm" className="w-full" onClick={handleAddQuestion}>
                                                 <Plus size={16} className="mr-2" /> Add Question
                                             </Button>
                                         </div>
                                     </div>
                                 ) : assessmentType === 'MSE' ? (
                                     // MSE SPECIFIC BUILDER
-                                    <div className="bg-muted/50 p-4 rounded-lg border">
+                                    <div className="bg-muted p-4 rounded-md border border-border">
                                         <h4 className="font-bold text-sm mb-3">MSE Question Breakdown</h4>
                                         <div className="overflow-x-auto">
                                             <table className="w-full text-sm text-left">
@@ -636,10 +661,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                         <Label>Map COs <span className="text-destructive">*</span></Label>
                                         <div className="flex flex-wrap gap-2">
                                             {COS.map(co => (
-                                                <label key={co} className="flex items-center gap-2 cursor-pointer border rounded-lg px-3 py-1 hover:bg-muted transition-colors">
+                                                <label key={co} className="flex items-center gap-2 cursor-pointer border border-border rounded-md px-3 py-1 hover:bg-muted transition-colors">
                                                     <input
                                                         type="checkbox"
-                                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                        className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
                                                         checked={selectedCOs.includes(co)}
                                                         onChange={() => {
                                                             toggleCO(co);
@@ -663,6 +688,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-1">
                                         <Clock size={14} /> Start Time <span className="text-destructive">*</span>
+                                        <span className="text-xs text-muted-foreground">(IST)</span>
                                     </Label>
                                     <Input
                                         type="datetime-local"
@@ -677,6 +703,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-1">
                                         <Calendar size={14} /> End Time <span className="text-destructive">*</span>
+                                        <span className="text-xs text-muted-foreground">(IST)</span>
                                     </Label>
                                     <Input
                                         type="datetime-local"
@@ -694,6 +721,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                             <div className="space-y-2">
                                 <Label className="flex items-center gap-1">
                                     <Calendar size={14} /> Start Time <span className="text-destructive">*</span>
+                                    <span className="text-xs text-muted-foreground">(IST)</span>
                                 </Label>
                                 <Input
                                     type="datetime-local"
@@ -710,7 +738,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                         {/* Summary Footer */}
                         <div className="flex justify-between items-center mt-4 pt-4 border-t">
                             <div className="text-sm">
-                                Total Marks: <span className="font-bold">{maxMarks}</span>
+                                Total Marks: <span className="font-bold">{isMCQ ? questions.reduce((sum, q) => sum + q.marks, 0) : maxMarks}</span>
                             </div>
                             <div className="flex gap-2">
                                 <Button variant="outline" onClick={handleClose}>Cancel</Button>

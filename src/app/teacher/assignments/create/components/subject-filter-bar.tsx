@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { SUBJECT_MAP, SEMESTERS, CLASSES, BATCHES } from "@/app/teacher/assignments/create/constants";
+import { SUBJECT_MAP, SEMESTERS, CLASS_BY_SEM, BATCHES } from "@/app/teacher/assignments/create/constants";
 import type { Semester, AllottedSubject } from "./create-assignment-content";
 
 interface SubjectFilterBarProps {
@@ -86,6 +87,11 @@ export function SubjectFilterBar({ onAllot, onClose }: SubjectFilterBarProps) {
             ? SUBJECT_MAP[selectedSemester]
             : [];
 
+    const availableClasses =
+        selectedSemester && selectedSemester in CLASS_BY_SEM
+            ? CLASS_BY_SEM[selectedSemester]
+            : [];
+
     return (
         <Card className="p-6 bg-muted/50">
             <div className="space-y-4">
@@ -132,9 +138,9 @@ export function SubjectFilterBar({ onAllot, onClose }: SubjectFilterBarProps) {
                                         <SelectItem key={subject.code} value={subjectString} className="cursor-pointer">
                                             <div className="flex items-center gap-2">
                                                 <span>{subject.code} {subject.fullName}</span>
-                                                <span className={`text-xs px-2 py-0.5 rounded-full ${subject.type === 'Lab' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                <Badge variant={subject.type === 'Lab' ? 'secondary' : 'default'} className="text-xs">
                                                     {typeLabel}
-                                                </span>
+                                                </Badge>
                                             </div>
                                         </SelectItem>
                                     );
@@ -143,15 +149,15 @@ export function SubjectFilterBar({ onAllot, onClose }: SubjectFilterBarProps) {
                         </Select>
                     </div>
 
-                    {/* Class Select */}
+                    {/* Class Select (depends on Semester) */}
                     <div className="space-y-2">
                         <Label htmlFor="class">Class</Label>
-                        <Select value={selectedClass} onValueChange={setSelectedClass}>
+                        <Select value={selectedClass} onValueChange={setSelectedClass} disabled={!selectedSemester}>
                             <SelectTrigger id="class">
                                 <SelectValue placeholder="Select Class" />
                             </SelectTrigger>
                             <SelectContent className="max-h-[300px]">
-                                {CLASSES.map((cls) => (
+                                {availableClasses.map((cls) => (
                                     <SelectItem key={cls} value={cls} className="cursor-pointer">
                                         {cls}
                                     </SelectItem>

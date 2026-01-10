@@ -60,8 +60,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         // For MCQ, hide correct answers if not submitted yet
         let mcqQuestions = task.mcq_questions;
-        if (task.assessment_sub_type === 'MCQ' && mcqQuestions && !existingMark) {
-            // Remove correct answers for unsumbitted MCQ
+        const isSubmitted = existingMark?.status === 'Submitted';
+
+        if (task.assessment_sub_type === 'MCQ' && mcqQuestions && !isSubmitted) {
+            // Remove correct answers for unsubmitted MCQ
             mcqQuestions = (mcqQuestions as any[]).map(q => ({
                 id: q.id,
                 text: q.text,
@@ -71,25 +73,32 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             }));
         }
 
-        // Check timing for MCQ
-        let canAttempt = true;
-        let message = '';
-        const now = new Date();
+        // Check if already submitted
+        let canAttempt = !isSubmitted;
+        let message = isSubmitted ? 'Already submitted' : '';
+        let testStatus: 'not_started' | 'in_progress' | 'ended' | 'submitted' = 'in_progress';
+        let startTime: Date | null = null;
+        let endTime: Date | null = null;
 
-        if (task.assessment_sub_type === 'MCQ') {
-            if (task.start_time && new Date(task.start_time) > now) {
+        if (isSubmitted) {
+            testStatus = 'submitted';
+        } else if (task.assessment_sub_type === 'MCQ') {
+            const now = new Date();
+            startTime = task.start_time ? new Date(task.start_time) : null;
+            endTime = task.end_time ? new Date(task.end_time) : null;
+
+            if (startTime && startTime > now) {
                 canAttempt = false;
-                message = 'Test has not started yet';
-            }
-            if (task.end_time && new Date(task.end_time) < now) {
+                testStatus = 'not_started';
+                message = `Test opens at ${startTime.toLocaleString()}`;
+            } else if (endTime && endTime < now) {
                 canAttempt = false;
+                testStatus = 'ended';
                 message = 'Test has ended';
+            } else {
+                testStatus = 'in_progress';
+                message = endTime ? `Test ends at ${endTime.toLocaleString()}` : '';
             }
-        }
-
-        if (existingMark) {
-            canAttempt = false;
-            message = 'Already submitted';
         }
 
         return NextResponse.json({
@@ -102,7 +111,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 submitted_at: existingMark.submitted_at
             } : null,
             canAttempt,
-            message
+            message,
+            testStatus,
+            scheduledTimes: task.assessment_sub_type === 'MCQ' ? {
+                startTime: task.start_time,
+                endTime: task.end_time
+            } : null
         });
     } catch (error) {
         console.error('Server error:', error);

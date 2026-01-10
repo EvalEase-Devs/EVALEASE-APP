@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { AppSidebarStudent } from "@/components/app-sidebar-student";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -9,16 +10,15 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/co
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { IconBook, IconFileText, IconChartBar, IconClock, IconCheck, IconPlayerPlay } from "@tabler/icons-react";
+import { IconBook, IconFileText, IconChartBar, IconClock, IconCheck, IconPlayerPlay, IconClipboardText } from "@tabler/icons-react";
 import { Loader2 } from "lucide-react";
-import StudentSubmitModal from "@/components/student-submit-modal";
 import StudentTestModal from "@/components/student-test-modal";
-import { useStudentTasks } from "@/hooks/use-api";
+import { useStudentAssignments } from "@/hooks/use-api";
 
 export default function StudentDashboard() {
   const { data: session } = useSession();
-  const { tasks, loading, error, fetchTasks } = useStudentTasks();
-  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const router = useRouter();
+  const { assignments, loading, error } = useStudentAssignments();
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
 
@@ -28,11 +28,11 @@ export default function StudentDashboard() {
     avatar: session?.user?.image || "",
   };
 
-  // Calculate stats
-  const pendingTasks = tasks.filter((t: any) => !t.submission);
-  const completedTasks = tasks.filter((t: any) => t.submission);
+  // Calculate stats from assignments (marks table)
+  const pendingTasks = assignments.filter((a) => a.status === 'Pending');
+  const completedTasks = assignments.filter((a) => a.status === 'Submitted');
   const avgGrade = completedTasks.length > 0
-    ? (completedTasks.reduce((sum: number, t: any) => sum + (t.submission?.marks_obtained || 0), 0) / completedTasks.length).toFixed(1)
+    ? (completedTasks.reduce((sum, a) => sum + (a.total_marks_obtained || 0), 0) / completedTasks.length).toFixed(1)
     : '--';
 
   const handleStartMCQ = (taskId: number) => {
@@ -40,15 +40,16 @@ export default function StudentDashboard() {
     setIsTestModalOpen(true);
   };
 
-  const handleViewTask = (taskId: number) => {
-    setSelectedTaskId(taskId);
-    setIsSubmitModalOpen(true);
+  const handleViewTask = (assignmentId: number) => {
+    // Redirect to assignments page
+    router.push('/student/assignments');
   };
 
-  const getTaskStatus = (task: any) => {
-    if (task.submission) {
-      return { label: 'Completed', variant: 'default' as const, icon: IconCheck };
+  const getTaskStatus = (assignment: any) => {
+    if (assignment.status === 'Submitted') {
+      return { label: 'Submitted', variant: 'default' as const, icon: IconCheck };
     }
+    const task = assignment.task;
     if (task.end_time && new Date(task.end_time) < new Date()) {
       return { label: 'Missed', variant: 'destructive' as const, icon: IconClock };
     }
@@ -126,26 +127,27 @@ export default function StudentDashboard() {
               <div className="min-h-[200px] flex items-center justify-center">
                 <p className="text-destructive">{error}</p>
               </div>
-            ) : tasks.length === 0 ? (
+            ) : assignments.length === 0 ? (
               <div className="min-h-[200px] flex-1 rounded-xl bg-muted/50 flex items-center justify-center">
                 <p className="text-muted-foreground">No tasks assigned yet</p>
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {tasks.map((task: any) => {
-                  const status = getTaskStatus(task);
+                {assignments.map((assignment: any) => {
+                  const status = getTaskStatus(assignment);
+                  const task = assignment.task;
                   const isMCQ = task.assessment_sub_type === 'MCQ';
-                  const canAttempt = !task.submission &&
+                  const canAttempt = assignment.status === 'Pending' &&
                     (!task.start_time || new Date(task.start_time) <= new Date()) &&
                     (!task.end_time || new Date(task.end_time) >= new Date());
 
                   return (
-                    <Card key={task.task_id} className="flex flex-col">
+                    <Card key={assignment.mark_id} className="flex flex-col">
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="space-y-1">
                             <CardTitle className="text-base">{task.title}</CardTitle>
-                            <CardDescription>{task.sub_id}</CardDescription>
+                            <CardDescription>{task.allotment.sub_name}</CardDescription>
                           </div>
                           <Badge variant={status.variant}>
                             {status.label}
@@ -162,11 +164,11 @@ export default function StudentDashboard() {
                             <span className="text-muted-foreground">Max Marks:</span>
                             <span>{task.max_marks}</span>
                           </div>
-                          {task.submission && (
+                          {assignment.status === 'Submitted' && (
                             <div className="flex justify-between font-medium">
                               <span className="text-muted-foreground">Your Score:</span>
                               <span className="text-green-600">
-                                {task.submission.marks_obtained}/{task.max_marks}
+                                {assignment.total_marks_obtained}/{task.max_marks}
                               </span>
                             </div>
                           )}
@@ -187,21 +189,29 @@ export default function StudentDashboard() {
                             <IconPlayerPlay className="mr-2 h-4 w-4" />
                             Start Test
                           </Button>
-                        ) : task.submission ? (
+                        ) : assignment.status === 'Submitted' ? (
                           <Button
                             variant="outline"
                             className="w-full"
-                            onClick={() => handleViewTask(task.task_id)}
+                            onClick={() => handleViewTask(assignment.mark_id)}
                           >
                             View Result
+                          </Button>
+                        ) : canAttempt ? (
+                          <Button
+                            className="w-full"
+                            onClick={() => handleViewTask(assignment.mark_id)}
+                          >
+                            <IconClipboardText className="mr-2 h-4 w-4" />
+                            Add Marks
                           </Button>
                         ) : (
                           <Button
                             variant="secondary"
                             className="w-full"
-                            disabled={!canAttempt}
+                            disabled
                           >
-                            {canAttempt ? 'View Details' : 'Not Available'}
+                            Not Available
                           </Button>
                         )}
                       </CardFooter>
@@ -220,19 +230,6 @@ export default function StudentDashboard() {
           isOpen={isTestModalOpen}
           onClose={() => {
             setIsTestModalOpen(false);
-            setSelectedTaskId(null);
-            fetchTasks();
-          }}
-          taskId={selectedTaskId}
-        />
-      )}
-
-      {/* Submit/View Modal */}
-      {selectedTaskId && (
-        <StudentSubmitModal
-          isOpen={isSubmitModalOpen}
-          onClose={() => {
-            setIsSubmitModalOpen(false);
             setSelectedTaskId(null);
           }}
           taskId={selectedTaskId}

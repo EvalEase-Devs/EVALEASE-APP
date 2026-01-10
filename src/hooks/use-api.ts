@@ -405,3 +405,103 @@ export function useExperimentCOs(subId: string, expNo: string | number | null) {
 
     return { cos, loading, error, fetchExperimentCOs };
 }
+
+// ============ STUDENT ASSIGNMENTS ============
+
+export interface StudentAssignment {
+    mark_id: number;
+    task_id: number;
+    total_marks_obtained: number | null;
+    status: 'Pending' | 'Submitted';
+    submitted_at: string | null;
+    task: {
+        task_id: number;
+        title: string;
+        task_type: 'Lec' | 'Lab';
+        assessment_type: 'ISE' | 'MSE' | null;
+        assessment_sub_type: 'Subjective' | 'MCQ' | null;
+        sub_id: string;
+        exp_no: number | null;
+        max_marks: number;
+        start_time: string | null;
+        end_time: string | null;
+        sub_questions?: any[];
+        allotment: {
+            sub_name: string;
+            class_name: string;
+            batch_no: number | null;
+        };
+    };
+}
+
+// Hook: Get student's assignments
+export function useStudentAssignments(status?: 'Pending' | 'Submitted') {
+    const [assignments, setAssignments] = useState<StudentAssignment[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchAssignments = useCallback(async () => {
+        try {
+            setLoading(true);
+            const url = status ? `/api/student/assignments?status=${status}` : '/api/student/assignments';
+            const res = await fetch(url);
+            if (!res.ok) {
+                throw new Error(`Failed to fetch assignments: ${res.status}`);
+            }
+            const data = await res.json();
+            setAssignments(data);
+            setError(null);
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+            console.error('Error in useStudentAssignments:', errorMsg);
+            setError(errorMsg);
+            setAssignments([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [status]);
+
+    useEffect(() => {
+        fetchAssignments();
+    }, [fetchAssignments]);
+
+    return { assignments, loading, error, refetch: fetchAssignments };
+}
+
+// Hook: Submit marks for an assignment
+export function useSubmitAssignmentMarks() {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const submitMarks = useCallback(async (marksId: number, marksObtained: number, questionMarks?: Record<string, number> | null) => {
+        try {
+            setLoading(true);
+            const res = await fetch(`/api/student/assignments/${marksId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    marks_obtained: marksObtained,
+                    question_marks: questionMarks
+                })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || `Failed to submit marks: ${res.status}`);
+            }
+
+            const data = await res.json();
+            setError(null);
+            return data;
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+            console.error('Error in useSubmitAssignmentMarks:', errorMsg);
+            setError(errorMsg);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    return { submitMarks, loading, error };
+}

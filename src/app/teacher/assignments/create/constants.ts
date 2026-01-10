@@ -173,7 +173,17 @@ export const SUBJECT_MAP = SUBJECTS_DATA;
 export const COURSES = ["B.E."] as const;
 
 export const SEMESTERS = ["SEM 5", "SEM 6", "SEM 7", "SEM 8"] as const;
-export const CLASSES = ["TE CMPN A", "TE CMPN B"] as const;
+// Dynamic classes depend on semester:
+// - SEM 5 & SEM 6 → TE CMPN A/B
+// - SEM 7 & SEM 8 → BE CMPN A/B
+export const CLASS_BY_SEM = {
+  "SEM 5": ["TE CMPN A", "TE CMPN B"],
+  "SEM 6": ["TE CMPN A", "TE CMPN B"],
+  "SEM 7": ["BE CMPN A", "BE CMPN B"],
+  "SEM 8": ["BE CMPN A", "BE CMPN B"],
+} as const;
+// Backward compatible default (used nowhere after UI update, but kept for safety)
+export const CLASSES = CLASS_BY_SEM["SEM 5"];
 export const BATCHES = ["1", "2", "3", "4", "All"] as const;
 export const BRANCH = "Computer Engineering";
 

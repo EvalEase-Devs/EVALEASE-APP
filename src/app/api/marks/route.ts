@@ -117,13 +117,13 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
             }
 
-            // Upsert marks entries
+            // Upsert marks entries (status must be 'Pending' or 'Submitted')
             const marksData = marks_entries.map((entry: any) => ({
                 task_id,
                 stud_pid: entry.stud_pid,
                 total_marks_obtained: entry.total_marks_obtained,
                 question_marks: entry.question_marks || null,
-                status: entry.status || 'Graded'
+                status: (entry.status && entry.status.toLowerCase() === 'pending') ? 'Pending' : 'Submitted'
             }));
 
             const { data, error } = await supabase
@@ -182,17 +182,13 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: 'Test has ended' }, { status: 400 });
             }
 
-            // Check if already submitted
+            // Find existing marks row (pre-populated on task creation)
             const { data: existingMark } = await supabase
                 .from('marks')
-                .select('mark_id')
+                .select('mark_id, status')
                 .eq('task_id', task_id)
                 .eq('stud_pid', student.pid)
                 .single();
-
-            if (existingMark) {
-                return NextResponse.json({ error: 'Already submitted' }, { status: 400 });
-            }
 
             // Calculate score
             const questions = task.mcq_questions as any[];
@@ -209,18 +205,39 @@ export async function POST(request: NextRequest) {
                 }
             });
 
-            // Save the submission
-            const { data, error } = await supabase
-                .from('marks')
-                .insert({
-                    task_id,
-                    stud_pid: student.pid,
-                    total_marks_obtained: totalScore,
-                    question_marks: questionMarks,
-                    status: 'Graded'
-                })
-                .select()
-                .single();
+            let data;
+            let error;
+            if (!existingMark) {
+                // No pre-populated row found; insert fresh submission
+                ({ data, error } = await supabase
+                    .from('marks')
+                    .insert({
+                        task_id,
+                        stud_pid: student.pid,
+                        total_marks_obtained: totalScore,
+                        question_marks: questionMarks,
+                        status: 'Submitted',
+                        submitted_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single());
+            } else {
+                // Pre-populated row exists; ensure not already submitted, then update
+                if (existingMark.status === 'Submitted') {
+                    return NextResponse.json({ error: 'Already submitted' }, { status: 400 });
+                }
+                ({ data, error } = await supabase
+                    .from('marks')
+                    .update({
+                        total_marks_obtained: totalScore,
+                        question_marks: questionMarks,
+                        status: 'Submitted',
+                        submitted_at: new Date().toISOString()
+                    })
+                    .eq('mark_id', existingMark.mark_id)
+                    .select()
+                    .single());
+            }
 
             if (error) {
                 console.error('Error submitting MCQ:', error);
