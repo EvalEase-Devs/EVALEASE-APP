@@ -20,6 +20,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
     const [students, setStudents] = useState<any[]>([]);
     const [loadingStudents, setLoadingStudents] = useState(false);
     const [studentError, setStudentError] = useState<string | null>(null);
+    const selectedTask = tasks.find(t => t.task_id === selectedTaskId) || null;
 
     const fetchStudents = async (taskId: number) => {
         try {
@@ -182,6 +183,8 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                 <div className="space-y-2">
                                     {students.map((entry) => {
                                         const student = entry.student;
+                                        const isMSE = selectedTask?.assessment_type === 'MSE';
+                                        const hasSubmitted = entry.status === 'Submitted';
                                         return (
                                             <div key={student?.pid} className="flex items-center justify-between bg-muted/50 rounded-md p-3">
                                                 <div className="space-y-1">
@@ -189,9 +192,33 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                                     <div className="text-xs text-muted-foreground">Roll: {student?.roll_no ?? 'N/A'} | PID: {student?.pid}</div>
                                                     <div className="text-[11px] text-muted-foreground">Class: {student?.class_name} {student?.batch ? `Batch ${student.batch}` : ''}</div>
                                                 </div>
-                                                <Badge variant={entry.status === 'Submitted' ? 'default' : 'outline'}>
-                                                    {entry.status || 'Pending'}
-                                                </Badge>
+                                                <div className="flex items-center gap-3">
+                                                    {hasSubmitted ? (
+                                                        isMSE ? (
+                                                            <div className="text-xs bg-background border rounded p-2 max-w-[280px]">
+                                                                <div className="font-semibold mb-1">Question-wise:</div>
+                                                                <div className="grid grid-cols-2 gap-1">
+                                                                    {entry.question_marks ? Object.entries(entry.question_marks).map(([label, val]: [string, any]) => (
+                                                                        <div key={label} className="flex justify-between">
+                                                                            <span className="text-muted-foreground">{label}</span>
+                                                                            <span className="font-medium">{typeof val === 'number' ? val : parseFloat(val)}</span>
+                                                                        </div>
+                                                                    )) : <span className="text-muted-foreground">No breakdown</span>}
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-xs bg-background border rounded p-2">
+                                                                <span className="text-muted-foreground">Marks:</span>
+                                                                <span className="ml-1 font-semibold">{entry.total_marks_obtained ?? '-'}</span>
+                                                            </div>
+                                                        )
+                                                    ) : (
+                                                        <div className="text-xs text-muted-foreground">Pending</div>
+                                                    )}
+                                                    <Badge variant={hasSubmitted ? 'default' : 'outline'}>
+                                                        {entry.status || 'Pending'}
+                                                    </Badge>
+                                                </div>
                                             </div>
                                         );
                                     })}
