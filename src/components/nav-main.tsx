@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { ChevronRight, type LucideIcon } from "lucide-react"
 import { usePathname } from "next/navigation"
 
@@ -33,22 +34,27 @@ export function NavMain({
     }[]
   }[]
 }) {
+  const [isMounted, setIsMounted] = React.useState(false)
   const pathname = usePathname()
-  
+
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
-          // 1. Check if any sub-item matches the current URL
-          const isChildActive = item.items?.some((sub) => sub.url === pathname)
+          // 1. Check if any sub-item matches the current URL (only after mount)
+          const isChildActive = isMounted ? item.items?.some((sub) => sub.url === pathname) : false
 
           return item.items && item.items.length > 0 ? (
             <Collapsible
               key={item.title}
               asChild
               // 2. Keep open if a child is active OR if the data says so
-              defaultOpen={isChildActive || item.isActive} 
+              defaultOpen={isChildActive || item.isActive}
               className="group/collapsible"
             >
               <SidebarMenuItem>
@@ -63,10 +69,10 @@ export function NavMain({
                   <SidebarMenuSub>
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton 
+                        <SidebarMenuSubButton
                           asChild
                           // 3. Highlight this specific sub-link if it matches URL
-                          isActive={pathname === subItem.url} 
+                          isActive={isMounted && pathname === subItem.url}
                         >
                           <a href={subItem.url}>
                             <span>{subItem.title}</span>
@@ -80,11 +86,11 @@ export function NavMain({
             </Collapsible>
           ) : (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton 
-                asChild 
+              <SidebarMenuButton
+                asChild
                 tooltip={item.title}
                 // 4. Highlight this main link if it matches URL
-                isActive={pathname === item.url} 
+                isActive={isMounted && pathname === item.url}
               >
                 <a href={item.url}>
                   {item.icon && <item.icon />}
