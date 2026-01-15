@@ -47,12 +47,12 @@ const data = {
       icon: IconFileCheck,
       items: [
         {
-          title: "Pending Review",
-          url: "/teacher/evaluations/pending",
+          title: "Practical Attainments",
+          url: "/teacher/evaluations/practical-attainments",
         },
         {
-          title: "Completed",
-          url: "/teacher/evaluations/completed",
+          title: "ISE-MSE Attainments",
+          url: "/teacher/evaluations/ise-mse-attainments",
         },
       ],
     },

@@ -38,11 +38,6 @@ const data = {
       ],
     },
     {
-      title: "My Courses",
-      url: "/student/courses",
-      icon: IconBook,
-    },
-    {
       title: "Notifications",
       url: "/student/notifications",
       icon: IconBell,
