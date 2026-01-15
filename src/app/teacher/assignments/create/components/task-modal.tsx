@@ -68,7 +68,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
 
-    const [maxMarks, setMaxMarks] = useState<number>(20);
+    const [maxMarks, setMaxMarks] = useState<number>(15);
 
     // MCQ Builder State
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -330,7 +330,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
         setQuestions([]);
         setStartTime('');
         setEndTime('');
-        setMaxMarks(20);
+        setMaxMarks(15);
         setErrors({});
         setTouched({});
         setMseQuestions(DEFAULT_MSE_QUESTIONS);
