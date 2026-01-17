@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Task as APITask } from '@/hooks/use-api';
-import { Trash2, X, Clock, AlertCircle } from 'lucide-react';
+import { Trash2, X, Clock, AlertCircle, Pencil, Save, XCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 interface TasksListModalProps {
     isOpen: boolean;
@@ -20,6 +22,10 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
     const [students, setStudents] = useState<any[]>([]);
     const [loadingStudents, setLoadingStudents] = useState(false);
     const [studentError, setStudentError] = useState<string | null>(null);
+    const [editingMarkId, setEditingMarkId] = useState<number | null>(null);
+    const [editedMarks, setEditedMarks] = useState<number | Record<string, number>>(0);
+    const [savingMarks, setSavingMarks] = useState<boolean>(false);
+
     const selectedTask = tasks.find(t => t.task_id === selectedTaskId) || null;
 
     const fetchStudents = async (taskId: number) => {
@@ -38,6 +44,88 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
             setStudents([]);
         } finally {
             setLoadingStudents(false);
+        }
+    };
+
+    const handleEdit = (entry: any) => {
+        const isMSE = selectedTask?.assessment_type === 'MSE';
+        setEditingMarkId(entry.mark_id);
+        if (isMSE && entry.question_marks) {
+            setEditedMarks({ ...entry.question_marks });
+        } else {
+            setEditedMarks(entry.total_marks_obtained ?? 0);
+        }
+    };
+
+    const handleCancel = () => {
+        setEditingMarkId(null);
+        setEditedMarks(0);
+    };
+
+    const handleSave = async (markId: number) => {
+        if (!markId) {
+            console.error('No markId provided');
+            toast.error('Invalid mark ID');
+            return;
+        }
+
+        console.log('Starting save...', { markId, editedMarks, selectedTask });
+
+        setSavingMarks(true);
+        try {
+            const isMSE = selectedTask?.assessment_type === 'MSE';
+            let totalMarks: number;
+            let questionMarks: Record<string, number> | null = null;
+
+            if (isMSE && typeof editedMarks === 'object') {
+                questionMarks = editedMarks;
+                totalMarks = Object.values(editedMarks).reduce((sum, val) => sum + (typeof val === 'number' ? val : parseFloat(val) || 0), 0);
+            } else {
+                totalMarks = typeof editedMarks === 'number' ? editedMarks : parseFloat(editedMarks as any) || 0;
+            }
+
+            console.log('Sending request:', { totalMarks, questionMarks, url: `/api/marks/${markId}` });
+
+            const response = await fetch(`/api/marks/${markId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    total_marks_obtained: totalMarks,
+                    question_marks: questionMarks,
+                }),
+            });
+
+            console.log('Response status:', response.status);
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('Response error:', error);
+                throw new Error(error.error || 'Failed to update marks');
+            }
+
+            const result = await response.json();
+            console.log('Update successful:', result);
+
+            toast.success('Marks updated successfully');
+            setEditingMarkId(null);
+            setEditedMarks(0);
+
+            // Refresh students list
+            await fetchStudents(selectedTaskId!);
+        } catch (error: any) {
+            console.error('Error updating marks:', error);
+            toast.error(error.message || 'Failed to update marks');
+        } finally {
+            setSavingMarks(false);
+        }
+    };
+
+    const handleQuestionMarkChange = (label: string, value: string) => {
+        if (typeof editedMarks === 'object') {
+            setEditedMarks(prev => ({
+                ...prev as Record<string, number>,
+                [label]: parseFloat(value) || 0,
+            }));
         }
     };
 
@@ -185,6 +273,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                         const student = entry.student;
                                         const isMSE = selectedTask?.assessment_type === 'MSE';
                                         const hasSubmitted = entry.status === 'Submitted';
+                                        const isEditing = editingMarkId === entry.mark_id;
                                         return (
                                             <div key={student?.pid} className="flex items-center justify-between bg-muted/50 rounded-md p-3">
                                                 <div className="space-y-1">
@@ -194,27 +283,100 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     {hasSubmitted ? (
-                                                        isMSE ? (
-                                                            <div className="text-xs bg-background border rounded p-2 max-w-[280px]">
-                                                                <div className="font-semibold mb-1">Question-wise:</div>
-                                                                <div className="grid grid-cols-2 gap-1">
-                                                                    {entry.question_marks ? Object.entries(entry.question_marks).map(([label, val]: [string, any]) => (
-                                                                        <div key={label} className="flex justify-between">
-                                                                            <span className="text-muted-foreground">{label}</span>
-                                                                            <span className="font-medium">{typeof val === 'number' ? val : parseFloat(val)}</span>
-                                                                        </div>
-                                                                    )) : <span className="text-muted-foreground">No breakdown</span>}
+                                                        isEditing ? (
+                                                            // Edit mode
+                                                            isMSE ? (
+                                                                <div className="text-xs bg-background border rounded p-2 max-w-[280px]">
+                                                                    <div className="font-semibold mb-1">Edit Question-wise:</div>
+                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                        {entry.question_marks && typeof editedMarks === 'object' ? Object.keys(editedMarks).map((label) => (
+                                                                            <div key={label} className="flex items-center gap-1">
+                                                                                <span className="text-muted-foreground text-[10px]">{label}:</span>
+                                                                                <Input
+                                                                                    type="number"
+                                                                                    value={(editedMarks as Record<string, number>)[label]}
+                                                                                    onChange={(e) => handleQuestionMarkChange(label, e.target.value)}
+                                                                                    className="h-6 w-14 text-xs"
+                                                                                    step="0.5"
+                                                                                    min="0"
+                                                                                />
+                                                                            </div>
+                                                                        )) : <span className="text-muted-foreground">No breakdown</span>}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
+                                                            ) : (
+                                                                <div className="text-xs bg-background border rounded p-2 flex items-center gap-2">
+                                                                    <span className="text-muted-foreground">Marks:</span>
+                                                                    <Input
+                                                                        type="number"
+                                                                        value={typeof editedMarks === 'number' ? editedMarks : 0}
+                                                                        onChange={(e) => setEditedMarks(parseFloat(e.target.value) || 0)}
+                                                                        className="h-6 w-16 text-xs"
+                                                                        step="0.5"
+                                                                        min="0"
+                                                                    />
+                                                                </div>
+                                                            )
                                                         ) : (
-                                                            <div className="text-xs bg-background border rounded p-2">
-                                                                <span className="text-muted-foreground">Marks:</span>
-                                                                <span className="ml-1 font-semibold">{entry.total_marks_obtained ?? '-'}</span>
-                                                            </div>
+                                                            // View mode
+                                                            isMSE ? (
+                                                                <div className="text-xs bg-background border rounded p-2 max-w-[280px]">
+                                                                    <div className="font-semibold mb-1">Question-wise:</div>
+                                                                    <div className="grid grid-cols-2 gap-1">
+                                                                        {entry.question_marks ? Object.entries(entry.question_marks).map(([label, val]: [string, any]) => (
+                                                                            <div key={label} className="flex justify-between">
+                                                                                <span className="text-muted-foreground">{label}</span>
+                                                                                <span className="font-medium">{typeof val === 'number' ? val : parseFloat(val)}</span>
+                                                                            </div>
+                                                                        )) : <span className="text-muted-foreground">No breakdown</span>}
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-xs bg-background border rounded p-2">
+                                                                    <span className="text-muted-foreground">Marks:</span>
+                                                                    <span className="ml-1 font-semibold">{entry.total_marks_obtained ?? '-'}</span>
+                                                                </div>
+                                                            )
                                                         )
                                                     ) : (
                                                         <div className="text-xs text-muted-foreground">Pending</div>
                                                     )}
+
+                                                    {hasSubmitted && (
+                                                        isEditing ? (
+                                                            <div className="flex gap-1">
+                                                                <Button
+                                                                    variant="default"
+                                                                    size="icon"
+                                                                    className="h-7 w-7"
+                                                                    onClick={() => handleSave(entry.mark_id)}
+                                                                    disabled={savingMarks}
+                                                                >
+                                                                    <Save size={14} />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-7 w-7"
+                                                                    onClick={handleCancel}
+                                                                    disabled={savingMarks}
+                                                                >
+                                                                    <XCircle size={14} />
+                                                                </Button>
+                                                            </div>
+                                                        ) : (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-7 w-7"
+                                                                onClick={() => handleEdit(entry)}
+                                                                disabled={editingMarkId !== null}
+                                                            >
+                                                                <Pencil size={14} />
+                                                            </Button>
+                                                        )
+                                                    )}
+
                                                     <Badge variant={hasSubmitted ? 'default' : 'outline'}>
                                                         {entry.status || 'Pending'}
                                                     </Badge>

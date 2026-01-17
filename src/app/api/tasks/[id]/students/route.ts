@@ -36,7 +36,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         // Fetch students for this task with their marks status and scores
         const { data, error } = await supabase
             .from('marks')
-            .select('status, stud_pid, total_marks_obtained, question_marks, student:stud_pid(pid, stud_name, roll_no, class_name, batch)')
+            .select('mark_id, status, stud_pid, total_marks_obtained, question_marks, student:stud_pid(pid, stud_name, roll_no, class_name, batch)')
             .eq('task_id', taskId)
             .order('roll_no', { ascending: true, foreignTable: 'student' });
 
