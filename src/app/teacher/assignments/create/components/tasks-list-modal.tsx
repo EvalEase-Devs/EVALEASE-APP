@@ -148,6 +148,29 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
         return 'ACTIVE';
     };
 
+    // Group tasks by assessment type (MCQ, Subjective, MSE, Experiments)
+    const groupedTasks = tasks.reduce((acc, task) => {
+        let category = 'Other';
+
+        if (task.assessment_sub_type === 'MCQ') {
+            category = 'MCQ';
+        } else if (task.assessment_sub_type === 'Subjective') {
+            category = 'Subjective';
+        } else if (task.assessment_type === 'MSE') {
+            category = 'MSE';
+        } else if (task.task_type === 'Lab' && task.exp_no) {
+            category = 'Experiments';
+        }
+
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(task);
+        return acc;
+    }, {} as Record<string, APITask[]>);
+
+    // Define order for categories
+    const categoryOrder = ['MCQ', 'Subjective', 'MSE', 'Experiments', 'Other'];
+    const orderedCategories = categoryOrder.filter(cat => groupedTasks[cat]);
+
     return (
         <>
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -164,80 +187,115 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-6 bg-muted/10">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {tasks.length === 0 && (
-                                <div className="col-span-full flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-muted rounded-lg">
-                                    <p>No tasks found for this subject.</p>
-                                    <Button className="mt-4" onClick={onClose}>Close & Add Task</Button>
-                                </div>
-                            )}
-                            {tasks.map(task => {
-                                const status = getTaskStatus(task);
-                                const taskType = task.task_type === 'Lab' ? 'Lab' : 'Theory';
-                                const mappedCOs = task.task_co_mapping?.map(m => m.co?.co_name).filter(Boolean) || [];
-                                return (
-                                    <Card key={task.task_id} className={`shadow-md hover:shadow-lg transition-shadow ${status === 'SCHEDULED' ? 'border-blue-400 border-dashed' : ''}`}>
-                                        <CardHeader className="p-5 pb-2">
-                                            <div className="flex justify-between items-start">
-                                                <CardTitle className="text-base line-clamp-1" title={task.title}>{task.title}</CardTitle>
-                                                <div className="flex gap-1 flex-wrap justify-end">
-                                                    {status === 'SCHEDULED' && <Badge variant="secondary">Scheduled</Badge>}
-                                                    {status === 'ACTIVE' && <Badge variant="default">Active</Badge>}
-                                                    {status === 'CLOSED' && <Badge variant="outline">Closed</Badge>}
-                                                    <Badge variant={taskType === 'Lab' ? 'secondary' : 'default'}>
-                                                        {taskType}
-                                                    </Badge>
-                                                </div>
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent className="p-5 pt-0 pb-2">
-                                            <div className="flex flex-wrap gap-1 mb-2">
-                                                {mappedCOs.map(co => (
-                                                    <Badge key={co} variant="secondary" className="text-[10px] h-5">{co}</Badge>
-                                                ))}
-                                            </div>
-                                            <div className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-                                                <span>Max Marks: {task.max_marks}</span>
-                                                {task.assessment_sub_type === 'MCQ' && <Badge variant="outline" className="text-[10px] h-5">MCQ</Badge>}
-                                                {task.assessment_type === 'MSE' && <Badge variant="outline" className="text-[10px] h-5">MSE</Badge>}
-                                            </div>
+                    <div className="flex-1 overflow-y-auto p-6 bg-muted/10 space-y-8">
+                        {tasks.length === 0 && (
+                            <div className="col-span-full flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-muted rounded-lg">
+                                <p>No tasks found for this subject.</p>
+                                <Button className="mt-4" onClick={onClose}>Close & Add Task</Button>
+                            </div>
+                        )}
 
-                                            {/* Time Window Details */}
-                                            <div className="text-xs text-muted-foreground mt-2 bg-muted p-2 rounded">
-                                                <div className="flex items-center gap-1">
-                                                    <Clock size={10} />
-                                                    <span>Start: {task.start_time?.replace('T', ' ') || 'N/A'}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1 mt-1">
-                                                    <AlertCircle size={10} />
-                                                    <span>End: {task.end_time?.replace('T', ' ') || 'N/A'}</span>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                        <CardFooter className="p-5 pt-2 flex justify-between gap-2 items-center">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setSelectedTaskId(task.task_id)}
-                                            >
-                                                View Students
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                onClick={() => onDeleteTask(task.task_id)}
-                                                title="Delete Task"
-                                            >
-                                                <Trash2 size={18} />
-                                            </Button>
-                                            <Button variant="ghost" size="sm">Edit</Button>
-                                        </CardFooter>
-                                    </Card>
-                                );
-                            })}
-                        </div>
+                        {tasks.length > 0 && orderedCategories.map((category) => {
+                            const categoryTasks = groupedTasks[category];
+                            const categoryColors: Record<string, string> = {
+                                'MCQ': 'bg-blue-100 dark:bg-blue-900',
+                                'Subjective': 'bg-green-100 dark:bg-green-900',
+                                'MSE': 'bg-purple-100 dark:bg-purple-900',
+                                'Experiments': 'bg-orange-100 dark:bg-orange-900',
+                                'Other': 'bg-gray-100 dark:bg-gray-900'
+                            };
+                            const categoryBorders: Record<string, string> = {
+                                'MCQ': 'border-l-blue-500',
+                                'Subjective': 'border-l-green-500',
+                                'MSE': 'border-l-purple-500',
+                                'Experiments': 'border-l-orange-500',
+                                'Other': 'border-l-gray-500'
+                            };
+
+                            return (
+                                <div key={category} className="space-y-4">
+                                    {/* Category Header */}
+                                    <div className="flex items-center gap-2">
+                                        <div className={`h-8 w-1 ${categoryBorders[category]} rounded-full`}></div>
+                                        <h3 className="text-lg font-bold text-foreground tracking-tight">
+                                            {category}
+                                        </h3>
+                                        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">
+                                            {categoryTasks.length} Tasks
+                                        </span>
+                                    </div>
+
+                                    {/* Grid of Task Cards */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {categoryTasks.map(task => {
+                                            const status = getTaskStatus(task);
+                                            const taskType = task.task_type === 'Lab' ? 'Lab' : 'Theory';
+                                            const mappedCOs = task.task_co_mapping?.map(m => m.co?.co_name).filter(Boolean) || [];
+                                            return (
+                                                <Card key={task.task_id} className={`shadow-md hover:shadow-lg transition-shadow border-l-4 ${categoryBorders[category]} ${status === 'SCHEDULED' ? 'border-dashed' : ''}`}>
+                                                    <CardHeader className="p-5 pb-2">
+                                                        <div className="flex justify-between items-start">
+                                                            <CardTitle className="text-base line-clamp-1" title={task.title}>{task.title}</CardTitle>
+                                                            <div className="flex gap-1 flex-wrap justify-end">
+                                                                {status === 'SCHEDULED' && <Badge variant="secondary">Scheduled</Badge>}
+                                                                {status === 'ACTIVE' && <Badge variant="default">Active</Badge>}
+                                                                {status === 'CLOSED' && <Badge variant="outline">Closed</Badge>}
+                                                                <Badge variant={taskType === 'Lab' ? 'secondary' : 'default'}>
+                                                                    {taskType}
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
+                                                    </CardHeader>
+                                                    <CardContent className="p-5 pt-0 pb-2">
+                                                        <div className="flex flex-wrap gap-1 mb-2">
+                                                            {mappedCOs.map(co => (
+                                                                <Badge key={co} variant="secondary" className="text-[10px] h-5">{co}</Badge>
+                                                            ))}
+                                                        </div>
+                                                        <div className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                                                            <span>Max Marks: {task.max_marks}</span>
+                                                            {task.assessment_sub_type === 'MCQ' && <Badge variant="outline" className="text-[10px] h-5">MCQ</Badge>}
+                                                            {task.assessment_type === 'MSE' && <Badge variant="outline" className="text-[10px] h-5">MSE</Badge>}
+                                                        </div>
+
+                                                        {/* Time Window Details */}
+                                                        <div className="text-xs text-muted-foreground mt-2 bg-muted p-2 rounded">
+                                                            <div className="flex items-center gap-1">
+                                                                <Clock size={10} />
+                                                                <span>Start: {task.start_time?.replace('T', ' ') || 'N/A'}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1 mt-1">
+                                                                <AlertCircle size={10} />
+                                                                <span>End: {task.end_time?.replace('T', ' ') || 'N/A'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                    <CardFooter className="p-5 pt-2 flex justify-between gap-2 items-center">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => setSelectedTaskId(task.task_id)}
+                                                        >
+                                                            View Students
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                            onClick={() => onDeleteTask(task.task_id)}
+                                                            title="Delete Task"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </Button>
+                                                        <Button variant="ghost" size="sm">Edit</Button>
+                                                    </CardFooter>
+                                                </Card>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

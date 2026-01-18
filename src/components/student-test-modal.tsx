@@ -537,7 +537,7 @@ function StudentTestModalInner({
                                                 </p>
                                                 {answers[question.id] !== undefined && (
                                                     <p className="text-sm text-green-700 mt-1">
-                                                        ✓ Your Answer: {String.fromCharCode(65 + answers[question.id])}. {question.options[answers[question.id]]}
+                                                        Your Answer: {String.fromCharCode(65 + answers[question.id])}. {question.options[answers[question.id]]}
                                                     </p>
                                                 )}
                                                 {answers[question.id] === undefined && (
