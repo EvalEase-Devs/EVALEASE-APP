@@ -116,7 +116,7 @@ export default function StudentDashboard() {
           </div>
 
           {/* Tasks List */}
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <h2 className="text-lg font-semibold">Your Tasks</h2>
 
             {loading ? (
@@ -220,7 +220,7 @@ export default function StudentDashboard() {
                 })}
               </div>
             )}
-          </div>
+          </div> */}
         </div>
       </SidebarInset>
 
