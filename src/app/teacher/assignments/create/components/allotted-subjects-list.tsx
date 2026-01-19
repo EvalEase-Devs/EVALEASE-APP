@@ -23,17 +23,20 @@ import {
     MoreVertical,
     Loader2
 } from "lucide-react";
+import { IconFileSpreadsheet } from "@tabler/icons-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuTrigger
+    DropdownMenuTrigger,
+    DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import type { AllottedSubject } from "./create-assignment-content";
 import { parseSubject } from "@/app/teacher/assignments/create/utils";
 import TaskModal from "./task-modal";
 import TasksListModal from "./tasks-list-modal";
+import { BatchMarksReportModal } from "./batch-marks-report-modal";
 import { useTasks, Task as APITask, useExperiments } from "@/hooks/use-api";
 import { Task as FormTask } from "@/lib/types";
 
@@ -53,6 +56,10 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
     // Tasks List Modal State
     const [isTasksListOpen, setIsTasksListOpen] = useState(false);
     const [selectedSubjectForList, setSelectedSubjectForList] = useState<AllottedSubject | null>(null);
+
+    // Batch Marks Report Modal State
+    const [isMarksReportOpen, setIsMarksReportOpen] = useState(false);
+    const [selectedSubjectForMarks, setSelectedSubjectForMarks] = useState<AllottedSubject | null>(null);
 
     // Use API hook for tasks
     const { tasks: allTasks, loading: tasksLoading, createTask, deleteTask, fetchTasks } = useTasks();
@@ -89,6 +96,11 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
     const handleOpenTasksList = (allotment: AllottedSubject) => {
         setSelectedSubjectForList(allotment);
         setIsTasksListOpen(true);
+    };
+
+    const handleOpenMarksReport = (allotment: AllottedSubject) => {
+        setSelectedSubjectForMarks(allotment);
+        setIsMarksReportOpen(true);
     };
 
     const handleAddTask = async (newTask: FormTask) => {
@@ -237,9 +249,12 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                                                     <DropdownMenuItem onClick={() => handleOpenTasksList(allotment)}>
                                                         <LayoutGrid className="mr-2 h-4 w-4" /> View All Tasks
                                                     </DropdownMenuItem>
-                                                    {/* <DropdownMenuItem onClick={() => toast.info("View Students List")}>
-                                                        <Users className="mr-2 h-4 w-4" /> Students List
-                                                    </DropdownMenuItem> */}
+                                                    {allotment.type === 'Lab' && (
+                                                        <DropdownMenuItem onClick={() => handleOpenMarksReport(allotment)}>
+                                                            <IconFileSpreadsheet className="mr-2 h-4 w-4" /> All Marks
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    <DropdownMenuSeparator />
                                                     {allotment.isIncharge && (
                                                         <DropdownMenuItem onClick={() => toast.info("View Reports")}>
                                                             <BarChart3 className="mr-2 h-4 w-4" /> Attainment Report
@@ -307,6 +322,21 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                     onDeleteTask={handleDeleteTask}
                     onPublishTask={handlePublishTask}
                     subjectName={selectedSubjectForList.subject}
+                />
+            )}
+
+            {/* Batch Marks Report Modal */}
+            {selectedSubjectForMarks && (
+                <BatchMarksReportModal
+                    open={isMarksReportOpen}
+                    onOpenChange={(open) => {
+                        setIsMarksReportOpen(open);
+                        if (!open) setSelectedSubjectForMarks(null);
+                    }}
+                    allotmentId={selectedSubjectForMarks.allotment_id}
+                    subjectName={selectedSubjectForMarks.subjectName}
+                    className={selectedSubjectForMarks.class}
+                    batch={selectedSubjectForMarks.batch}
                 />
             )}
         </>

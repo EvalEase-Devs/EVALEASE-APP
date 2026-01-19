@@ -505,3 +505,64 @@ export function useSubmitAssignmentMarks() {
 
     return { submitMarks, loading, error };
 }
+
+// Hook to fetch batch marks report
+export interface BatchMarksReportData {
+    allotment: Allotment;
+    students: {
+        pid: number;
+        stud_name: string;
+        roll_no: number;
+        batch: number | null;
+    }[];
+    experiments: {
+        exp_no: number;
+        exp_name: string;
+        cos: string[];
+    }[];
+    marksMatrix: Record<number, Record<number, {
+        mark_id: number;
+        marks: number;
+        max_marks: number;
+        status: string;
+    }>>;
+}
+
+export function useBatchMarksReport(allotmentId: number | null) {
+    const [data, setData] = useState<BatchMarksReportData | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchReport = useCallback(async () => {
+        if (!allotmentId) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const res = await fetch(`/api/marks/batch-report?allotment_id=${allotmentId}`);
+            
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to fetch batch marks report');
+            }
+
+            const reportData = await res.json();
+            setData(reportData);
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+            console.error('Error fetching batch marks report:', errorMsg);
+            setError(errorMsg);
+        } finally {
+            setLoading(false);
+        }
+    }, [allotmentId]);
+
+    useEffect(() => {
+        if (allotmentId) {
+            fetchReport();
+        }
+    }, [allotmentId, fetchReport]);
+
+    return { data, loading, error, refetch: fetchReport };
+}
