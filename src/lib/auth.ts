@@ -4,7 +4,7 @@ import Google from "next-auth/providers/google";
 // Exception emails for testing/special access
 const EXCEPTION_EMAILS = {
   admin: ["kevilshaji@gmail.com"],
-  teacher: ["fevermusic321@gmail.com", "solankibhavik92@gmail.com"],
+  teacher: ["fevermusic321@gmail.com", "solankibhavik92@gmail.com","sohampatil1510@gmail.com"],
   student: [] as string[],
 };
 

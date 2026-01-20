@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 // Exception emails for testing/special access (must match auth.ts)
 const EXCEPTION_EMAILS = {
   admin: ["kevilshaji@gmail.com"],
-  teacher: ["fevermusic321@gmail.com"],
+  teacher: ["fevermusic321@gmail.com","solankibhavik92@gmail.com","sohampatil1510@gmail.com"],
   student: [] as string[],
 };
 
