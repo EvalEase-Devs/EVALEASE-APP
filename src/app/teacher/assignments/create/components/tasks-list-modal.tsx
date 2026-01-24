@@ -69,8 +69,6 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
             return;
         }
 
-        console.log('Starting save...', { markId, editedMarks, selectedTask });
-
         setSavingMarks(true);
         try {
             const isMSE = selectedTask?.assessment_type === 'MSE';
@@ -84,7 +82,6 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                 totalMarks = typeof editedMarks === 'number' ? editedMarks : parseFloat(editedMarks as any) || 0;
             }
 
-            console.log('Sending request:', { totalMarks, questionMarks, url: `/api/marks/${markId}` });
 
             const response = await fetch(`/api/marks/${markId}`, {
                 method: 'PUT',
@@ -95,8 +92,6 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                 }),
             });
 
-            console.log('Response status:', response.status);
-
             if (!response.ok) {
                 const error = await response.json();
                 console.error('Response error:', error);
@@ -104,7 +99,6 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
             }
 
             const result = await response.json();
-            console.log('Update successful:', result);
 
             toast.success('Marks updated successfully');
             setEditingMarkId(null);

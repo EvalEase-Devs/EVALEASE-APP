@@ -380,13 +380,11 @@ export function useExperimentCOs(subId: string, expNo: string | number | null) {
         try {
             setLoading(true);
             const url = `/api/experiments/${subId}?exp_no=${expNo}`;
-            console.log('Fetching COs from:', url);
             const res = await fetch(url);
             if (!res.ok) {
                 throw new Error(`Failed to fetch experiment COs: ${res.status}`);
             }
             const data = await res.json();
-            console.log('Fetched COs data:', data);
             setCos(data);
             setError(null);
         } catch (err) {

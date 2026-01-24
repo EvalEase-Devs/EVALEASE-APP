@@ -18,7 +18,6 @@ export async function GET(
     }
 
     try {
-        console.log(`Fetching COs for: subId=${subId}, expNo=${expNo}`);
 
         // Fetch COs associated with the experiment
         const { data: coData, error: coError } = await supabase
@@ -32,7 +31,6 @@ export async function GET(
             throw coError;
         }
 
-        console.log(`Fetched COs:`, coData);
         return NextResponse.json(coData || []);
     } catch (error) {
         console.error('Error fetching experiment COs:', error);

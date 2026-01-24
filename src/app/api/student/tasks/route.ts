@@ -19,13 +19,7 @@ export async function GET(request: NextRequest) {
         const student = await getStudentByEmail(session.user.email);
         if (!student) {
             return NextResponse.json({ error: 'Student not found' }, { status: 404 });
-        }
-
-        console.log('Student found:', {
-            pid: student.pid,
-            class_name: student.class_name,
-            batch: student.batch
-        });
+        };
 
         // Get allotments for student's class
         const { data: allotments, error: allotError } = await supabase
@@ -33,7 +27,7 @@ export async function GET(request: NextRequest) {
             .select('allotment_id, sub_id, type, batch_no, class_name')
             .eq('class_name', student.class_name);
 
-        console.log('Allotments found for class:', allotments);
+       
 
         if (allotError) {
             console.error('Error fetching allotments:', allotError);
@@ -48,7 +42,6 @@ export async function GET(request: NextRequest) {
             return true; // Lec applies to all
         });
 
-        console.log('Relevant allotments after batch filter:', relevantAllotments);
 
         if (relevantAllotments.length === 0) {
             return NextResponse.json([]);
@@ -56,16 +49,12 @@ export async function GET(request: NextRequest) {
 
         const allotmentIds = relevantAllotments.map(a => a.allotment_id);
 
-        console.log('Allotment IDs to search tasks:', allotmentIds);
-
         // Get tasks for these allotments
         const { data: tasks, error: taskError } = await supabase
             .from('task')
             .select('*')
             .in('allotment_id', allotmentIds)
             .order('created_at', { ascending: false });
-
-        console.log('Tasks found:', tasks?.length, tasks);
 
         if (taskError) {
             console.error('Error fetching tasks:', taskError);

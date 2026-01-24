@@ -331,7 +331,6 @@ function StudentTestModalInner({
         if (onSubmit) {
             onSubmit(answers);
         }
-        console.log('Test submitted with answers:', answers);
         if (violations >= 2) {
             alert(`⚠️ TEST AUTO-SUBMITTED due to malpractice detection!\n\nAnswered ${answeredCount} out of ${questions.length} questions.\n\nViolations detected: ${violations}`);
         } else {
