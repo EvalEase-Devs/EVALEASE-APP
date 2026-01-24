@@ -57,11 +57,6 @@ const data = {
       ],
     },
     {
-      title: "Students",
-      url: "/teacher/students",
-      icon: IconUsers,
-    },
-    {
       title: "Analytics",
       url: "/teacher/analytics",
       icon: IconChartLine,
