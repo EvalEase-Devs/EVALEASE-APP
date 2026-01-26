@@ -13,6 +13,7 @@ export interface Allotment {
     is_subject_incharge: boolean;
     course: string | null;
     type: 'Lec' | 'Lab';
+    current_sem?: string;
 }
 
 export interface TaskCOMapping {
@@ -539,7 +540,7 @@ export function useBatchMarksReport(allotmentId: number | null) {
 
         try {
             const res = await fetch(`/api/marks/batch-report?allotment_id=${allotmentId}`);
-            
+
             if (!res.ok) {
                 const errorData = await res.json();
                 throw new Error(errorData.error || 'Failed to fetch batch marks report');

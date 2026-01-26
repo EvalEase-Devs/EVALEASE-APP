@@ -39,7 +39,7 @@ export function CreateAssignmentContent() {
     const allottedSubjects: AllottedSubject[] = allotments.map(a => ({
         id: a.allotment_id,
         allotment_id: a.allotment_id,
-        semester: getSemesterFromClass(a.class_name),
+        semester: (a.current_sem as Semester) || getSemesterFromClass(a.class_name),
         subject: a.sub_id, // Just the subject code
         subjectName: a.sub_name, // Full subject name
         class: a.class_name,
@@ -58,7 +58,8 @@ export function CreateAssignmentContent() {
                 batch_no: allotment.batch === 'All' ? null : parseInt(allotment.batch.replace('Batch ', '')),
                 is_subject_incharge: allotment.isIncharge,
                 course: 'Computer Engineering',
-                type: allotment.type
+                type: allotment.type,
+                current_sem: allotment.semester
             });
             toast.success("Subject allotted successfully");
             setShowFilterBar(false);

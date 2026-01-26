@@ -101,6 +101,7 @@ CREATE TABLE public.allotment (
   is_subject_incharge boolean DEFAULT false, -- e.g. true/false. Grants extra permissions like finalizing reports.
   course character varying, -- e.g. 'Computer Engineering'.
   type character varying, -- e.g. 'Lec' or 'Lab'. Strict Enum logic in frontend.
+  current_sem varchar, -- e.g. 'SEM 5', 'SEM 6', 'SEM 7'. Redundant but useful for filtering.
   CONSTRAINT allotment_pkey PRIMARY KEY (allotment_id),
   CONSTRAINT allotment_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teacher(teacher_id)
 );
