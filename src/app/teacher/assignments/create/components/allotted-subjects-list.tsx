@@ -75,6 +75,13 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
         return acc;
     }, {} as Record<string, AllottedSubject[]>);
 
+    // Sort groups by semester in ascending order
+    const sortedGroupedSubjects = Object.entries(groupedSubjects).sort((a, b) => {
+        const semesterA = parseInt(a[0].split(' ')[1]); // Extract number from "SEM 5"
+        const semesterB = parseInt(b[0].split(' ')[1]);
+        return semesterA - semesterB;
+    });
+
     const handleUnAllot = (id: number) => {
         setSubjectToDelete(id);
         setDeleteDialogOpen(true);
@@ -152,7 +159,7 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
     return (
         <>
             <div className="space-y-8">
-                {Object.entries(groupedSubjects).map(([groupTitle, groupSubjects]) => (
+                {sortedGroupedSubjects.map(([groupTitle, groupSubjects]) => (
                     <div key={groupTitle} className="space-y-4">
 
                         {/* Group Header */}
