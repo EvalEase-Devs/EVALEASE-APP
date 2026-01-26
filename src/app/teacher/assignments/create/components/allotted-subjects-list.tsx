@@ -261,7 +261,7 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                                                             <IconFileSpreadsheet className="mr-2 h-4 w-4" /> All Marks
                                                         </DropdownMenuItem>
                                                     )}
-                                                    <DropdownMenuSeparator />
+                                                    
                                                     {allotment.isIncharge && (
                                                         <DropdownMenuItem onClick={() => toast.info("View Reports")}>
                                                             <BarChart3 className="mr-2 h-4 w-4" /> Attainment Report
