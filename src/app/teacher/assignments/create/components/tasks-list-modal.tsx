@@ -226,7 +226,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                             const taskType = task.task_type === 'Lab' ? 'Lab' : 'Theory';
                                             const mappedCOs = task.task_co_mapping?.map(m => m.co?.co_name).filter(Boolean) || [];
                                             return (
-                                                <Card key={task.task_id} className={`shadow-md hover:shadow-lg transition-shadow border-l-4 ${categoryBorders[category]} ${status === 'SCHEDULED' ? 'border-dashed' : ''}`}>
+                                                <Card key={task.task_id} className={`${status === 'SCHEDULED' ? 'opacity-75' : ''}`}>
                                                     <CardHeader className="p-5 pb-2">
                                                         <div className="flex justify-between items-start">
                                                             <CardTitle className="text-base line-clamp-1" title={task.title}>{task.title}</CardTitle>

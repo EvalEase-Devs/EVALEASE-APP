@@ -18,6 +18,7 @@ import {
   EmptyState,
   DashboardFooter,
 } from "@/components/student";
+import { FadeIn } from "@/components/ui/fade-in";
 
 // Get urgency level for sorting and styling
 function getUrgency(dateString: string | null): "critical" | "warning" | "normal" {
@@ -58,12 +59,12 @@ export default function StudentDashboard() {
     const avgScore =
       completed.length > 0
         ? Math.round(
-            completed.reduce((sum, a) => {
-              const obtained = a.total_marks_obtained || 0;
-              const max = a.task?.max_marks || 1;
-              return sum + (obtained / max) * 100;
-            }, 0) / completed.length
-          )
+          completed.reduce((sum, a) => {
+            const obtained = a.total_marks_obtained || 0;
+            const max = a.task?.max_marks || 1;
+            return sum + (obtained / max) * 100;
+          }, 0) / completed.length
+        )
         : 0;
 
     return {
@@ -115,29 +116,37 @@ export default function StudentDashboard() {
         <div className="flex-1 flex flex-col p-4 gap-4 overflow-hidden">
           {/* Top Section: Welcome + Stats */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-            <WelcomeCard
-              firstName={firstName}
-              pendingCount={stats.pending}
-              completionRate={stats.completionRate}
-            />
-            <StatCard
-              icon={IconClock}
-              value={stats.pending}
-              label="Pending"
-              variant="destructive"
-            />
-            <StatCard
-              icon={IconCheck}
-              value={stats.completed}
-              label="Submitted"
-              variant="accent"
-            />
-            <StatCard
-              icon={IconChartBar}
-              value={stats.avgScore > 0 ? `${stats.avgScore}%` : "--"}
-              label="Avg Score"
-              variant="primary"
-            />
+            <FadeIn delay={0.1}>
+              <WelcomeCard
+                firstName={firstName}
+                pendingCount={stats.pending}
+                completionRate={stats.completionRate}
+              />
+            </FadeIn>
+            <FadeIn delay={0.2}>
+              <StatCard
+                icon={IconClock}
+                value={stats.pending}
+                label="Pending"
+                variant="destructive"
+              />
+            </FadeIn>
+            <FadeIn delay={0.3}>
+              <StatCard
+                icon={IconCheck}
+                value={stats.completed}
+                label="Submitted"
+                variant="accent"
+              />
+            </FadeIn>
+            <FadeIn delay={0.4}>
+              <StatCard
+                icon={IconChartBar}
+                value={stats.avgScore > 0 ? `${stats.avgScore}%` : "--"}
+                label="Avg Score"
+                variant="primary"
+              />
+            </FadeIn>
           </div>
 
           {/* Middle Section: Pending Tasks */}

@@ -395,7 +395,7 @@ function AssignmentCard({
     };
 
     return (
-        <Card className="overflow-hidden border-l-4 border-l-primary hover:shadow-md transition-shadow">
+        <Card className="overflow-hidden">
             <CardHeader className="pb-3">
                 <div className="space-y-2">
                     <h3 className="font-bold text-sm line-clamp-2" title={assignment.task.title}>

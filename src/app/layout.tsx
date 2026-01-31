@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Lora, Roboto_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Lora, Roboto_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
@@ -19,6 +19,11 @@ const fontMono = Roboto_Mono({
   variable: "--font-mono",
 });
 
+const fontHeading = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-heading",
+});
+
 export const metadata: Metadata = {
   title: "Evalease",
   description: "An online evaluation platform for schools and colleges.",
@@ -36,8 +41,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body 
-      className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}>
+      <body
+        className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} ${fontHeading.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

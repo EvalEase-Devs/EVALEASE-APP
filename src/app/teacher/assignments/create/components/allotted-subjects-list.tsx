@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { FadeIn } from "@/components/ui/fade-in";
 import { Badge } from "@/components/ui/badge";
 import {
     AlertDialog,
@@ -175,102 +176,104 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
 
                         {/* Grid of Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-4 gap-3">
-                            {groupSubjects.map((allotment) => {
+                            {groupSubjects.map((allotment, index) => {
                                 const parsed = parseSubject(allotment.subject);
                                 return (
-                                    <Card key={allotment.id} className="group relative overflow-hidden border-l-4 border-l-primary/50 hover:border-l-primary transition-all hover:shadow-md">
+                                    <FadeIn key={allotment.id} delay={index * 0.1}>
+                                        <Card className="group relative overflow-hidden">
 
-                                        {/* Top Right Actions (Menu) */}
-                                        <div className="absolute top-2 right-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                onClick={() => handleUnAllot(allotment.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-
-                                        <CardHeader className="pb-2">
-                                            <div className="flex items-start justify-between">
-                                                <div>
-                                                    {/* Subject Name */}
-                                                    <h4 className="font-bold text-lg leading-tight line-clamp-1" title={allotment.subjectName}>
-                                                        {allotment.subjectName}
-                                                    </h4>
-                                                    <p className="text-xs text-muted-foreground font-mono mt-1">
-                                                        {allotment.sub_id}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </CardHeader>
-
-                                        <CardContent className="pb-4">
-                                            {/* Badges Row */}
-                                            <div className="flex flex-wrap gap-2 mt-2">
-
-                                                {/* Type Badge (Lec/Lab) */}
-                                                <Badge
-                                                    variant={allotment.type === 'Lab' ? 'secondary' : 'default'}
-                                                    className="text-[10px] uppercase font-bold"
+                                            {/* Top Right Actions (Menu) */}
+                                            <div className="absolute top-2 right-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                    onClick={() => handleUnAllot(allotment.id)}
                                                 >
-                                                    {allotment.type}
-                                                </Badge>
-
-                                                {/* Batch Badge */}
-                                                <Badge variant="outline" className="text-[10px] font-medium">
-                                                    Batch: {allotment.batch}
-                                                </Badge>
-
-                                                {/* Incharge Badge */}
-                                                {allotment.isIncharge && (
-                                                    <Badge
-                                                        variant="default"
-                                                        className="text-[10px] font-bold flex items-center gap-1"
-                                                    >
-                                                        <Users className="h-3 w-3" /> Incharge
-                                                    </Badge>
-                                                )}
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
                                             </div>
-                                        </CardContent>
 
-                                        {/* Footer Actions - The "Control Panel" */}
-                                        <CardFooter className="pt-0 gap-2">
-                                            <Button
-                                                className="flex-1"
-                                                size="sm"
-                                                onClick={() => handleOpenTaskModal(allotment)}
-                                            >
-                                                <Plus className="mr-1.5 h-3.5 w-3.5" />
-                                                Add Task
-                                            </Button>
+                                            <CardHeader className="pb-2">
+                                                <div className="flex items-start justify-between">
+                                                    <div>
+                                                        {/* Subject Name */}
+                                                        <h4 className="font-bold text-lg leading-tight line-clamp-1" title={allotment.subjectName}>
+                                                            {allotment.subjectName}
+                                                        </h4>
+                                                        <p className="text-xs text-muted-foreground font-mono mt-1">
+                                                            {allotment.sub_id}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
 
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="px-2">
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-48">
-                                                    <DropdownMenuItem onClick={() => handleOpenTasksList(allotment)}>
-                                                        <LayoutGrid className="mr-2 h-4 w-4" /> View All Tasks
-                                                    </DropdownMenuItem>
-                                                    {allotment.type === 'Lab' && (
-                                                        <DropdownMenuItem onClick={() => handleOpenMarksReport(allotment)}>
-                                                            <IconFileSpreadsheet className="mr-2 h-4 w-4" /> All Marks
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    
+                                            <CardContent className="pb-4">
+                                                {/* Badges Row */}
+                                                <div className="flex flex-wrap gap-2 mt-2">
+
+                                                    {/* Type Badge (Lec/Lab) */}
+                                                    <Badge
+                                                        variant={allotment.type === 'Lab' ? 'secondary' : 'default'}
+                                                        className="text-[10px] uppercase font-bold"
+                                                    >
+                                                        {allotment.type}
+                                                    </Badge>
+
+                                                    {/* Batch Badge */}
+                                                    <Badge variant="outline" className="text-[10px] font-medium">
+                                                        Batch: {allotment.batch}
+                                                    </Badge>
+
+                                                    {/* Incharge Badge */}
                                                     {allotment.isIncharge && (
-                                                        <DropdownMenuItem onClick={() => toast.info("View Reports")}>
-                                                            <BarChart3 className="mr-2 h-4 w-4" /> Attainment Report
-                                                        </DropdownMenuItem>
+                                                        <Badge
+                                                            variant="default"
+                                                            className="text-[10px] font-bold flex items-center gap-1"
+                                                        >
+                                                            <Users className="h-3 w-3" /> Incharge
+                                                        </Badge>
                                                     )}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </CardFooter>
-                                    </Card>
+                                                </div>
+                                            </CardContent>
+
+                                            {/* Footer Actions - The "Control Panel" */}
+                                            <CardFooter className="pt-0 gap-2">
+                                                <Button
+                                                    className="flex-1"
+                                                    size="sm"
+                                                    onClick={() => handleOpenTaskModal(allotment)}
+                                                >
+                                                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                                                    Add Task
+                                                </Button>
+
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="outline" size="sm" className="px-2">
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-48">
+                                                        <DropdownMenuItem onClick={() => handleOpenTasksList(allotment)}>
+                                                            <LayoutGrid className="mr-2 h-4 w-4" /> View All Tasks
+                                                        </DropdownMenuItem>
+                                                        {allotment.type === 'Lab' && (
+                                                            <DropdownMenuItem onClick={() => handleOpenMarksReport(allotment)}>
+                                                                <IconFileSpreadsheet className="mr-2 h-4 w-4" /> All Marks
+                                                            </DropdownMenuItem>
+                                                        )}
+
+                                                        {allotment.isIncharge && (
+                                                            <DropdownMenuItem onClick={() => toast.info("View Reports")}>
+                                                                <BarChart3 className="mr-2 h-4 w-4" /> Attainment Report
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </CardFooter>
+                                        </Card>
+                                    </FadeIn>
                                 );
                             })}
                         </div>

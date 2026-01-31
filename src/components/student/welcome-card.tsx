@@ -28,7 +28,7 @@ export function WelcomeCard({ firstName, pendingCount, completionRate }: Welcome
   });
 
   return (
-    <Card className="lg:col-span-2 border-primary/20 bg-gradient-to-br from-primary/5 via-background to-accent/5">
+    <Card className="lg:col-span-2 bg-gradient-to-br from-primary/5 via-background to-accent/5">
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div>

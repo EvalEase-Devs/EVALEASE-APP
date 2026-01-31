@@ -71,7 +71,7 @@ export function PendingTaskCard({ assignment, urgency, onStartMCQ, onSubmitMarks
   };
 
   return (
-    <Card className={`flex flex-col transition-all hover:shadow-md ${urgencyStyles[urgency]}`}>
+    <Card className={`flex flex-col ${urgencyStyles[urgency]}`}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">

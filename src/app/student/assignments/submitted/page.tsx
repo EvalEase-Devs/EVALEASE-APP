@@ -65,7 +65,7 @@ function SubmittedAssignmentCard({ assignment }: { assignment: StudentAssignment
     };
 
     return (
-        <Card className="overflow-hidden border-l-4 border-l-secondary">
+        <Card className="overflow-hidden">
             <CardHeader className="pb-3">
                 <div className="space-y-2">
                     <h3 className="font-bold text-sm line-clamp-2" title={assignment.task.title}>
