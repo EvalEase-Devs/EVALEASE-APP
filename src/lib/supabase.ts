@@ -122,11 +122,11 @@ export async function getTeacherByEmail(email: string): Promise<Teacher | null> 
 
 // Helper function to get student by email
 export async function getStudentByEmail(email: string): Promise<Student | null> {
-    // Look up student by email_id column
+    // Look up student by email_id column (case-insensitive)
     const { data, error } = await supabase
         .from('student')
         .select('*')
-        .eq('email_id', email)
+        .ilike('email_id', email)
         .single();
 
     if (error) {

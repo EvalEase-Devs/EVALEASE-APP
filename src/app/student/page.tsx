@@ -1,19 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { AppSidebarStudent } from "@/components/app-sidebar-student";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { IconBook, IconFileText, IconChartBar, IconClock, IconCheck, IconPlayerPlay, IconClipboardText } from "@tabler/icons-react";
-import { Loader2 } from "lucide-react";
+import { IconClock, IconCheck, IconChartBar, IconAlertCircle, IconArrowRight, IconLoader2, IconAlertTriangle } from "@tabler/icons-react";
 import StudentTestModal from "@/components/student-test-modal";
 import { useStudentAssignments } from "@/hooks/use-api";
+import {
+  WelcomeCard,
+  StatCard,
+  PendingTaskCard,
+  EmptyState,
+  DashboardFooter,
+} from "@/components/student";
+
+// Get urgency level for sorting and styling
+function getUrgency(dateString: string | null): "critical" | "warning" | "normal" {
+  if (!dateString) return "normal";
+  const now = new Date();
+  const deadline = new Date(dateString);
+  const diffMs = deadline.getTime() - now.getTime();
+  const diffHours = diffMs / (1000 * 60 * 60);
+
+  if (diffHours < 0) return "critical"; // Overdue
+  if (diffHours < 24) return "critical"; // Less than 24 hours
+  if (diffHours < 72) return "warning"; // Less than 3 days
+  return "normal";
+}
 
 export default function StudentDashboard() {
   const { data: session } = useSession();
@@ -28,199 +46,151 @@ export default function StudentDashboard() {
     avatar: session?.user?.image || "",
   };
 
-  // Calculate stats from assignments (marks table)
-  const pendingTasks = assignments.filter((a) => a.status === 'Pending');
-  const completedTasks = assignments.filter((a) => a.status === 'Submitted');
-  const avgGrade = completedTasks.length > 0
-    ? (completedTasks.reduce((sum, a) => sum + (a.total_marks_obtained || 0), 0) / completedTasks.length).toFixed(1)
-    : '--';
+  // Get first name for greeting
+  const firstName = user.name.split(" ")[0];
+
+  // Calculate stats from assignments
+  const stats = useMemo(() => {
+    const pending = assignments.filter((a) => a.status === "Pending");
+    const completed = assignments.filter((a) => a.status === "Submitted");
+    const total = assignments.length;
+    const completionRate = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+    const avgScore =
+      completed.length > 0
+        ? Math.round(
+            completed.reduce((sum, a) => {
+              const obtained = a.total_marks_obtained || 0;
+              const max = a.task?.max_marks || 1;
+              return sum + (obtained / max) * 100;
+            }, 0) / completed.length
+          )
+        : 0;
+
+    return {
+      pending: pending.length,
+      completed: completed.length,
+      total,
+      completionRate,
+      avgScore,
+    };
+  }, [assignments]);
+
+  // Get top 3 urgent pending assignments sorted by deadline
+  const urgentPending = useMemo(() => {
+    return assignments
+      .filter((a) => a.status === "Pending")
+      .sort((a, b) => {
+        const aTime = a.task?.end_time ? new Date(a.task.end_time).getTime() : Infinity;
+        const bTime = b.task?.end_time ? new Date(b.task.end_time).getTime() : Infinity;
+        return aTime - bTime;
+      })
+      .slice(0, 3);
+  }, [assignments]);
 
   const handleStartMCQ = (taskId: number) => {
     setSelectedTaskId(taskId);
     setIsTestModalOpen(true);
   };
 
-  const handleViewTask = (assignmentId: number) => {
-    // Redirect to assignments page
-    router.push('/student/assignments');
-  };
-
-  const getTaskStatus = (assignment: any) => {
-    if (assignment.status === 'Submitted') {
-      return { label: 'Submitted', variant: 'default' as const, icon: IconCheck };
-    }
-    const task = assignment.task;
-    if (task.end_time && new Date(task.end_time) < new Date()) {
-      return { label: 'Missed', variant: 'destructive' as const, icon: IconClock };
-    }
-    if (task.start_time && new Date(task.start_time) > new Date()) {
-      return { label: 'Upcoming', variant: 'secondary' as const, icon: IconClock };
-    }
-    return { label: 'Pending', variant: 'outline' as const, icon: IconClock };
-  };
-
   return (
     <SidebarProvider>
       <AppSidebarStudent user={user} />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+      <SidebarInset className="flex flex-col h-screen overflow-hidden">
+        {/* Header */}
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Student Dashboard</BreadcrumbPage>
+                  <BreadcrumbPage className="font-medium">Dashboard</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          {/* Quick Stats */}
-          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Assignments</CardTitle>
-                <IconFileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{pendingTasks.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  {pendingTasks.length === 0 ? 'No pending work' : 'Awaiting submission'}
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Completed</CardTitle>
-                <IconBook className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{completedTasks.length}</div>
-                <p className="text-xs text-muted-foreground">Assignments submitted</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Average Grade</CardTitle>
-                <IconChartBar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{avgGrade}</div>
-                <p className="text-xs text-muted-foreground">
-                  {avgGrade === '--' ? 'No grades yet' : 'Average marks'}
-                </p>
-              </CardContent>
-            </Card>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col p-4 gap-4 overflow-hidden">
+          {/* Top Section: Welcome + Stats */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+            <WelcomeCard
+              firstName={firstName}
+              pendingCount={stats.pending}
+              completionRate={stats.completionRate}
+            />
+            <StatCard
+              icon={IconClock}
+              value={stats.pending}
+              label="Pending"
+              variant="destructive"
+            />
+            <StatCard
+              icon={IconCheck}
+              value={stats.completed}
+              label="Submitted"
+              variant="accent"
+            />
+            <StatCard
+              icon={IconChartBar}
+              value={stats.avgScore > 0 ? `${stats.avgScore}%` : "--"}
+              label="Avg Score"
+              variant="primary"
+            />
           </div>
 
-          {/* Tasks List */}
-          {/* <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Your Tasks</h2>
+          {/* Middle Section: Pending Tasks */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <IconAlertCircle className="h-5 w-5 text-destructive" />
+                Needs Your Attention
+              </h2>
+              {stats.pending > 3 && (
+                <Button variant="ghost" size="sm" onClick={() => router.push("/student/assignments/pending")}>
+                  View all ({stats.pending}) <IconArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              )}
+            </div>
 
             {loading ? (
-              <div className="min-h-[200px] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="flex-1 flex items-center justify-center bg-muted/30 rounded-xl">
+                <IconLoader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : error ? (
-              <div className="min-h-[200px] flex items-center justify-center">
-                <p className="text-destructive">{error}</p>
+              <div className="flex-1 flex items-center justify-center bg-destructive/5 rounded-xl border border-destructive/20">
+                <div className="text-center">
+                  <IconAlertTriangle className="h-10 w-10 text-destructive mx-auto mb-2" />
+                  <p className="text-destructive font-medium">Unable to load assignments</p>
+                  <p className="text-sm text-muted-foreground mt-1">Please refresh or try again later</p>
+                </div>
               </div>
-            ) : assignments.length === 0 ? (
-              <div className="min-h-[200px] flex-1 rounded-xl bg-muted/50 flex items-center justify-center">
-                <p className="text-muted-foreground">No tasks assigned yet</p>
-              </div>
+            ) : urgentPending.length === 0 ? (
+              <EmptyState
+                title="All Caught Up!"
+                description="No pending assignments. Great job!"
+              />
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {assignments.map((assignment: any) => {
-                  const status = getTaskStatus(assignment);
-                  const task = assignment.task;
-                  const isMCQ = task.assessment_sub_type === 'MCQ';
-                  const canAttempt = assignment.status === 'Pending' &&
-                    (!task.start_time || new Date(task.start_time) <= new Date()) &&
-                    (!task.end_time || new Date(task.end_time) >= new Date());
-
-                  return (
-                    <Card key={assignment.mark_id} className="flex flex-col">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <CardTitle className="text-base">{task.title}</CardTitle>
-                            <CardDescription>{task.allotment.sub_name}</CardDescription>
-                          </div>
-                          <Badge variant={status.variant}>
-                            {status.label}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex-1">
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Type:</span>
-                            <span>{task.task_type === 'Lab' ? 'Lab' : task.assessment_type || 'Theory'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Max Marks:</span>
-                            <span>{task.max_marks}</span>
-                          </div>
-                          {assignment.status === 'Submitted' && (
-                            <div className="flex justify-between font-medium">
-                              <span className="text-muted-foreground">Your Score:</span>
-                              <span className="text-green-600">
-                                {assignment.total_marks_obtained}/{task.max_marks}
-                              </span>
-                            </div>
-                          )}
-                          {task.end_time && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Due:</span>
-                              <span>{new Date(task.end_time).toLocaleDateString()}</span>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                      <CardFooter>
-                        {isMCQ && canAttempt ? (
-                          <Button
-                            className="w-full"
-                            onClick={() => handleStartMCQ(task.task_id)}
-                          >
-                            <IconPlayerPlay className="mr-2 h-4 w-4" />
-                            Start Test
-                          </Button>
-                        ) : assignment.status === 'Submitted' ? (
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => handleViewTask(assignment.mark_id)}
-                          >
-                            View Result
-                          </Button>
-                        ) : canAttempt ? (
-                          <Button
-                            className="w-full"
-                            onClick={() => handleViewTask(assignment.mark_id)}
-                          >
-                            <IconClipboardText className="mr-2 h-4 w-4" />
-                            Add Marks
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="secondary"
-                            className="w-full"
-                            disabled
-                          >
-                            Not Available
-                          </Button>
-                        )}
-                      </CardFooter>
-                    </Card>
-                  );
-                })}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                {urgentPending.map((assignment: any) => (
+                  <PendingTaskCard
+                    key={assignment.mark_id}
+                    assignment={assignment}
+                    urgency={getUrgency(assignment.task?.end_time)}
+                    onStartMCQ={handleStartMCQ}
+                    onSubmitMarks={() => router.push("/student/assignments")}
+                  />
+                ))}
               </div>
             )}
-          </div> */}
+          </div>
+
+          {/* Footer Navigation */}
+          <DashboardFooter
+            onViewAll={() => router.push("/student/assignments")}
+            onViewSubmitted={() => router.push("/student/assignments/submitted")}
+          />
         </div>
       </SidebarInset>
 
