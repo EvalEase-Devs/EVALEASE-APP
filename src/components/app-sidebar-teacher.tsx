@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { IconUsers, IconFileCheck, IconClipboardList, IconChartLine, IconSettings, IconBell } from "@tabler/icons-react"
+import { LayoutDashboard, ClipboardList, FileCheck, ChartLine, Bell, Settings } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -20,12 +20,12 @@ const data = {
     {
       title: "Dashboard",
       url: "/teacher",
-      icon: IconChartLine,
+      icon: LayoutDashboard,
     },
     {
       title: "Assignments",
       url: "/teacher/assignments",
-      icon: IconClipboardList,
+      icon: ClipboardList,
       items: [
         {
           title: "Create New",
@@ -44,7 +44,7 @@ const data = {
     {
       title: "Evaluations",
       url: "/teacher/evaluations",
-      icon: IconFileCheck,
+      icon: FileCheck,
       items: [
         {
           title: "Practical Attainments",
@@ -59,17 +59,17 @@ const data = {
     {
       title: "Analytics",
       url: "/teacher/analytics",
-      icon: IconChartLine,
+      icon: ChartLine,
     },
     {
       title: "Notifications",
       url: "/teacher/notifications",
-      icon: IconBell,
+      icon: Bell,
     },
     {
       title: "Settings",
       url: "/teacher/settings",
-      icon: IconSettings,
+      icon: Settings,
     },
   ],
 }
@@ -89,14 +89,18 @@ export function AppSidebarTeacher({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+            <SidebarMenuButton
+              size="lg"
+              asChild
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-hover:bg-sidebar-accent/50 transition-colors"
+            >
               <a href="/teacher">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <IconFileCheck className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
+                  <FileCheck className="size-4" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">EvalEase</span>
-                  <span className="truncate text-xs">Teacher Portal</span>
+                <div className="grid flex-1 text-left leading-tight">
+                  <span className="truncate font-bold text-base tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>EvalEase</span>
+                  <span className="inline-flex items-center w-fit px-2 py-0.5 rounded-full bg-muted/80 text-[9px] uppercase tracking-wider font-medium text-muted-foreground">Teacher Portal</span>
                 </div>
               </a>
             </SidebarMenuButton>

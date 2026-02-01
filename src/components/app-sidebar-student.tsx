@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { IconBook, IconFileText, IconChartBar, IconBell, IconSettings } from "@tabler/icons-react"
+import { LayoutDashboard, ClipboardList, Bell, Settings, BookOpen } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -20,12 +20,12 @@ const data = {
     {
       title: "Dashboard",
       url: "/student",
-      icon: IconChartBar,
+      icon: LayoutDashboard,
     },
     {
       title: "Assignments",
       url: "/student/assignments",
-      icon: IconFileText,
+      icon: ClipboardList,
       items: [
         {
           title: "Pending",
@@ -40,12 +40,12 @@ const data = {
     {
       title: "Notifications",
       url: "/student/notifications",
-      icon: IconBell,
+      icon: Bell,
     },
     {
       title: "Settings",
       url: "/student/settings",
-      icon: IconSettings,
+      icon: Settings,
     },
   ],
 }
@@ -65,14 +65,18 @@ export function AppSidebarStudent({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+            <SidebarMenuButton
+              size="lg"
+              asChild
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-hover:bg-sidebar-accent/50 transition-colors"
+            >
               <a href="/student">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <IconBook className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
+                  <BookOpen className="size-4" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">EvalEase</span>
-                  <span className="truncate text-xs">Student Portal</span>
+                <div className="grid flex-1 text-left leading-tight">
+                  <span className="truncate font-bold text-base tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>EvalEase</span>
+                  <span className="inline-flex items-center w-fit px-2 py-0.5 rounded-full bg-muted/80 text-[9px] uppercase tracking-wider font-medium text-muted-foreground">Student Portal</span>
                 </div>
               </a>
             </SidebarMenuButton>

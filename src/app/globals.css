@@ -3,38 +3,54 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: hsl(210 40% 98%);
-  --foreground: hsl(222.2 84% 4.9%);
+  /* Warm Stone Light Mode - "Paper" Aesthetic */
+  --background: hsl(30 20% 97%);
+  /* Creamy warm gray - like premium paper */
+  --foreground: hsl(25 5% 15%);
+  /* Warm charcoal - softer than black */
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(221.5385 35.1351% 36.2745%);
+  /* Pure white - creates "pop" against warm bg */
+  --card-foreground: hsl(25 5% 15%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(223.8 64.9% 19%);
-  --primary: hsl(223.8095 64.9485% 19.0196%);
-  --primary-foreground: hsl(35.0000 37.5000% 93.7255%);
-  --secondary: hsl(40.0000 56.6434% 71.9608%);
-  --secondary-foreground: hsl(343.4483 23.9669% 23.7255%);
-  --muted: hsl(35.0000 37.5000% 93.7255%);
-  --muted-foreground: hsl(221.5385 35.1351% 36.2745%);
-  --accent: hsl(40.0000 56.6434% 71.9608%);
-  --accent-foreground: hsl(343.4483 23.9669% 23.7255%);
-  --destructive: hsl(223.8095 64.9485% 19.0196%);
-  --destructive-foreground: hsl(260 23.0769% 97.4510%);
-  --border: hsl(258.7500 17.3913% 81.9608%);
-  --input: hsl(260.0000 23.0769% 92.3529%);
-  --ring: hsl(223.8095 64.9485% 19.0196%);
-  --chart-1: hsl(223.8095 64.9485% 19.0196%);
-  --chart-2: hsl(40.0000 56.6434% 71.9608%);
-  --chart-3: hsl(221.5385 35.1351% 36.2745%);
-  --chart-4: hsl(35.0000 37.5000% 93.7255%);
-  --chart-5: hsl(23.4783 23.2323% 80.5882%);
-  --sidebar: hsl(35.0000 37.5000% 93.7255%);
-  --sidebar-foreground: hsl(223.8095 64.9485% 19.0196%);
-  --sidebar-primary: hsl(35.0000 37.5000% 93.7255%);
-  --sidebar-primary-foreground: hsl(260 23.0769% 97.4510%);
-  --sidebar-accent: hsl(40.0000 56.6434% 71.9608%);
-  --sidebar-accent-foreground: hsl(343.4483 23.9669% 23.7255%);
-  --sidebar-border: hsl(261.4286 18.4211% 85.0980%);
-  --sidebar-ring: hsl(223.8095 64.9485% 19.0196%);
+  --popover-foreground: hsl(25 5% 15%);
+  --primary: hsl(220 15% 20%);
+  /* Deep slate blue - pairs well with stone */
+  --primary-foreground: hsl(30 20% 97%);
+  --secondary: hsl(30 15% 65%);
+  /* Warm taupe */
+  --secondary-foreground: hsl(25 5% 15%);
+  --muted: hsl(30 20% 92%);
+  /* Darker warm gray for secondary backgrounds */
+  --muted-foreground: hsl(25 5% 45%);
+  --accent: hsl(35 40% 75%);
+  /* Warm sand accent */
+  --accent-foreground: hsl(25 5% 20%);
+  --destructive: hsl(0 65% 50%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(30 10% 85%);
+  /* Warm subtle borders */
+  --input: hsl(30 15% 94%);
+  --ring: hsl(220 15% 20%);
+
+  /* Charts - Warm earthy tones */
+  --chart-1: hsl(220 15% 20%);
+  --chart-2: hsl(35 40% 55%);
+  --chart-3: hsl(25 30% 45%);
+  --chart-4: hsl(30 20% 75%);
+  --chart-5: hsl(15 25% 60%);
+
+  /* Sidebar - Clean white anchor */
+  --sidebar: hsl(0 0% 100%);
+  /* Pure white for clean look */
+  --sidebar-foreground: hsl(25 5% 20%);
+  --sidebar-primary: hsl(220 15% 20%);
+  --sidebar-primary-foreground: hsl(30 20% 97%);
+  --sidebar-accent: hsl(30 30% 96%);
+  /* Warm highlight on hover */
+  --sidebar-accent-foreground: hsl(25 5% 20%);
+  --sidebar-border: hsl(30 10% 90%);
+  --sidebar-ring: hsl(220 15% 20%);
+
   --font-sans: Geist, sans-serif;
   --font-serif: "Lora", Georgia, serif;
   --font-mono: "Fira Code", "Courier New", monospace;
@@ -59,38 +75,47 @@
 }
 
 .dark {
-  --background: hsl(222.2 84% 4.9%);
-  --foreground: hsl(250.0000 36.0000% 90.1961%);
-  --card: hsl(217.2 32.6% 17.5%);
-  --card-foreground: hsl(250.0000 36.0000% 90.1961%);
-  --popover: hsl(251.2500 20% 15.6863%);
-  --popover-foreground: hsl(250.0000 36.0000% 90.1961%);
-  --primary: hsl(263.0769 32.5000% 68.6275%);
-  --primary-foreground: hsl(250.9091 18.6441% 11.5686%);
-  --secondary: hsl(254.4828 14.8718% 38.2353%);
-  --secondary-foreground: hsl(250.0000 36.0000% 90.1961%);
-  --muted: hsl(254.1176 20.9877% 15.8824%);
-  --muted-foreground: hsl(258.9474 10.3825% 64.1176%);
-  --accent: hsl(271.7647 15.5963% 21.3725%);
-  --accent-foreground: hsl(345.5172 69.0476% 83.5294%);
-  --destructive: hsl(0 68.6747% 67.4510%);
-  --destructive-foreground: hsl(250.9091 18.6441% 11.5686%);
-  --border: hsl(217.2 32.6% 17.5%);
-  --input: hsl(249.4737 19.5876% 19.0196%);
-  --ring: hsl(263.0769 32.5000% 68.6275%);
-  --chart-1: hsl(263.0769 32.5000% 68.6275%);
-  --chart-2: hsl(345.5172 69.0476% 83.5294%);
-  --chart-3: hsl(158.7692 31.4010% 59.4118%);
-  --chart-4: hsl(35.7576 76.7442% 74.7059%);
-  --chart-5: hsl(215.8209 54.4715% 75.8824%);
-  --sidebar: hsl(252 20.0000% 9.8039%);
-  --sidebar-foreground: hsl(250.0000 36.0000% 90.1961%);
-  --sidebar-primary: hsl(263.0769 32.5000% 68.6275%);
-  --sidebar-primary-foreground: hsl(250.9091 18.6441% 11.5686%);
-  --sidebar-accent: hsl(271.7647 15.5963% 21.3725%);
-  --sidebar-accent-foreground: hsl(345.5172 69.0476% 83.5294%);
-  --sidebar-border: hsl(249.4737 19.5876% 19.0196%);
-  --sidebar-ring: hsl(263.0769 32.5000% 68.6275%);
+  /* Warm Stone Dark Mode - "Luxury Dark" Aesthetic */
+  --background: hsl(25 10% 10%);
+  /* Deep warm black - like coffee beans */
+  --foreground: hsl(30 10% 90%);
+  --card: hsl(25 10% 14%);
+  /* Slightly lighter warm card */
+  --card-foreground: hsl(30 10% 90%);
+  --popover: hsl(25 10% 12%);
+  --popover-foreground: hsl(30 10% 90%);
+  --primary: hsl(220 15% 65%);
+  /* Lighter slate blue for dark mode */
+  --primary-foreground: hsl(25 10% 10%);
+  --secondary: hsl(30 12% 30%);
+  --secondary-foreground: hsl(30 10% 90%);
+  --muted: hsl(25 10% 16%);
+  --muted-foreground: hsl(30 8% 60%);
+  --accent: hsl(35 20% 25%);
+  --accent-foreground: hsl(30 10% 90%);
+  --destructive: hsl(0 60% 55%);
+  --destructive-foreground: hsl(30 10% 90%);
+  --border: hsl(25 10% 20%);
+  --input: hsl(25 10% 18%);
+  --ring: hsl(220 15% 65%);
+
+  /* Charts - Warm tones for dark mode */
+  --chart-1: hsl(220 15% 65%);
+  --chart-2: hsl(35 40% 65%);
+  --chart-3: hsl(25 30% 55%);
+  --chart-4: hsl(30 20% 50%);
+  --chart-5: hsl(15 25% 55%);
+
+  /* Sidebar - Slightly different warm tone */
+  --sidebar: hsl(25 10% 12%);
+  --sidebar-foreground: hsl(30 10% 90%);
+  --sidebar-primary: hsl(220 15% 65%);
+  --sidebar-primary-foreground: hsl(25 10% 10%);
+  --sidebar-accent: hsl(30 15% 20%);
+  --sidebar-accent-foreground: hsl(30 10% 90%);
+  --sidebar-border: hsl(25 10% 18%);
+  --sidebar-ring: hsl(220 15% 65%);
+
   --font-sans: Geist, sans-serif;
   --font-serif: "Lora", Georgia, serif;
   --font-mono: "Fira Code", "Courier New", monospace;
@@ -163,6 +188,19 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+
+  /* Font families */
+  --font-heading: var(--font-heading);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+}
+
+@theme {
+  --font-family-heading: var(--font-heading);
+  --font-family-sans: var(--font-sans);
+  --font-family-serif: var(--font-serif);
+  --font-family-mono: var(--font-mono);
 }
 
 @layer utilities {
@@ -247,4 +285,71 @@
   .press-scale:active {
     transform: scale(0.97);
   }
+}
+
+/* ============================================
+   GLOBAL SCROLLBAR STYLING
+   Applied OUTSIDE layers for maximum specificity
+   ============================================ */
+
+/* Firefox */
+html,
+body,
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: hsl(220 15% 20%) transparent !important;
+}
+
+/* Webkit (Chrome, Edge, Safari, Vivaldi, Arc, Brave) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb {
+  background: hsl(220 15% 20%) !important;
+  border-radius: 10px !important;
+}
+
+html::-webkit-scrollbar-button,
+body::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Force hide scrollbar buttons - alternative approach */
+*::-webkit-scrollbar-button:single-button {
+  display: none !important;
+  height: 0 !important;
+}
+
+*::-webkit-scrollbar-button:start {
+  display: none !important;
+}
+
+*::-webkit-scrollbar-button:end {
+  display: none !important;
+}
+
+/* Additional Vivaldi-specific overrides */
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner,
+*::-webkit-scrollbar-corner {
+  background: transparent !important;
 }

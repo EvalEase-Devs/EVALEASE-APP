@@ -8,7 +8,8 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { IconClock, IconCheck, IconChartBar, IconAlertCircle, IconArrowRight, IconLoader2, IconAlertTriangle } from "@tabler/icons-react";
+import { IconClock, IconCheck, IconChartBar, IconAlertCircle, IconArrowRight, IconAlertTriangle } from "@tabler/icons-react";
+import { StatsSkeleton, CardsGridSkeleton } from "@/components/skeletons";
 import StudentTestModal from "@/components/student-test-modal";
 import { useStudentAssignments } from "@/hooks/use-api";
 import {
@@ -115,39 +116,43 @@ export default function StudentDashboard() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col p-4 gap-4 overflow-hidden">
           {/* Top Section: Welcome + Stats */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-            <FadeIn delay={0.1}>
-              <WelcomeCard
-                firstName={firstName}
-                pendingCount={stats.pending}
-                completionRate={stats.completionRate}
-              />
-            </FadeIn>
-            <FadeIn delay={0.2}>
-              <StatCard
-                icon={IconClock}
-                value={stats.pending}
-                label="Pending"
-                variant="destructive"
-              />
-            </FadeIn>
-            <FadeIn delay={0.3}>
-              <StatCard
-                icon={IconCheck}
-                value={stats.completed}
-                label="Submitted"
-                variant="accent"
-              />
-            </FadeIn>
-            <FadeIn delay={0.4}>
-              <StatCard
-                icon={IconChartBar}
-                value={stats.avgScore > 0 ? `${stats.avgScore}%` : "--"}
-                label="Avg Score"
-                variant="primary"
-              />
-            </FadeIn>
-          </div>
+          {loading ? (
+            <StatsSkeleton count={4} />
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              <FadeIn delay={0.1}>
+                <WelcomeCard
+                  firstName={firstName}
+                  pendingCount={stats.pending}
+                  completionRate={stats.completionRate}
+                />
+              </FadeIn>
+              <FadeIn delay={0.2}>
+                <StatCard
+                  icon={IconClock}
+                  value={stats.pending}
+                  label="Pending"
+                  variant="destructive"
+                />
+              </FadeIn>
+              <FadeIn delay={0.3}>
+                <StatCard
+                  icon={IconCheck}
+                  value={stats.completed}
+                  label="Submitted"
+                  variant="accent"
+                />
+              </FadeIn>
+              <FadeIn delay={0.4}>
+                <StatCard
+                  icon={IconChartBar}
+                  value={stats.avgScore > 0 ? `${stats.avgScore}%` : "--"}
+                  label="Avg Score"
+                  variant="primary"
+                />
+              </FadeIn>
+            </div>
+          )}
 
           {/* Middle Section: Pending Tasks */}
           <div className="flex-1 flex flex-col min-h-0">
@@ -164,9 +169,7 @@ export default function StudentDashboard() {
             </div>
 
             {loading ? (
-              <div className="flex-1 flex items-center justify-center bg-muted/30 rounded-xl">
-                <IconLoader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
+              <CardsGridSkeleton count={3} />
             ) : error ? (
               <div className="flex-1 flex items-center justify-center bg-destructive/5 rounded-xl border border-destructive/20">
                 <div className="text-center">

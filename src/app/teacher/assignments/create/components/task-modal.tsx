@@ -357,9 +357,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-            <SheetContent side="right" className="w-[95vw] sm:max-w-[1000px] overflow-y-auto p-0">
+            <SheetContent side="right" className="w-[95vw] sm:max-w-[1000px] p-0 flex flex-col">
                 {/* Header */}
-                <SheetHeader className="px-6 pt-6 pb-4 border-b sticky top-0 bg-background z-10">
+                <SheetHeader className="px-6 pt-4 pb-3 border-b shrink-0">
                     <SheetTitle className="text-xl">
                         Create {isLab ? 'Lab Experiment' : 'Theory Assessment'}
                     </SheetTitle>
@@ -368,166 +368,195 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                     </SheetDescription>
                 </SheetHeader>
 
-                {/* Main Content - Split Screen Grid */}
-                <div className="px-6 py-6">
-                    <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-                        {/* LAB LOGIC - Full Width */}
-                        {isLab && (
-                            <div className="bg-muted/30 p-5 rounded-xl border border-border/50 space-y-4">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <BookOpen className="h-5 w-5 text-primary" />
-                                    <h3 className="font-semibold text-base">Laboratory Experiment Selection</h3>
-                                </div>
-
-                                {experimentsLoading ? (
-                                    <div className="flex h-12 w-full items-center justify-center rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground animate-pulse">
-                                        Loading experiments...
+                {/* Main Content - Scrollable Area */}
+                <div className="flex-1 overflow-y-auto">
+                    <div className="px-6 py-4">
+                        <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+                            {/* LAB LOGIC - Full Width */}
+                            {isLab && (
+                                <div className="bg-muted/30 p-4 rounded-xl border border-border/50 space-y-3">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <BookOpen className="h-5 w-5 text-primary" />
+                                        <h3 className="font-semibold text-base">Laboratory Experiment Selection</h3>
                                     </div>
-                                ) : experiments.length > 0 ? (
-                                    <>
-                                        <div className="space-y-2">
-                                            <Label>Select Experiment <span className="text-destructive">*</span></Label>
-                                            <Select value={selectedExp} onValueChange={setSelectedExp}>
-                                                <SelectTrigger className="h-11">
-                                                    <SelectValue placeholder="Choose an experiment..." />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {experiments.map(exp => (
-                                                        <SelectItem
-                                                            key={exp.exp_no}
-                                                            value={`${exp.exp_no}`}
-                                                            className="cursor-pointer"
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-semibold">Exp {exp.exp_no}</span>
-                                                                <span className="text-muted-foreground">—</span>
-                                                                <span>{exp.exp_name}</span>
-                                                            </div>
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+
+                                    {experimentsLoading ? (
+                                        <div className="flex h-12 w-full items-center justify-center rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground animate-pulse">
+                                            Loading experiments...
                                         </div>
-
-                                        {/* Display COs associated with selected experiment */}
-                                        {selectedExp && (
-                                            <div className="mt-4 space-y-3 p-3 bg-background rounded-md border">
-                                                <Label className="text-sm font-medium">Associated Course Outcomes</Label>
-                                                {cosLoading ? (
-                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse">
-                                                        <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
-                                                        Fetching COs...
-                                                    </div>
-                                                ) : experimentCOs.length > 0 ? (
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {experimentCOs.map((co) => (
-                                                            <Badge
-                                                                key={co.co_no}
-                                                                variant="secondary"
-                                                            >
-                                                                CO{co.co_no}
-                                                            </Badge>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-xs text-muted-foreground italic">No COs associated with this experiment</div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <div className="flex h-12 w-full items-center justify-center rounded-md border border-dashed border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-                                        No experiments available for this subject
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* THEORY LOGIC - Responsive Grid */}
-                        {!isLab && (
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                                {/* LEFT COLUMN: Logistics & Settings */}
-                                <div className="lg:col-span-5 space-y-6">
-                                    <div className="bg-muted/30 p-5 rounded-xl border border-border/50 space-y-4">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Settings className="h-5 w-5 text-primary" />
-                                            <h3 className="font-semibold text-base">Step 1: Logistics</h3>
-                                        </div>
-
-                                        {/* Type Selection */}
-                                        <div className="space-y-2">
-                                            <Label>Assessment Type</Label>
-                                            <div className="flex gap-4 bg-muted p-3 rounded-md">
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="radio"
-                                                        className="h-4 w-4"
-                                                        checked={assessmentType === 'ISE'}
-                                                        onChange={() => setAssessmentType('ISE')}
-                                                    />
-                                                    <span className="text-sm font-medium">ISE</span>
-                                                </label>
-                                                <label className="flex items-center gap-2 cursor-pointer">
-                                                    <input
-                                                        type="radio"
-                                                        className="h-4 w-4"
-                                                        checked={assessmentType === 'MSE'}
-                                                        onChange={() => setAssessmentType('MSE')}
-                                                    />
-                                                    <span className="text-sm font-medium">MSE</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        {/* Mode Selection (Only for ISE) */}
-                                        {assessmentType === 'ISE' && (
+                                    ) : experiments.length > 0 ? (
+                                        <>
                                             <div className="space-y-2">
-                                                <Label>Mode</Label>
+                                                <Label>Select Experiment <span className="text-destructive">*</span></Label>
+                                                <Select value={selectedExp} onValueChange={setSelectedExp}>
+                                                    <SelectTrigger className="h-11">
+                                                        <SelectValue placeholder="Choose an experiment..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {experiments.map(exp => (
+                                                            <SelectItem
+                                                                key={exp.exp_no}
+                                                                value={`${exp.exp_no}`}
+                                                                className="cursor-pointer"
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-semibold">Exp {exp.exp_no}</span>
+                                                                    <span className="text-muted-foreground">—</span>
+                                                                    <span>{exp.exp_name}</span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            {/* Display COs associated with selected experiment */}
+                                            {selectedExp && (
+                                                <div className="mt-4 space-y-3 p-3 bg-background rounded-md border">
+                                                    <Label className="text-sm font-medium">Associated Course Outcomes</Label>
+                                                    {cosLoading ? (
+                                                        <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse">
+                                                            <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
+                                                            Fetching COs...
+                                                        </div>
+                                                    ) : experimentCOs.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {experimentCOs.map((co) => (
+                                                                <Badge
+                                                                    key={co.co_no}
+                                                                    variant="secondary"
+                                                                >
+                                                                    CO{co.co_no}
+                                                                </Badge>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-xs text-muted-foreground italic">No COs associated with this experiment</div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className="flex h-12 w-full items-center justify-center rounded-md border border-dashed border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                                            No experiments available for this subject
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* THEORY LOGIC - Responsive Grid */}
+                            {!isLab && (
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                    {/* LEFT COLUMN: Logistics & Settings */}
+                                    <div className="lg:col-span-5 space-y-4">
+                                        <div className="bg-muted/30 p-4 rounded-xl border border-border/50 space-y-3">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Settings className="h-5 w-5 text-primary" />
+                                                <h3 className="font-semibold text-base">Step 1: Logistics</h3>
+                                            </div>
+
+                                            {/* Type Selection */}
+                                            <div className="space-y-2">
+                                                <Label>Assessment Type</Label>
                                                 <div className="flex gap-4 bg-muted p-3 rounded-md">
                                                     <label className="flex items-center gap-2 cursor-pointer">
                                                         <input
                                                             type="radio"
                                                             className="h-4 w-4"
-                                                            checked={assessmentSubType === 'Subjective'}
-                                                            onChange={() => setAssessmentSubType('Subjective')}
+                                                            checked={assessmentType === 'ISE'}
+                                                            onChange={() => setAssessmentType('ISE')}
                                                         />
-                                                        <span className="text-sm font-medium">Subjective</span>
+                                                        <span className="text-sm font-medium">ISE</span>
                                                     </label>
                                                     <label className="flex items-center gap-2 cursor-pointer">
                                                         <input
                                                             type="radio"
                                                             className="h-4 w-4"
-                                                            checked={assessmentSubType === 'MCQ'}
-                                                            onChange={() => setAssessmentSubType('MCQ')}
+                                                            checked={assessmentType === 'MSE'}
+                                                            onChange={() => setAssessmentType('MSE')}
                                                         />
-                                                        <span className="text-sm font-medium">MCQ (Quiz)</span>
+                                                        <span className="text-sm font-medium">MSE</span>
                                                     </label>
                                                 </div>
                                             </div>
-                                        )}
 
-                                        {/* Topic / Title - Only for ISE */}
-                                        {assessmentType !== 'MSE' && (
-                                            <div className="space-y-2">
-                                                <Label>Topic / Title <span className="text-destructive">*</span></Label>
-                                                <Input
-                                                    type="text"
-                                                    placeholder="e.g. Module 1 Test"
-                                                    value={title}
-                                                    onChange={(e) => setTitle(e.target.value)}
-                                                    onBlur={() => handleBlur('title')}
-                                                    className={errors.title && touched.title ? 'border-destructive' : ''}
-                                                />
-                                                <FieldError field="title" />
-                                            </div>
-                                        )}
+                                            {/* Mode Selection (Only for ISE) */}
+                                            {assessmentType === 'ISE' && (
+                                                <div className="space-y-2">
+                                                    <Label>Mode</Label>
+                                                    <div className="flex gap-4 bg-muted p-3 rounded-md">
+                                                        <label className="flex items-center gap-2 cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                className="h-4 w-4"
+                                                                checked={assessmentSubType === 'Subjective'}
+                                                                onChange={() => setAssessmentSubType('Subjective')}
+                                                            />
+                                                            <span className="text-sm font-medium">Subjective</span>
+                                                        </label>
+                                                        <label className="flex items-center gap-2 cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                className="h-4 w-4"
+                                                                checked={assessmentSubType === 'MCQ'}
+                                                                onChange={() => setAssessmentSubType('MCQ')}
+                                                            />
+                                                            <span className="text-sm font-medium">MCQ (Quiz)</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                        {/* Time Configuration */}
-                                        {isMCQ ? (
-                                            <div className="grid grid-cols-2 gap-4">
+                                            {/* Topic / Title - Only for ISE */}
+                                            {assessmentType !== 'MSE' && (
+                                                <div className="space-y-2">
+                                                    <Label>Topic / Title <span className="text-destructive">*</span></Label>
+                                                    <Input
+                                                        type="text"
+                                                        placeholder="e.g. Module 1 Test"
+                                                        value={title}
+                                                        onChange={(e) => setTitle(e.target.value)}
+                                                        onBlur={() => handleBlur('title')}
+                                                        className={errors.title && touched.title ? 'border-destructive' : ''}
+                                                    />
+                                                    <FieldError field="title" />
+                                                </div>
+                                            )}
+
+                                            {/* Time Configuration */}
+                                            {isMCQ ? (
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label className="flex items-center gap-1">
+                                                            <Clock size={14} /> Start <span className="text-destructive">*</span>
+                                                        </Label>
+                                                        <Input
+                                                            type="datetime-local"
+                                                            value={startTime}
+                                                            onChange={(e) => setStartTime(e.target.value)}
+                                                            onBlur={() => handleBlur('startTime')}
+                                                            className={errors.startTime && touched.startTime ? 'border-destructive' : ''}
+                                                        />
+                                                        <FieldError field="startTime" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label className="flex items-center gap-1">
+                                                            <Calendar size={14} /> End <span className="text-destructive">*</span>
+                                                        </Label>
+                                                        <Input
+                                                            type="datetime-local"
+                                                            value={endTime}
+                                                            onChange={(e) => setEndTime(e.target.value)}
+                                                            onBlur={() => handleBlur('endTime')}
+                                                            className={errors.endTime && touched.endTime ? 'border-destructive' : ''}
+                                                        />
+                                                        <FieldError field="endTime" />
+                                                    </div>
+                                                </div>
+                                            ) : (
                                                 <div className="space-y-2">
                                                     <Label className="flex items-center gap-1">
-                                                        <Clock size={14} /> Start <span className="text-destructive">*</span>
+                                                        <Calendar size={14} /> Start Time <span className="text-destructive">*</span>
                                                     </Label>
                                                     <Input
                                                         type="datetime-local"
@@ -538,243 +567,217 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                     />
                                                     <FieldError field="startTime" />
                                                 </div>
+                                            )}
+
+                                            {/* Max Marks for Subjective */}
+                                            {!isMCQ && assessmentType !== 'MSE' && (
                                                 <div className="space-y-2">
-                                                    <Label className="flex items-center gap-1">
-                                                        <Calendar size={14} /> End <span className="text-destructive">*</span>
-                                                    </Label>
+                                                    <Label>Max Marks <span className="text-destructive">*</span></Label>
                                                     <Input
-                                                        type="datetime-local"
-                                                        value={endTime}
-                                                        onChange={(e) => setEndTime(e.target.value)}
-                                                        onBlur={() => handleBlur('endTime')}
-                                                        className={errors.endTime && touched.endTime ? 'border-destructive' : ''}
+                                                        type="number"
+                                                        value={maxMarks}
+                                                        onChange={(e) => setMaxMarks(parseInt(e.target.value) || 0)}
+                                                        onBlur={() => handleBlur('maxMarks')}
+                                                        className={errors.maxMarks && touched.maxMarks ? 'border-destructive' : ''}
                                                     />
-                                                    <FieldError field="endTime" />
+                                                    <FieldError field="maxMarks" />
                                                 </div>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-2">
-                                                <Label className="flex items-center gap-1">
-                                                    <Calendar size={14} /> Start Time <span className="text-destructive">*</span>
-                                                </Label>
-                                                <Input
-                                                    type="datetime-local"
-                                                    value={startTime}
-                                                    onChange={(e) => setStartTime(e.target.value)}
-                                                    onBlur={() => handleBlur('startTime')}
-                                                    className={errors.startTime && touched.startTime ? 'border-destructive' : ''}
-                                                />
-                                                <FieldError field="startTime" />
-                                            </div>
-                                        )}
+                                            )}
 
-                                        {/* Max Marks for Subjective */}
-                                        {!isMCQ && assessmentType !== 'MSE' && (
-                                            <div className="space-y-2">
-                                                <Label>Max Marks <span className="text-destructive">*</span></Label>
-                                                <Input
-                                                    type="number"
-                                                    value={maxMarks}
-                                                    onChange={(e) => setMaxMarks(parseInt(e.target.value) || 0)}
-                                                    onBlur={() => handleBlur('maxMarks')}
-                                                    className={errors.maxMarks && touched.maxMarks ? 'border-destructive' : ''}
-                                                />
-                                                <FieldError field="maxMarks" />
-                                            </div>
-                                        )}
-
-                                        {/* Manual CO Map - Only show if NOT MSE */}
-                                        {assessmentType !== 'MSE' && (
-                                            <div className="space-y-2">
-                                                <Label>Map COs <span className="text-destructive">*</span></Label>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {COS.map(co => (
-                                                        <label key={co} className="flex items-center gap-2 cursor-pointer border border-border rounded-md px-3 py-2 hover:bg-muted transition-colors">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="h-4 w-4 rounded"
-                                                                checked={selectedCOs.includes(co)}
-                                                                onChange={() => {
-                                                                    toggleCO(co);
-                                                                    setTouched(prev => ({ ...prev, selectedCOs: true }));
-                                                                }}
-                                                            />
-                                                            <span className="text-sm">{co}</span>
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                                <FieldError field="selectedCOs" />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* RIGHT COLUMN: Content & Questions */}
-                                <div className="lg:col-span-7 space-y-6">
-                                    <div className="bg-muted/30 p-5 rounded-xl border border-border/50 space-y-4">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <FileText className="h-5 w-5 text-primary" />
-                                            <h3 className="font-semibold text-base">Step 2: Content</h3>
-                                        </div>
-
-                                        {/* MCQ BUILDER */}
-                                        {isMCQ && (
-                                            <div className="space-y-4">
-                                                <h4 className="font-semibold text-sm">Build MCQ Quiz</h4>
-                                                <FieldError field="questions" />
-
-                                                {/* List Existing Questions */}
-                                                {questions.length > 0 && (
-                                                    <div className="space-y-2">
-                                                        {questions.map((q, idx) => (
-                                                            <div key={q.id} className="bg-background p-3 rounded-lg border flex justify-between items-center">
-                                                                <div className="flex-1">
-                                                                    <span className="font-bold mr-2">Q{idx + 1}.</span>
-                                                                    {q.text} <span className="text-xs text-muted-foreground">({q.marks} Marks)</span>
-                                                                </div>
-                                                                <Button variant="ghost" size="sm" onClick={() => handleRemoveQuestion(q.id)} className="text-destructive">
-                                                                    <Trash size={14} />
-                                                                </Button>
-                                                            </div>
-                                                        ))}
-                                                        {/* Total Marks Summary */}
-                                                        <div className="mt-3 p-3 bg-primary/10 rounded-md border border-primary/20 flex justify-between items-center">
-                                                            <span className="text-sm font-semibold">Total MCQ Marks:</span>
-                                                            <span className="text-lg font-bold text-primary">{questions.reduce((sum, q) => sum + q.marks, 0)}</span>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Add New Question Form */}
-                                                <div className="bg-background p-4 rounded-lg border space-y-3">
-                                                    <FieldError field="currentQuestion" />
-                                                    <div className="flex gap-2">
-                                                        <Input
-                                                            type="text"
-                                                            placeholder="Question Text"
-                                                            value={currentQText}
-                                                            onChange={(e) => setCurrentQText(e.target.value)}
-                                                            className={errors.currentQuestion && touched.currentQuestion ? 'border-destructive' : ''}
-                                                        />
-                                                        <Input
-                                                            type="number"
-                                                            className="w-24"
-                                                            placeholder="Marks"
-                                                            value={currentQMarks}
-                                                            onChange={(e) => setCurrentQMarks(parseInt(e.target.value) || 1)}
-                                                        />
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        {currentOptions.map((opt, idx) => (
-                                                            <div key={idx} className="flex items-center gap-2">
-                                                                <span className="text-xs font-bold w-5">{String.fromCharCode(65 + idx)}.</span>
-                                                                <Input
-                                                                    type="text"
-                                                                    className={`text-sm ${currentCorrectOpt === idx ? 'border-primary ring-1 ring-primary' : ''}`}
-                                                                    placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-                                                                    value={opt}
-                                                                    onChange={(e) => updateOption(idx, e.target.value)}
-                                                                />
+                                            {/* Manual CO Map - Only show if NOT MSE */}
+                                            {assessmentType !== 'MSE' && (
+                                                <div className="space-y-2">
+                                                    <Label>Map COs <span className="text-destructive">*</span></Label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {COS.map(co => (
+                                                            <label key={co} className="flex items-center gap-2 cursor-pointer border border-border rounded-md px-3 py-2 hover:bg-muted transition-colors">
                                                                 <input
-                                                                    type="radio"
-                                                                    name="correctOpt"
-                                                                    className="h-4 w-4"
-                                                                    checked={currentCorrectOpt === idx}
-                                                                    onChange={() => setCurrentCorrectOpt(idx)}
-                                                                    title="Mark as correct"
+                                                                    type="checkbox"
+                                                                    className="h-4 w-4 rounded"
+                                                                    checked={selectedCOs.includes(co)}
+                                                                    onChange={() => {
+                                                                        toggleCO(co);
+                                                                        setTouched(prev => ({ ...prev, selectedCOs: true }));
+                                                                    }}
                                                                 />
-                                                            </div>
+                                                                <span className="text-sm">{co}</span>
+                                                            </label>
                                                         ))}
                                                     </div>
-                                                    <Button variant="outline" size="sm" className="w-full" onClick={handleAddQuestion}>
-                                                        <Plus size={16} className="mr-2" /> Add Question
-                                                    </Button>
+                                                    <FieldError field="selectedCOs" />
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
+                                    </div>
 
-                                        {/* MSE BUILDER */}
-                                        {assessmentType === 'MSE' && (
-                                            <div className="space-y-4">
-                                                <h4 className="font-semibold text-sm">MSE Question Breakdown</h4>
-                                                <div className="overflow-x-auto">
-                                                    <table className="w-full text-sm">
-                                                        <thead className="text-xs uppercase bg-muted">
-                                                            <tr>
-                                                                <th className="px-4 py-2 text-left">Q. Label</th>
-                                                                <th className="px-4 py-2 text-left">CO Mapping</th>
-                                                                <th className="px-4 py-2 text-left w-24">Marks</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {mseQuestions.map((q, idx) => (
-                                                                <tr key={idx} className="border-b bg-background">
-                                                                    <td className="px-4 py-2 font-bold">{q.label}</td>
-                                                                    <td className="px-4 py-2">
-                                                                        <select
-                                                                            className="flex h-9 w-full items-center rounded-md border border-input bg-background px-3 py-1 text-sm"
-                                                                            value={q.co}
-                                                                            onChange={(e) => handleMseChange(idx, 'co', e.target.value)}
-                                                                        >
-                                                                            {COS.map(co => <option key={co} value={co}>{co}</option>)}
-                                                                        </select>
-                                                                    </td>
-                                                                    <td className="px-4 py-2">
-                                                                        <Input
-                                                                            type="number"
-                                                                            value={q.marks}
-                                                                            onChange={(e) => handleMseChange(idx, 'marks', parseInt(e.target.value) || 0)}
-                                                                        />
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                        <tfoot>
-                                                            <tr className="bg-muted/50">
-                                                                <td colSpan={2} className="px-4 py-2 text-right font-bold">Total Max Marks:</td>
-                                                                <td className="px-4 py-2 font-bold text-lg text-primary">{maxMarks}</td>
-                                                            </tr>
-                                                        </tfoot>
-                                                    </table>
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    * Mapped COs will be auto-calculated based on unique COs selected above.
-                                                </div>
+                                    {/* RIGHT COLUMN: Content & Questions */}
+                                    <div className="lg:col-span-7 space-y-4">
+                                        <div className="bg-muted/30 p-4 rounded-xl border border-border/50 space-y-3">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <FileText className="h-5 w-5 text-primary" />
+                                                <h3 className="font-semibold text-base">Step 2: Content</h3>
                                             </div>
-                                        )}
+
+                                            {/* MCQ BUILDER */}
+                                            {isMCQ && (
+                                                <div className="space-y-4">
+                                                    <h4 className="font-semibold text-sm">Build MCQ Quiz</h4>
+                                                    <FieldError field="questions" />
+
+                                                    {/* List Existing Questions */}
+                                                    {questions.length > 0 && (
+                                                        <div className="space-y-2">
+                                                            {questions.map((q, idx) => (
+                                                                <div key={q.id} className="bg-background p-3 rounded-lg border flex justify-between items-center">
+                                                                    <div className="flex-1">
+                                                                        <span className="font-bold mr-2">Q{idx + 1}.</span>
+                                                                        {q.text} <span className="text-xs text-muted-foreground">({q.marks} Marks)</span>
+                                                                    </div>
+                                                                    <Button variant="ghost" size="sm" onClick={() => handleRemoveQuestion(q.id)} className="text-destructive">
+                                                                        <Trash size={14} />
+                                                                    </Button>
+                                                                </div>
+                                                            ))}
+                                                            {/* Total Marks Summary */}
+                                                            <div className="mt-3 p-3 bg-primary/10 rounded-md border border-primary/20 flex justify-between items-center">
+                                                                <span className="text-sm font-semibold">Total MCQ Marks:</span>
+                                                                <span className="text-lg font-bold text-primary">{questions.reduce((sum, q) => sum + q.marks, 0)}</span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Add New Question Form */}
+                                                    <div className="bg-background p-4 rounded-lg border space-y-3">
+                                                        <FieldError field="currentQuestion" />
+                                                        <div className="flex gap-2">
+                                                            <Input
+                                                                type="text"
+                                                                placeholder="Question Text"
+                                                                value={currentQText}
+                                                                onChange={(e) => setCurrentQText(e.target.value)}
+                                                                className={errors.currentQuestion && touched.currentQuestion ? 'border-destructive' : ''}
+                                                            />
+                                                            <Input
+                                                                type="number"
+                                                                className="w-24"
+                                                                placeholder="Marks"
+                                                                value={currentQMarks}
+                                                                onChange={(e) => setCurrentQMarks(parseInt(e.target.value) || 1)}
+                                                            />
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            {currentOptions.map((opt, idx) => (
+                                                                <div key={idx} className="flex items-center gap-2">
+                                                                    <span className="text-xs font-bold w-5">{String.fromCharCode(65 + idx)}.</span>
+                                                                    <Input
+                                                                        type="text"
+                                                                        className={`text-sm ${currentCorrectOpt === idx ? 'border-primary ring-1 ring-primary' : ''}`}
+                                                                        placeholder={`Option ${String.fromCharCode(65 + idx)}`}
+                                                                        value={opt}
+                                                                        onChange={(e) => updateOption(idx, e.target.value)}
+                                                                    />
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="correctOpt"
+                                                                        className="h-4 w-4"
+                                                                        checked={currentCorrectOpt === idx}
+                                                                        onChange={() => setCurrentCorrectOpt(idx)}
+                                                                        title="Mark as correct"
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        <Button variant="outline" size="sm" className="w-full" onClick={handleAddQuestion}>
+                                                            <Plus size={16} className="mr-2" /> Add Question
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* MSE BUILDER */}
+                                            {assessmentType === 'MSE' && (
+                                                <div className="space-y-3">
+                                                    <h4 className="font-semibold text-sm">MSE Question Breakdown</h4>
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-sm">
+                                                            <thead className="text-xs uppercase bg-muted">
+                                                                <tr>
+                                                                    <th className="px-3 py-1.5 text-left">Q. Label</th>
+                                                                    <th className="px-3 py-1.5 text-left">CO Mapping</th>
+                                                                    <th className="px-3 py-1.5 text-left w-24">Marks</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {mseQuestions.map((q, idx) => (
+                                                                    <tr key={idx} className="border-b bg-background">
+                                                                        <td className="px-3 py-1.5 font-bold">{q.label}</td>
+                                                                        <td className="px-3 py-1.5">
+                                                                            <select
+                                                                                className="flex h-8 w-full items-center rounded-md border border-input bg-background px-2 py-1 text-sm"
+                                                                                value={q.co}
+                                                                                onChange={(e) => handleMseChange(idx, 'co', e.target.value)}
+                                                                            >
+                                                                                {COS.map(co => <option key={co} value={co}>{co}</option>)}
+                                                                            </select>
+                                                                        </td>
+                                                                        <td className="px-3 py-1.5">
+                                                                            <Input
+                                                                                type="number"
+                                                                                className="h-8"
+                                                                                value={q.marks}
+                                                                                onChange={(e) => handleMseChange(idx, 'marks', parseInt(e.target.value) || 0)}
+                                                                            />
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                            <tfoot>
+                                                                <tr className="bg-muted/50">
+                                                                    <td colSpan={2} className="px-3 py-1.5 text-right font-bold">Total Max Marks:</td>
+                                                                    <td className="px-3 py-1.5 font-bold text-lg text-primary">{maxMarks}</td>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        * Mapped COs will be auto-calculated based on unique COs selected above.
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {/* TIME CONFIGURATION FOR LAB */}
-                        {isLab && (
-                            <div className="bg-muted/30 p-5 rounded-xl border border-border/50 space-y-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Calendar className="h-5 w-5 text-primary" />
-                                    <h3 className="font-semibold text-base">Scheduling</h3>
+                            {/* TIME CONFIGURATION FOR LAB */}
+                            {isLab && (
+                                <div className="bg-muted/30 p-4 rounded-xl border border-border/50 space-y-3">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Calendar className="h-5 w-5 text-primary" />
+                                        <h3 className="font-semibold text-base">Scheduling</h3>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="flex items-center gap-1">
+                                            <Clock size={14} /> Start Time <span className="text-destructive">*</span>
+                                            <span className="text-xs text-muted-foreground">(IST)</span>
+                                        </Label>
+                                        <Input
+                                            type="datetime-local"
+                                            value={startTime}
+                                            onChange={(e) => setStartTime(e.target.value)}
+                                            onBlur={() => handleBlur('startTime')}
+                                            className={errors.startTime && touched.startTime ? 'border-destructive' : ''}
+                                        />
+                                        <FieldError field="startTime" />
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label className="flex items-center gap-1">
-                                        <Clock size={14} /> Start Time <span className="text-destructive">*</span>
-                                        <span className="text-xs text-muted-foreground">(IST)</span>
-                                    </Label>
-                                    <Input
-                                        type="datetime-local"
-                                        value={startTime}
-                                        onChange={(e) => setStartTime(e.target.value)}
-                                        onBlur={() => handleBlur('startTime')}
-                                        className={errors.startTime && touched.startTime ? 'border-destructive' : ''}
-                                    />
-                                    <FieldError field="startTime" />
-                                </div>
-                            </div>
-                        )}
-                    </form>
+                            )}
+                        </form>
+                    </div>
                 </div>
 
-                {/* Footer - Sticky at Bottom */}
-                <SheetFooter className="px-6 py-4 border-t bg-background sticky bottom-0">
+                {/* Footer - Fixed at Bottom */}
+                <SheetFooter className="px-6 py-3 border-t bg-background shrink-0">
                     <div className="flex items-center justify-between w-full">
                         <div className="text-sm text-muted-foreground">
                             Total Marks: <span className="font-bold text-foreground">{isMCQ ? questions.reduce((sum, q) => sum + q.marks, 0) : maxMarks}</span>

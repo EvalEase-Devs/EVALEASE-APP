@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SubjectFilterBar } from "./subject-filter-bar";
 import { AllottedSubjectsList } from "./allotted-subjects-list";
-import { Plus, Loader2 } from "lucide-react";
+import { SlideIn } from "@/components/ui/slide-in";
+import { Plus } from "lucide-react";
 import { useAllotments } from "@/hooks/use-api";
+import { CardsGridSkeleton } from "@/components/skeletons";
 import { toast } from "sonner";
 
 export type Semester = "SEM 5" | "SEM 6" | "SEM 7" | "SEM 8";
@@ -78,11 +80,7 @@ export function CreateAssignmentContent() {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-[50vh] flex-1 rounded-xl bg-muted/50 flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-        );
+        return <CardsGridSkeleton count={3} />;
     }
 
     return (
@@ -101,10 +99,12 @@ export function CreateAssignmentContent() {
 
             {/* Filter Bar */}
             {showFilterBar && (
-                <SubjectFilterBar
-                    onAllot={handleAddAllotment}
-                    onClose={() => setShowFilterBar(false)}
-                />
+                <SlideIn direction="up">
+                    <SubjectFilterBar
+                        onAllot={handleAddAllotment}
+                        onClose={() => setShowFilterBar(false)}
+                    />
+                </SlideIn>
             )}
 
             {/* Allotted Subjects List */}
