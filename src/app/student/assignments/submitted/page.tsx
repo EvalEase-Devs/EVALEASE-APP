@@ -71,9 +71,9 @@ function SubmittedAssignmentCard({ assignment }: { assignment: StudentAssignment
                     <h3 className="font-bold text-sm line-clamp-2" title={assignment.task.title}>
                         {assignment.task.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground">
-                        {assignment.task.allotment.sub_name}
-                    </p>
+                    <h3 className="font-bold text-sm line-clamp-2" title={assignment.task.allotment.sub_name}>
+                         {assignment.task.allotment.sub_name}
+                    </h3>
                 </div>
             </CardHeader>
 

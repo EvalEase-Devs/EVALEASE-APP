@@ -398,12 +398,12 @@ function AssignmentCard({
         <Card className="overflow-hidden">
             <CardHeader className="pb-3">
                 <div className="space-y-2">
-                    <h3 className="font-bold text-sm line-clamp-2" title={assignment.task.title}>
+                    <h4 className="font-bold text-sm line-clamp-2" title={assignment.task.title}>
                         {assignment.task.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
+                    </h4>
+                    <h3 className="font-bold text-sm line-clamp-2">
                         {assignment.task.allotment.sub_name}
-                    </p>
+                    </h3>
                 </div>
             </CardHeader>
 
