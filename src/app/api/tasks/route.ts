@@ -191,7 +191,6 @@ export async function POST(request: NextRequest) {
         if (mapped_cos && mapped_cos.length > 0) {
             const coMappings = mapped_cos.map((co_no: number) => ({
                 task_id: task.task_id,
-                sub_id,
                 co_no
             }));
 

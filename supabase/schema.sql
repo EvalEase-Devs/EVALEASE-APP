@@ -4,7 +4,6 @@
 -- ==========================================
 CREATE TABLE public.teacher (
   teacher_id bigint NOT NULL, --  Primary Key.
-  user_id uuid, -- Links to your Auth Provider (e.g., Supabase auth.users.id).
   teacher_name text NOT NULL, -- e.g. 'Prof. Sharma'.
   designation text, -- e.g. 'Assistant Professor', 'HOD'.
   department text, -- e.g. 'Computer Engineering'.
@@ -18,7 +17,6 @@ CREATE TABLE public.teacher (
 -- ==========================================
 CREATE TABLE public.student (
   pid bigint NOT NULL, -- The Student's unique College ID/PRN (e.g. 12345). Acts as Primary Key.
-  user_id uuid, -- Links to your Auth Provider (e.g., Supabase auth.users.id).
   stud_name text NOT NULL, -- e.g. 'Aarav Patel'.
   class_name text NOT NULL, -- e.g. 'TE CMPN A' (Standardized string used in filters).
   batch smallint, -- e.g. 1, 2, 3, 4. (For Labs). Can be NULL for theory-only students.
@@ -149,14 +147,13 @@ CREATE TABLE public.task (
 -- ==========================================
 -- 10. TASK <> CO MAPPING
 -- For Theory tasks (ISE/MSE) where COs are mapped manually or per question
+-- Stores the mapping when teacher selects multiple COs for a task
 -- ==========================================
 CREATE TABLE public.task_co_mapping (
   task_id bigint NOT NULL, -- Foreign Key to task.
-  sub_id character varying NOT NULL, -- Part of CO Composite Key.
-  co_no bigint NOT NULL, -- Part of CO Composite Key. e.g. 1 (Maps task to CO1).
+  co_no bigint NOT NULL, -- e.g. 1 (Maps task to CO1).
   CONSTRAINT task_co_mapping_pkey PRIMARY KEY (task_id, co_no),
-  CONSTRAINT task_co_mapping_task_id_fkey FOREIGN KEY (task_id) REFERENCES public.task(task_id) ON DELETE CASCADE,
-  CONSTRAINT fk_task_co FOREIGN KEY (sub_id, co_no) REFERENCES public.co(sub_id, co_no)
+  CONSTRAINT task_co_mapping_task_id_fkey FOREIGN KEY (task_id) REFERENCES public.task(task_id) ON DELETE CASCADE
 );
 
 -- ==========================================

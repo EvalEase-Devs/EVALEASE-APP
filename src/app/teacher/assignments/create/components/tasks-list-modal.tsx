@@ -229,7 +229,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                                 <Card key={task.task_id} className={`${status === 'SCHEDULED' ? 'opacity-75' : ''}`}>
                                                     <CardHeader className="p-5 pb-2">
                                                         <div className="flex justify-between items-start">
-                                                            <CardTitle className="text-base line-clamp-1" title={task.title}>{task.title}</CardTitle>
+                                                            <CardTitle className="text-base line-clamp-1" title={task.title.split('-').slice(-1)[0].toUpperCase()}>{task.title.split('-').slice(-1)[0].toUpperCase()}</CardTitle>
                                                             <div className="flex gap-1 flex-wrap justify-end">
                                                                 {status === 'SCHEDULED' && <Badge variant="secondary">Scheduled</Badge>}
                                                                 {status === 'ACTIVE' && <Badge variant="default">Active</Badge>}

@@ -331,7 +331,7 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                     tasks={getTasksForAllotment(selectedSubjectForList.allotment_id)}
                     onDeleteTask={handleDeleteTask}
                     onPublishTask={handlePublishTask}
-                    subjectName={selectedSubjectForList.subject}
+                    subjectName={selectedSubjectForList.subjectName}
                 />
             )}
 
