@@ -194,3 +194,46 @@ export const EXPERIMENTS = [
 
 export const COS = ["CO1", "CO2", "CO3", "CO4", "CO5", "CO6"] as const;
 
+// Subject Target for Attainment Report (percentage)
+export const SUBJECT_TARGETS = {
+  "CSC501": 65, // TCS
+  "CSC502": 65, // SE
+  "CSC503": 65, // CN
+  "CSC504": 65, // DWM
+  "CSL501": 65, // SE Lab
+  "CSL502": 65, // CN Lab
+  "CSL503": 65, // DWM Lab
+  "CSL504": 65, // PCE-II
+  "CSC601": 65, // SPCC
+  "CSC602": 65, // CSS
+  "CSC603": 65, // MC
+  "CSC604": 65, // AI
+  "CSL601": 65, // SPCC Lab
+  "CSL602": 65, // CSS Lab
+  "CSL603": 65, // MC Lab
+  "CSL604": 65, // AI Lab
+  "CSC701": 65, // ML
+  "CSC702": 65, // BDA
+  "CSDC7013": 65, // NLP
+  "CSDC7022": 65, // Blockchain
+  "CSDC7023": 65, // IR
+  "CSL701": 65, // ML Lab
+  "CSL702": 65, // BDA Lab
+  "CSDL7013": 65, // NLP Lab
+  "CSDL7022": 65, // Blockchain Lab
+  "CSDL7023": 65, // IR Lab
+  "CSC801": 65, // DC
+  "CSDC8013": 65, // ADS
+  "CSDC8023": 65, // SMA
+  "CSL801": 65, // DC Lab
+  "CSDL8013": 65, // ADS Lab
+  "CSDL8023": 65, // SMA Lab
+} as const;
+
+// Attainment Criteria Scale
+export const ATTAINMENT_CRITERIA = {
+  3: "If 60% and above students have scored above Subject Target",
+  2: "If 50% to 60% of students have scored above Subject Target",
+  1: "If less than 50% students have scored above Subject Target"
+} as const;
+

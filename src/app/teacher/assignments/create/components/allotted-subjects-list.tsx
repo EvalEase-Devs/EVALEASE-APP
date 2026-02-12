@@ -38,6 +38,7 @@ import { parseSubject } from "@/app/teacher/assignments/create/utils";
 import TaskModal from "./task-modal";
 import TasksListModal from "./tasks-list-modal";
 import { BatchMarksReportModal } from "./batch-marks-report-modal";
+import { ISEMSEReportModal } from "./ise-mse-report-modal";
 import { useTasks, Task as APITask, useExperiments } from "@/hooks/use-api";
 import { Task as FormTask } from "@/lib/types";
 
@@ -61,6 +62,10 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
     // Batch Marks Report Modal State
     const [isMarksReportOpen, setIsMarksReportOpen] = useState(false);
     const [selectedSubjectForMarks, setSelectedSubjectForMarks] = useState<AllottedSubject | null>(null);
+
+    // ISE-MSE Report Modal State
+    const [isISEMSEReportOpen, setIsISEMSEReportOpen] = useState(false);
+    const [selectedSubjectForISEMSEReport, setSelectedSubjectForISEMSEReport] = useState<AllottedSubject | null>(null);
 
     // Use API hook for tasks
     const { tasks: allTasks, loading: tasksLoading, createTask, deleteTask, fetchTasks } = useTasks();
@@ -109,6 +114,11 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
     const handleOpenMarksReport = (allotment: AllottedSubject) => {
         setSelectedSubjectForMarks(allotment);
         setIsMarksReportOpen(true);
+    };
+
+    const handleOpenISEMSEReport = (allotment: AllottedSubject) => {
+        setSelectedSubjectForISEMSEReport(allotment);
+        setIsISEMSEReportOpen(true);
     };
 
     const handleAddTask = async (newTask: FormTask) => {
@@ -266,8 +276,8 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                                                         )}
 
                                                         {allotment.isIncharge && (
-                                                            <DropdownMenuItem onClick={() => toast.info("View Reports")}>
-                                                                <BarChart3 className="mr-2 h-4 w-4" /> Attainment Report
+                                                            <DropdownMenuItem onClick={() => handleOpenISEMSEReport(allotment)}>
+                                                                <BarChart3 className="mr-2 h-4 w-4" /> ISE-MSE Attainment Report
                                                             </DropdownMenuItem>
                                                         )}
                                                     </DropdownMenuContent>
@@ -348,6 +358,19 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                     subjectName={selectedSubjectForMarks.subjectName}
                     className={selectedSubjectForMarks.class}
                     batch={selectedSubjectForMarks.batch}
+                />
+            )}
+
+            {/* ISE-MSE Attainment Report Modal */}
+            {selectedSubjectForISEMSEReport && (
+                <ISEMSEReportModal
+                    open={isISEMSEReportOpen}
+                    onOpenChange={(open) => {
+                        setIsISEMSEReportOpen(open);
+                        if (!open) setSelectedSubjectForISEMSEReport(null);
+                    }}
+                    allotmentId={selectedSubjectForISEMSEReport.allotment_id}
+                    subjectCode={selectedSubjectForISEMSEReport.sub_id}
                 />
             )}
         </>
