@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
         let query = supabase
             .from('task')
-            .select('*, allotment:allotment_id(*)')
+            .select('*, allotment:allotment_id(*), task_co_mapping:task_co_mapping(co_no, sub_id, co:co(co_no, co_description))')
             .in('allotment_id', allotmentIds)
             .order('created_at', { ascending: false });
 
@@ -56,7 +56,12 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 });
         }
 
-        return NextResponse.json(data);
+        const tasksWithMappedCos = (data || []).map((task: any) => ({
+            ...task,
+            mapped_cos: task.task_co_mapping?.map((m: any) => m.co_no) || []
+        }));
+
+        return NextResponse.json(tasksWithMappedCos);
     } catch (error) {
         console.error('Server error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -191,6 +196,7 @@ export async function POST(request: NextRequest) {
         if (mapped_cos && mapped_cos.length > 0) {
             const coMappings = mapped_cos.map((co_no: number) => ({
                 task_id: task.task_id,
+                sub_id,
                 co_no
             }));
 
@@ -204,7 +210,10 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        return NextResponse.json(task, { status: 201 });
+        return NextResponse.json({
+            ...task,
+            mapped_cos: mapped_cos || []
+        }, { status: 201 });
     } catch (error) {
         console.error('Server error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

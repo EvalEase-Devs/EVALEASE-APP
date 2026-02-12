@@ -19,23 +19,23 @@ export async function GET(
 
     try {
 
-        // Fetch COs associated with the experiment
-        const { data: coData, error: coError } = await supabase
-            .from('experiment_co_mapping')
-            .select('co_no')
+        // Fetch LOs associated with the experiment
+        const { data: loData, error: loError } = await supabase
+            .from('experiment_lo_mapping')
+            .select('lo_no')
             .eq('sub_id', subId)
             .eq('exp_no', expNo);
 
-        if (coError) {
-            console.error('Supabase error:', coError);
-            throw coError;
+        if (loError) {
+            console.error('Supabase error:', loError);
+            throw loError;
         }
 
-        return NextResponse.json(coData || []);
+        return NextResponse.json(loData || []);
     } catch (error) {
-        console.error('Error fetching experiment COs:', error);
+        console.error('Error fetching experiment LOs:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch experiment COs', details: String(error) },
+            { error: 'Failed to fetch experiment LOs', details: String(error) },
             { status: 500 }
         );
     }

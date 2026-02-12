@@ -133,6 +133,7 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
             };
 
             await createTask(apiTask);
+            await fetchTasks();
             toast.success(`Task "${newTask.title}" created successfully!`);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Failed to create task");

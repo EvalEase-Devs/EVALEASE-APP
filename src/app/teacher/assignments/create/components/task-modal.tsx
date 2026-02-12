@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Task, Subject, Question, SubQuestion } from '@/lib/types';
-import { Experiment, useExperimentCOs } from '@/hooks/use-api';
+import { Experiment, useExperimentLOs } from '@/hooks/use-api';
 import { EXPERIMENTS, COS } from '@/app/teacher/assignments/create/constants';
 import { Plus, Trash, Calendar, Clock, CheckCircle2, X, AlertCircle, BookOpen, Settings, FileText } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
     const [selectedCOs, setSelectedCOs] = useState<string[]>([]);
 
     // Fetch COs for the selected experiment
-    const { cos: experimentCOs, loading: cosLoading } = useExperimentCOs(
+    const { los: experimentLOs, loading: loLoading } = useExperimentLOs(
         currentSubject?.code || '',
         selectedExp ? parseInt(selectedExp) : null
     );
@@ -410,28 +410,28 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                 </Select>
                                             </div>
 
-                                            {/* Display COs associated with selected experiment */}
+                                            {/* Display LOs associated with selected experiment */}
                                             {selectedExp && (
                                                 <div className="mt-4 space-y-3 p-3 bg-background rounded-md border">
-                                                    <Label className="text-sm font-medium">Associated Course Outcomes</Label>
-                                                    {cosLoading ? (
+                                                    <Label className="text-sm font-medium">Associated Lab Outcomes</Label>
+                                                    {loLoading ? (
                                                         <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse">
                                                             <div className="h-2 w-2 rounded-full bg-primary animate-pulse"></div>
-                                                            Fetching COs...
+                                                            Fetching LOs...
                                                         </div>
-                                                    ) : experimentCOs.length > 0 ? (
+                                                    ) : experimentLOs.length > 0 ? (
                                                         <div className="flex flex-wrap gap-2">
-                                                            {experimentCOs.map((co) => (
+                                                            {experimentLOs.map((lo) => (
                                                                 <Badge
-                                                                    key={co.co_no}
+                                                                    key={lo.lo_no}
                                                                     variant="secondary"
                                                                 >
-                                                                    CO{co.co_no}
+                                                                    LO{lo.lo_no}
                                                                 </Badge>
                                                             ))}
                                                         </div>
                                                     ) : (
-                                                        <div className="text-xs text-muted-foreground italic">No COs associated with this experiment</div>
+                                                        <div className="text-xs text-muted-foreground italic">No LOs associated with this experiment</div>
                                                     )}
                                                 </div>
                                             )}

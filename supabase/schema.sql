@@ -60,20 +60,7 @@ CREATE TABLE public.experiment (
 );
 
 -- ==========================================
--- 6. EXPERIMENT <> CO MAPPING
--- Junction table linking Experiments to COs
--- ==========================================
-CREATE TABLE public.experiment_co_mapping (
-  sub_id character varying NOT NULL, -- e.g. 'CSL501'. Matches experiment and co table.
-  exp_no bigint NOT NULL, -- e.g. 1.
-  co_no bigint NOT NULL, -- e.g. 2. (Means Exp 1 maps to CO2).
-  CONSTRAINT experiment_co_mapping_pkey PRIMARY KEY (sub_id, exp_no, co_no),
-  CONSTRAINT fk_map_exp FOREIGN KEY (sub_id, exp_no) REFERENCES public.experiment(sub_id, exp_no) ON DELETE CASCADE,
-  CONSTRAINT fk_map_co FOREIGN KEY (sub_id, co_no) REFERENCES public.co(sub_id, co_no) ON DELETE CASCADE
-);
-
--- ==========================================
--- 7. EXPERIMENT <> LO MAPPING
+-- 6. EXPERIMENT <> LO MAPPING
 -- Junction table linking Experiments to Lab Outcomes
 -- ==========================================
 CREATE TABLE public.experiment_lo_mapping (
@@ -86,7 +73,7 @@ CREATE TABLE public.experiment_lo_mapping (
 );
 
 -- ==========================================
--- 8. ALLOTMENT TABLE
+-- 7. ALLOTMENT TABLE
 -- Links a Teacher to a specific Subject, Class, and Batch
 -- ==========================================
 CREATE TABLE public.allotment (
@@ -105,7 +92,7 @@ CREATE TABLE public.allotment (
 );
 
 -- ==========================================
--- 9. TASK TABLE
+-- 8. TASK TABLE
 -- The central table for all assessments (ISE, MSE, Assignments, Lab Experiments)
 -- ==========================================
 CREATE TABLE public.task (
@@ -145,19 +132,20 @@ CREATE TABLE public.task (
 );
 
 -- ==========================================
--- 10. TASK <> CO MAPPING
+-- 9. TASK <> CO MAPPING
 -- For Theory tasks (ISE/MSE) where COs are mapped manually or per question
 -- Stores the mapping when teacher selects multiple COs for a task
 -- ==========================================
 CREATE TABLE public.task_co_mapping (
   task_id bigint NOT NULL, -- Foreign Key to task.
-  co_no bigint NOT NULL, -- e.g. 1 (Maps task to CO1).
+  sub_id character varying NOT NULL, -- Part of CO Composite Key.
+  co_no bigint NOT NULL, -- Part of CO Composite Key. e.g. 1 (Maps task to CO1).
   CONSTRAINT task_co_mapping_pkey PRIMARY KEY (task_id, co_no),
-  CONSTRAINT task_co_mapping_task_id_fkey FOREIGN KEY (task_id) REFERENCES public.task(task_id) ON DELETE CASCADE
+  CONSTRAINT task_co_mapping_task_id_fkey FOREIGN KEY (task_id) REFERENCES public.task(task_id) ON DELETE CASCADE,
+  CONSTRAINT fk_task_co FOREIGN KEY (sub_id, co_no) REFERENCES public.co(sub_id, co_no)
 );
-
 -- ==========================================
--- 11. MARKS TABLE
+-- 9. MARKS TABLE
 -- Stores student submissions and granular marks
 -- ==========================================
 CREATE TABLE public.marks (

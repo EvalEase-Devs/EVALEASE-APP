@@ -45,16 +45,6 @@ const data = {
       title: "Evaluations",
       url: "/teacher/evaluations",
       icon: FileCheck,
-      items: [
-        {
-          title: "Practical Attainments",
-          url: "/teacher/evaluations/practical-attainments",
-        },
-        {
-          title: "ISE-MSE Attainments",
-          url: "/teacher/evaluations/ise-mse-attainments",
-        },
-      ],
     },
     {
       title: "Analytics",

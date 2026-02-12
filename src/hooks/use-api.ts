@@ -17,10 +17,11 @@ export interface Allotment {
 }
 
 export interface TaskCOMapping {
-    co_id: number;
+    co_no: number;
+    sub_id?: string;
     co?: {
-        co_id: number;
-        co_name: string;
+        co_no: number;
+        co_description: string;
     };
 }
 
@@ -358,23 +359,23 @@ export function useExperiments(subId: string) {
     return { experiments, loading, error, fetchExperiments };
 }
 
-// Fetch COs for a specific experiment
-export interface ExperimentCO {
-    co_no: number;
-    co?: {
-        co_no: number;
-        co_description: string;
+// Fetch LOs for a specific experiment
+export interface ExperimentLO {
+    lo_no: number;
+    lo?: {
+        lo_no: number;
+        lo_description: string;
     };
 }
 
-export function useExperimentCOs(subId: string, expNo: string | number | null) {
-    const [cos, setCos] = useState<ExperimentCO[]>([]);
+export function useExperimentLOs(subId: string, expNo: string | number | null) {
+    const [los, setLos] = useState<ExperimentLO[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchExperimentCOs = useCallback(async () => {
+    const fetchExperimentLOs = useCallback(async () => {
         if (!subId || !expNo) {
-            setCos([]);
+            setLos([]);
             return;
         }
 
@@ -383,26 +384,26 @@ export function useExperimentCOs(subId: string, expNo: string | number | null) {
             const url = `/api/experiments/${subId}?exp_no=${expNo}`;
             const res = await fetch(url);
             if (!res.ok) {
-                throw new Error(`Failed to fetch experiment COs: ${res.status}`);
+                throw new Error(`Failed to fetch experiment LOs: ${res.status}`);
             }
             const data = await res.json();
-            setCos(data);
+            setLos(data);
             setError(null);
         } catch (err) {
             const errorMsg = err instanceof Error ? err.message : 'An error occurred';
-            console.error('Error in useExperimentCOs:', errorMsg);
+            console.error('Error in useExperimentLOs:', errorMsg);
             setError(errorMsg);
-            setCos([]);
+            setLos([]);
         } finally {
             setLoading(false);
         }
     }, [subId, expNo]);
 
     useEffect(() => {
-        fetchExperimentCOs();
-    }, [fetchExperimentCOs]);
+        fetchExperimentLOs();
+    }, [fetchExperimentLOs]);
 
-    return { cos, loading, error, fetchExperimentCOs };
+    return { los, loading, error, fetchExperimentLOs };
 }
 
 // ============ STUDENT ASSIGNMENTS ============

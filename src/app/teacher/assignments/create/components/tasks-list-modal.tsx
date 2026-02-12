@@ -25,6 +25,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
     const [editingMarkId, setEditingMarkId] = useState<number | null>(null);
     const [editedMarks, setEditedMarks] = useState<number | Record<string, number>>(0);
     const [savingMarks, setSavingMarks] = useState<boolean>(false);
+    const [loMap, setLoMap] = useState<Record<string, number[]>>({});
 
     const selectedTask = tasks.find(t => t.task_id === selectedTaskId) || null;
 
@@ -129,6 +130,36 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
         }
     }, [selectedTaskId]);
 
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const labTasks = tasks.filter(t => t.task_type === 'Lab' && t.exp_no && t.sub_id);
+        const uniqueKeys = Array.from(new Set(labTasks.map(t => `${t.sub_id}-${t.exp_no}`)));
+
+        if (uniqueKeys.length === 0) return;
+
+        (async () => {
+            try {
+                const results = await Promise.all(uniqueKeys.map(async (key) => {
+                    const [subId, expNo] = key.split('-');
+                    const res = await fetch(`/api/experiments/${subId}?exp_no=${expNo}`);
+                    if (!res.ok) return { key, los: [] as number[] };
+                    const data = await res.json();
+                    const los = (data || []).map((lo: any) => lo.lo_no).filter((n: any) => typeof n === 'number');
+                    return { key, los };
+                }));
+
+                const nextMap: Record<string, number[]> = {};
+                results.forEach(({ key, los }) => {
+                    nextMap[key] = los;
+                });
+                setLoMap(nextMap);
+            } catch {
+                setLoMap({});
+            }
+        })();
+    }, [isOpen, tasks]);
+
     if (!isOpen) return null;
 
     const getTaskStatus = (task: APITask) => {
@@ -224,7 +255,9 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                         {categoryTasks.map(task => {
                                             const status = getTaskStatus(task);
                                             const taskType = task.task_type === 'Lab' ? 'Lab' : 'Theory';
-                                            const mappedCOs = task.task_co_mapping?.map(m => m.co?.co_name).filter(Boolean) || [];
+                                            const mappedCOs = task.task_co_mapping?.map(m => `CO${m.co_no}`) || (task.mapped_cos || []).map((co) => `CO${co}`);
+                                            const loKey = task.task_type === 'Lab' && task.exp_no ? `${task.sub_id}-${task.exp_no}` : null;
+                                            const mappedLOs = loKey ? (loMap[loKey] || []).map((lo) => `LO${lo}`) : [];
                                             return (
                                                 <Card key={task.task_id} className={`${status === 'SCHEDULED' ? 'opacity-75' : ''}`}>
                                                     <CardHeader className="p-5 pb-2">
@@ -242,9 +275,23 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                                     </CardHeader>
                                                     <CardContent className="p-5 pt-0 pb-2">
                                                         <div className="flex flex-wrap gap-1 mb-2">
-                                                            {mappedCOs.map(co => (
-                                                                <Badge key={co} variant="secondary" className="text-[10px] h-5">{co}</Badge>
-                                                            ))}
+                                                            {task.task_type === 'Lab' ? (
+                                                                mappedLOs.length > 0 ? (
+                                                                    mappedLOs.map(lo => (
+                                                                        <Badge key={lo} variant="secondary" className="text-[10px] h-5">{lo}</Badge>
+                                                                    ))
+                                                                ) : (
+                                                                    <span className="text-[10px] text-muted-foreground">No LOs mapped</span>
+                                                                )
+                                                            ) : (
+                                                                mappedCOs.length > 0 ? (
+                                                                    mappedCOs.map(co => (
+                                                                        <Badge key={co} variant="secondary" className="text-[10px] h-5">{co}</Badge>
+                                                                    ))
+                                                                ) : (
+                                                                    <span className="text-[10px] text-muted-foreground">No COs mapped</span>
+                                                                )
+                                                            )}
                                                         </div>
                                                         <div className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2">
                                                             <span>Max Marks: {task.max_marks}</span>
