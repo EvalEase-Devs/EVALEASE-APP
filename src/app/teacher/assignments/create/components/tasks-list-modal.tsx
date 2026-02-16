@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Task as APITask } from '@/hooks/use-api';
 import { Trash2, X, Clock, AlertCircle, Pencil, Save, XCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,13 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
     const [loMap, setLoMap] = useState<Record<string, number[]>>({});
 
     const selectedTask = tasks.find(t => t.task_id === selectedTaskId) || null;
+
+    // Memoize lab tasks and subject filtering to prevent unnecessary re-renders
+    const labTasksData = useMemo(() => {
+        const labTasks = tasks.filter(t => t.task_type === 'Lab' && t.exp_no && t.sub_id);
+        const uniqueSubjects = Array.from(new Set(labTasks.map(t => t.sub_id)));
+        return { labTasks, uniqueSubjects };
+    }, [tasks]);
 
     const fetchStudents = async (taskId: number) => {
         try {
@@ -133,35 +140,43 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
     useEffect(() => {
         if (!isOpen) return;
 
-        const labTasks = tasks.filter(t => t.task_type === 'Lab' && t.exp_no && t.sub_id);
-        const uniqueKeys = Array.from(new Set(labTasks.map(t => `${t.sub_id}-${t.exp_no}`)));
+        const { labTasks, uniqueSubjects } = labTasksData;
 
-        if (uniqueKeys.length === 0) return;
+        if (uniqueSubjects.length === 0) return;
 
         (async () => {
             try {
-                const results = await Promise.all(uniqueKeys.map(async (key) => {
-                    const [subId, expNo] = key.split('-');
-                    const res = await fetch(`/api/experiments/${subId}?exp_no=${expNo}`);
-                    if (!res.ok) return { key, los: [] as number[] };
+                // Fetch all experiments for each subject in batch
+                const results = await Promise.all(uniqueSubjects.map(async (subId) => {
+                    const res = await fetch(`/api/experiments/batch?sub_id=${subId}`);
+                    if (!res.ok) return { subId, experiments: [] };
                     const data = await res.json();
-                    const los = (data || []).map((lo: any) => lo.lo_no).filter((n: any) => typeof n === 'number');
-                    return { key, los };
+                    return { subId, experiments: data.experiments || [] };
                 }));
 
                 const nextMap: Record<string, number[]> = {};
-                results.forEach(({ key, los }) => {
-                    nextMap[key] = los;
+
+                // Build the map from batch results
+                results.forEach(({ subId, experiments }) => {
+                    // For each task that uses this subject, find its experiment and extract LOs
+                    labTasks
+                        .filter(t => t.sub_id === subId && t.exp_no)
+                        .forEach(task => {
+                            const key = `${subId}-${task.exp_no}`;
+                            const exp = experiments.find((e: any) => e.exp_no === task.exp_no);
+                            const los = exp
+                                ? (exp.experiment_lo_mapping || []).map((m: any) => m.lo_no).filter((n: any) => typeof n === 'number')
+                                : [];
+                            nextMap[key] = los;
+                        });
                 });
+
                 setLoMap(nextMap);
             } catch {
                 setLoMap({});
             }
         })();
-    }, [isOpen, tasks]);
-
-    if (!isOpen) return null;
-
+    }, [isOpen, labTasksData]);
     const getTaskStatus = (task: APITask) => {
         if (!task.start_time || !task.end_time) return 'ACTIVE';
         const now = new Date();
