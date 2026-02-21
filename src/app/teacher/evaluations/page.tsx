@@ -28,6 +28,7 @@ interface AllotmentData {
     type: 'Lec' | 'Lab';
     semester: string;
     subject: string;
+    is_subject_incharge: boolean;
 }
 
 export default function EvaluationsPage() {
@@ -63,7 +64,8 @@ export default function EvaluationsPage() {
 
     // Filter allotments
     const lecAllotments = allotments.filter(a => a.type === 'Lec');
-    const labAllotments = allotments.filter(a => a.type === 'Lab');
+    // Only subject incharge teachers can generate lab attainment reports
+    const labAllotments = allotments.filter(a => a.type === 'Lab' && a.is_subject_incharge);
 
     return (
         <SidebarProvider>

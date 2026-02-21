@@ -518,7 +518,7 @@ export interface BatchMarksReportData {
     experiments: {
         exp_no: number;
         exp_name: string;
-        cos: string[];
+        los: string[];
     }[];
     marksMatrix: Record<number, Record<number, {
         mark_id: number;

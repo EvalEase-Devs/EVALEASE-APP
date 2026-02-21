@@ -39,8 +39,9 @@ interface ReportResponse {
         sub_id: string;
         sub_name?: string;
         class_name: string;
-        batch_no: number;
+        batch_no?: number;
         current_sem: string;
+        all_batches: boolean;
     };
     teacher: {
         teacher_name: string;
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'allotment_id required' }, { status: 400 });
         }
 
-        // Verify allotment belongs to this teacher
+        // Verify allotment belongs to this teacher and check if subject incharge
         const { data: allotmentData, error: allotmentError } = await supabase
             .from('allotment')
             .select('*, teacher(teacher_name)')
@@ -79,11 +80,36 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Allotment not found or unauthorized' }, { status: 403 });
         }
 
-        // Fetch all lab tasks for this allotment
+        // Check if teacher is subject incharge
+        if (!allotmentData.is_subject_incharge) {
+            return NextResponse.json({
+                error: 'Only subject incharge can generate lab attainment report'
+            }, { status: 403 });
+        }
+
+        // Fetch ALL lab tasks for this subject and class (across all batches)
+        const { data: allAllotments, error: allAllotmentsError } = await supabase
+            .from('allotment')
+            .select('allotment_id')
+            .eq('sub_id', allotmentData.sub_id)
+            .eq('class_name', allotmentData.class_name)
+            .eq('current_sem', allotmentData.current_sem)
+            .eq('type', 'Lab');
+
+        if (allAllotmentsError) {
+            return NextResponse.json(
+                { error: 'Failed to fetch allotments' },
+                { status: 500 }
+            );
+        }
+
+        const allotmentIds = allAllotments.map((a: any) => a.allotment_id);
+
+        // Fetch all lab tasks across all batches for this subject
         const { data: tasksData, error: tasksError } = await supabase
             .from('task')
             .select('*')
-            .eq('allotment_id', parseInt(allotmentId))
+            .in('allotment_id', allotmentIds)
             .eq('task_type', 'Lab')
             .order('exp_no', { ascending: true });
 
@@ -142,12 +168,11 @@ export async function GET(request: NextRequest) {
             }
         });
 
-        // Fetch students in this class and batch
+        // Fetch ALL students in this class (across all batches)
         const { data: studentsData, error: studentsError } = await supabase
             .from('student')
-            .select('pid, stud_name, roll_no')
+            .select('pid, stud_name, roll_no, batch')
             .eq('class_name', allotmentData.class_name)
-            .eq('batch', allotmentData.batch_no)
             .order('roll_no', { ascending: true });
 
         if (studentsError || !studentsData) {
@@ -159,10 +184,14 @@ export async function GET(request: NextRequest) {
 
         // Fetch all marks for these tasks and students
         const taskIds = tasksData.map((t: any) => t.task_id);
+        const studentPids = studentsData.map((s: any) => s.pid);
+
+
         const { data: marksData, error: marksError } = await supabase
             .from('marks')
             .select('*')
-            .in('task_id', taskIds);
+            .in('task_id', taskIds)
+            .in('stud_pid', studentPids);
 
         if (marksError) {
             return NextResponse.json(
@@ -174,13 +203,24 @@ export async function GET(request: NextRequest) {
         // Build student LO marks structure
         const studentMarksMap = new Map();
 
+        let processedMarks = 0;
+        let skippedMarks = 0;
+
         marksData.forEach((mark: any) => {
             const task = tasksData.find((t: any) => t.task_id === mark.task_id);
-            if (!task) return;
+            if (!task) {
+                skippedMarks++;
+                return;
+            }
 
             const loNos = loMappingData
                 .filter((m: any) => m.exp_no === task.exp_no)
                 .map((m: any) => m.lo_no);
+
+            if (loNos.length === 0) {
+                skippedMarks++;
+                return;
+            }
 
             if (!studentMarksMap.has(mark.stud_pid)) {
                 studentMarksMap.set(mark.stud_pid, {});
@@ -202,6 +242,8 @@ export async function GET(request: NextRequest) {
                     max: maxMarksPerLo,
                 };
             });
+
+            processedMarks++;
         });
 
         // Build final student data
@@ -218,8 +260,8 @@ export async function GET(request: NextRequest) {
                 sub_id: allotmentData.sub_id,
                 sub_name: allotmentData.sub_name,
                 class_name: allotmentData.class_name,
-                batch_no: allotmentData.batch_no,
                 current_sem: allotmentData.current_sem,
+                all_batches: true,
             },
             teacher: {
                 teacher_name: allotmentData.teacher?.teacher_name || '',

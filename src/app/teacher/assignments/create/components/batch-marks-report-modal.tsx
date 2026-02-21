@@ -58,7 +58,7 @@ export function BatchMarksReportModal({
   const handleMarkChange = (pid: number, expNo: number, value: string) => {
     const key = `${pid}-${expNo}`;
     const numValue = parseFloat(value);
-    
+
     if (value === "" || isNaN(numValue)) {
       const newEdited = { ...editedMarks };
       delete newEdited[key];
@@ -88,7 +88,7 @@ export function BatchMarksReportModal({
       const updates = Object.entries(editedMarks).map(([key, marks]) => {
         const [pid, expNo] = key.split("-").map(Number);
         const originalMark = data?.marksMatrix[pid]?.[expNo];
-        
+
         return {
           marksId: originalMark?.mark_id,
           marks,
@@ -112,7 +112,7 @@ export function BatchMarksReportModal({
 
       toast.success("Marks updated successfully");
       setEditedMarks({});
-      
+
       // Optionally refresh the data
       window.location.reload();
     } catch (err) {
@@ -141,10 +141,10 @@ export function BatchMarksReportModal({
       headerRow1.push("Total");
       excelData.push(headerRow1);
 
-      // Header row 2: COs
+      // Header row 2: LOs
       const headerRow2 = ["", "", ""];
       data.experiments.forEach((exp) => {
-        headerRow2.push(exp.cos.join(", ") || "-");
+        headerRow2.push(exp.los.join(", ") || "-");
       });
       headerRow2.push("");
       excelData.push(headerRow2);
@@ -205,7 +205,7 @@ export function BatchMarksReportModal({
 
   const calculateTotal = (pid: number) => {
     if (!data) return { total: 0, max: 0 };
-    
+
     let total = 0;
     let max = 0;
 
@@ -316,87 +316,86 @@ export function BatchMarksReportModal({
                   <div className="min-w-max">
                     <Table>
                       <TableHeader>
-                      <TableRow>
-                        <TableHead className="sticky left-0 bg-background z-10 w-[100px]">
-                          PID
-                        </TableHead>
-                        <TableHead className="sticky left-[100px] bg-background z-10 min-w-[180px]">
-                          Name
-                        </TableHead>
-                        <TableHead className="sticky left-[280px] bg-background z-10 w-[80px]">
-                          Roll
-                        </TableHead>
-                        {data.experiments.map((exp) => (
-                          <TableHead key={exp.exp_no} className="text-center min-w-[150px]">
-                            <div className="font-semibold">EXP {exp.exp_no}</div>
-                            <div className="flex gap-1 justify-center mt-1 flex-wrap">
-                              {exp.cos.map((co) => (
-                                <Badge key={co} variant="secondary" className="text-xs">
-                                  {co}
-                                </Badge>
-                              ))}
-                            </div>
+                        <TableRow>
+                          <TableHead className="sticky left-0 bg-background z-10 w-[100px]">
+                            PID
                           </TableHead>
-                        ))}
-                        <TableHead className="text-center font-semibold w-[100px]">
-                          Total
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.students.map((student) => {
-                        const totals = calculateTotal(student.pid);
-                        return (
-                          <TableRow key={student.pid}>
-                            <TableCell className="sticky left-0 bg-background font-medium">
-                              {student.pid}
-                            </TableCell>
-                            <TableCell className="sticky left-[100px] bg-background">
-                              {student.stud_name}
-                            </TableCell>
-                            <TableCell className="sticky left-[280px] bg-background">
-                              {student.roll_no || "-"}
-                            </TableCell>
-                            {data.experiments.map((exp) => {
-                              const mark = data.marksMatrix[student.pid]?.[exp.exp_no];
-                              const currentValue = getMarkValue(student.pid, exp.exp_no);
-                              const isEdited = editedMarks[`${student.pid}-${exp.exp_no}`] !== undefined;
-                              
-                              return (
-                                <TableCell key={exp.exp_no} className="text-center">
-                                  {mark ? (
-                                    <div className="flex items-center justify-center gap-1">
-                                      <Input
-                                        type="number"
-                                        value={currentValue ?? ""}
-                                        onChange={(e) => handleMarkChange(student.pid, exp.exp_no, e.target.value)}
-                                        className={`w-16 h-8 text-center ${
-                                          isEdited ? 'border-yellow-500 bg-yellow-50' : ''
-                                        }`}
-                                        min={0}
-                                        max={mark.max_marks}
-                                        step={0.5}
-                                      />
-                                      <span className="text-muted-foreground">/ {mark.max_marks}</span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted-foreground">-</span>
-                                  )}
-                                </TableCell>
-                              );
-                            })}
-                            <TableCell className="text-center font-semibold">
-                              {totals.max > 0 ? (
-                                <span>{totals.total}/{totals.max}</span>
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+                          <TableHead className="sticky left-[100px] bg-background z-10 min-w-[180px]">
+                            Name
+                          </TableHead>
+                          <TableHead className="sticky left-[280px] bg-background z-10 w-[80px]">
+                            Roll
+                          </TableHead>
+                          {data.experiments.map((exp) => (
+                            <TableHead key={exp.exp_no} className="text-center min-w-[150px]">
+                              <div className="font-semibold">EXP {exp.exp_no}</div>
+                              <div className="flex gap-1 justify-center mt-1 flex-wrap">
+                                {exp.los.map((lo) => (
+                                  <Badge key={lo} variant="secondary" className="text-xs">
+                                    {lo}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </TableHead>
+                          ))}
+                          <TableHead className="text-center font-semibold w-[100px]">
+                            Total
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.students.map((student) => {
+                          const totals = calculateTotal(student.pid);
+                          return (
+                            <TableRow key={student.pid}>
+                              <TableCell className="sticky left-0 bg-background font-medium">
+                                {student.pid}
+                              </TableCell>
+                              <TableCell className="sticky left-[100px] bg-background">
+                                {student.stud_name}
+                              </TableCell>
+                              <TableCell className="sticky left-[280px] bg-background">
+                                {student.roll_no || "-"}
+                              </TableCell>
+                              {data.experiments.map((exp) => {
+                                const mark = data.marksMatrix[student.pid]?.[exp.exp_no];
+                                const currentValue = getMarkValue(student.pid, exp.exp_no);
+                                const isEdited = editedMarks[`${student.pid}-${exp.exp_no}`] !== undefined;
+
+                                return (
+                                  <TableCell key={exp.exp_no} className="text-center">
+                                    {mark ? (
+                                      <div className="flex items-center justify-center gap-1">
+                                        <Input
+                                          type="number"
+                                          value={currentValue ?? ""}
+                                          onChange={(e) => handleMarkChange(student.pid, exp.exp_no, e.target.value)}
+                                          className={`w-16 h-8 text-center ${isEdited ? 'border-yellow-500 bg-yellow-50' : ''
+                                            }`}
+                                          min={0}
+                                          max={mark.max_marks}
+                                          step={0.5}
+                                        />
+                                        <span className="text-muted-foreground">/ {mark.max_marks}</span>
+                                      </div>
+                                    ) : (
+                                      <span className="text-muted-foreground">-</span>
+                                    )}
+                                  </TableCell>
+                                );
+                              })}
+                              <TableCell className="text-center font-semibold">
+                                {totals.max > 0 ? (
+                                  <span>{totals.total.toFixed(2)}/{totals.max.toFixed(2)}</span>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
                   </div>
                   <ScrollBar orientation="horizontal" />
                 </ScrollArea>

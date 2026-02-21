@@ -34,18 +34,13 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Allotment not found or unauthorized' }, { status: 404 });
         }
 
-        // 2. Get students for this class and batch
-        let studentsQuery = supabase
+        // 2. Get students for this batch only (batch marks report shows only that batch's students)
+        const { data: students, error: studentsError } = await supabase
             .from('student')
             .select('pid, stud_name, roll_no, batch')
             .eq('class_name', allotment.class_name)
+            .eq('batch', allotment.batch_no)
             .order('roll_no', { ascending: true });
-
-        if (allotment.batch_no) {
-            studentsQuery = studentsQuery.eq('batch', allotment.batch_no);
-        }
-
-        const { data: students, error: studentsError } = await studentsQuery;
 
         if (studentsError) {
             console.error('Error fetching students:', studentsError);
@@ -78,7 +73,7 @@ export async function GET(request: NextRequest) {
 
         // 4. Get experiment details and COs
         const expNos = [...new Set(tasks.map(t => t.exp_no).filter(Boolean))];
-        
+
         const { data: experiments, error: expError } = await supabase
             .from('experiment')
             .select('sub_id, exp_no, exp_name')
@@ -90,24 +85,25 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Failed to fetch experiments' }, { status: 500 });
         }
 
-        // 5. Get COs for each experiment
-        const { data: expCOMapping, error: coError } = await supabase
-            .from('experiment_co_mapping')
-            .select('exp_no, co_no')
+
+        // 5. Get LOs for each experiment (Lab uses Learning Outcomes, not Course Outcomes)
+        const { data: expLOMapping, error: loError } = await supabase
+            .from('experiment_lo_mapping')
+            .select('exp_no, lo_no')
             .eq('sub_id', allotment.sub_id)
             .in('exp_no', expNos);
 
-        if (coError) {
-            console.error('Error fetching CO mappings:', coError);
+        if (loError) {
+            console.error('Error fetching LO mappings:', loError);
         }
 
-        // Build experiment data with COs
-        const experimentsWithCOs = experiments?.map(exp => ({
+        // Build experiment data with LOs
+        const experimentsWithLOs = experiments?.map(exp => ({
             exp_no: exp.exp_no,
             exp_name: exp.exp_name,
-            cos: expCOMapping
+            los: expLOMapping
                 ?.filter(m => m.exp_no === exp.exp_no)
-                .map(m => `CO${m.co_no}`)
+                .map(m => `LO${m.lo_no}`)
                 .sort() || []
         })) || [];
 
@@ -132,9 +128,9 @@ export async function GET(request: NextRequest) {
 
         tasks.forEach(task => {
             if (!task.exp_no) return;
-            
+
             const taskMarks = marks?.filter(m => m.task_id === task.task_id) || [];
-            
+
             taskMarks.forEach(mark => {
                 if (!marksMatrix[mark.stud_pid]) {
                     marksMatrix[mark.stud_pid] = {};
@@ -147,11 +143,10 @@ export async function GET(request: NextRequest) {
                 };
             });
         });
-
         return NextResponse.json({
             allotment,
             students: students || [],
-            experiments: experimentsWithCOs,
+            experiments: experimentsWithLOs,
             marksMatrix
         });
 

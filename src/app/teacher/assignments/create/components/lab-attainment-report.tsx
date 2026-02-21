@@ -37,8 +37,9 @@ interface ReportResponse {
         sub_id: string;
         sub_name?: string;
         class_name: string;
-        batch_no: number;
+        batch_no?: number;
         current_sem: string;
+        all_batches: boolean;
     };
     teacher: {
         teacher_name: string;
@@ -67,7 +68,6 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
                 }
 
                 const data: ReportResponse = await response.json();
-                console.log('Lab Report Data:', data);
                 setReportData(data);
             } catch (error) {
                 console.error('Error fetching report:', error);
@@ -96,7 +96,7 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
             worksheetData.push([
                 `Subject: ${allotment.sub_id}`,
                 `Class: ${allotment.class_name}`,
-                `Batch: ${allotment.batch_no}`,
+                `Batch: ${allotment.all_batches ? 'All Batches' : allotment.batch_no}`,
                 `Semester: ${allotment.current_sem}`,
             ]);
             worksheetData.push([`Teacher: ${reportData.teacher.teacher_name}`]);
@@ -491,7 +491,8 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Lab Attainment');
 
             const timestamp = new Date().toISOString().split('T')[0];
-            const filename = `Lab-Attainment-${allotment.sub_id}-Batch${allotment.batch_no}-${timestamp}.xlsx`;
+            const batchLabel = allotment.all_batches ? 'AllBatches' : `Batch${allotment.batch_no}`;
+            const filename = `Lab-Attainment-${allotment.sub_id}-${batchLabel}-${timestamp}.xlsx`;
             XLSX.writeFile(workbook, filename);
             toast.success('Report exported successfully');
         } catch (error) {
@@ -587,7 +588,7 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
                         <p className="font-bold text-xs">ST. FRANCIS INSTITUTE OF TECHNOLOGY</p>
                         <p className="text-xs">
                             Subject: {allotment.sub_id} {allotment.sub_name ? `(${allotment.sub_name})` : ''} | Class:{' '}
-                            {allotment.class_name} | Batch: {allotment.batch_no} | Semester: {allotment.current_sem}
+                            {allotment.class_name} | Batch: {allotment.all_batches ? 'All Batches' : allotment.batch_no} | Semester: {allotment.current_sem}
                         </p>
                         <p className="text-xs">Teacher: {teacher.teacher_name}</p>
                         <p className="text-xs font-semibold text-blue-600 border-t border-slate-300 pt-2 mt-2">

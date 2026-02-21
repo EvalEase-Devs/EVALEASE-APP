@@ -78,7 +78,6 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                 }
 
                 const data: ReportResponse = await response.json();
-                console.log('Report Data:', data);
                 setReportData(data);
             } catch (error) {
                 console.error('Error fetching report:', error);
