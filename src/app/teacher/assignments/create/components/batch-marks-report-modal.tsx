@@ -365,12 +365,12 @@ export function BatchMarksReportModal({
                                 return (
                                   <TableCell key={exp.exp_no} className="text-center">
                                     {mark ? (
-                                      <div className="flex items-center justify-center gap-1">
+                                      <div className="flex items-center justify-center gap-2 ">
                                         <Input
                                           type="number"
                                           value={currentValue ?? ""}
                                           onChange={(e) => handleMarkChange(student.pid, exp.exp_no, e.target.value)}
-                                          className={`w-16 h-8 text-center ${isEdited ? 'border-yellow-500 bg-yellow-50' : ''
+                                          className={`w-22 h-8 text-center ${isEdited ? 'border-yellow-500 bg-yellow-50' : ''
                                             }`}
                                           min={0}
                                           max={mark.max_marks}
