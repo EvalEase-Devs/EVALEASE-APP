@@ -224,7 +224,23 @@ function buildLabColMap(colDefs: ColDef[], fixedCols: number): LabColMap {
 // ─────────────────────────────────────────────────────────────────────────────
 // Logo helper — A1:B4 only
 // ─────────────────────────────────────────────────────────────────────────────
-async function embedLogo(workbook: ExcelJS.Workbook, ws: ExcelJS.Worksheet): Promise<void> {
+function embedLogoFromBase64(workbook: ExcelJS.Workbook, ws: ExcelJS.Worksheet, logoBase64: string): void {
+    try {
+        const imageId = workbook.addImage({
+            base64: logoBase64,
+            extension: 'png',
+        });
+        ws.addImage(imageId, 'A1:B5');
+    } catch {
+        console.warn('[generateLabExcel] logo embed skipped');
+    }
+}
+
+async function embedLogo(workbook: ExcelJS.Workbook, ws: ExcelJS.Worksheet, logoBase64?: string): Promise<void> {
+    if (logoBase64) {
+        embedLogoFromBase64(workbook, ws, logoBase64);
+        return;
+    }
     try {
         const response = await fetch('/sfit_logo.png');
         if (!response.ok) return;
@@ -245,7 +261,27 @@ async function embedLogo(workbook: ExcelJS.Workbook, ws: ExcelJS.Worksheet): Pro
 // ─────────────────────────────────────────────────────────────────────────────
 // Main export
 // ─────────────────────────────────────────────────────────────────────────────
+export async function generateLabAttainmentExcelBuffer(reportData: LabReportResponse, logoBase64?: string): Promise<ArrayBuffer> {
+    return _buildLabAttainmentExcel(reportData, logoBase64);
+}
+
 export async function generateLabAttainmentExcel(reportData: LabReportResponse): Promise<void> {
+    const buffer = await _buildLabAttainmentExcel(reportData);
+    const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const batchLabel = reportData.allotment.all_batches ? 'AllBatches' : `Batch${reportData.allotment.batch_no}`;
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `Lab-Attainment-${reportData.allotment.sub_id}-${batchLabel}.xlsx`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+}
+
+async function _buildLabAttainmentExcel(reportData: LabReportResponse, logoBase64?: string): Promise<ArrayBuffer> {
     const { allotment, teacher, students, loStructure, loList } = reportData;
 
     // ── Workbook ─────────────────────────────────────────────────────────────
@@ -349,7 +385,7 @@ export async function generateLabAttainmentExcel(reportData: LabReportResponse):
     ws.getRow(7).height = 22;
 
     // Embed logo (if available)
-    await embedLogo(workbook, ws);
+    await embedLogo(workbook, ws, logoBase64);
 
     // ═════════════════════════════════════════════════════════════════════════
     // SECTION B — Rows 9–10 : Meta-info block
@@ -868,22 +904,11 @@ export async function generateLabAttainmentExcel(reportData: LabReportResponse):
     });
 
     // ═════════════════════════════════════════════════════════════════════════
-    // SECTION H — Serialise & Download
+    // SECTION H — Serialise & return buffer
     // ═════════════════════════════════════════════════════════════════════════
 
-    const buffer = await workbook.xlsx.writeBuffer();
-
-    const blob = new Blob([buffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-
-    const batchLabel = allotment.all_batches ? 'AllBatches' : `Batch${allotment.batch_no}`;
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `Lab-Attainment-${allotment.sub_id}-${batchLabel}.xlsx`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
+    // ExcelJS returns Buffer/Uint8Array — copy into a true ArrayBuffer for Web Worker transfer
+    const raw = await workbook.xlsx.writeBuffer();
+    const u8 = new Uint8Array(raw);
+    return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
 }

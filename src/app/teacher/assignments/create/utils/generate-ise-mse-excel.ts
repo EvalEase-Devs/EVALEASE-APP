@@ -23,7 +23,7 @@
  */
 
 import ExcelJS from 'exceljs';
-import { SUBJECT_TARGETS } from '../constants';
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types  (mirrors ise-mse-report.tsx exactly)
@@ -164,7 +164,20 @@ function fill(argb: string): ExcelJS.Fill {
 // ─────────────────────────────────────────────────────────────────────────────
 // Logo helper — A1:B5 only, college name starts from col C
 // ─────────────────────────────────────────────────────────────────────────────
-async function embedLogo(workbook: ExcelJS.Workbook, ws: ExcelJS.Worksheet): Promise<void> {
+function embedLogoFromBase64(workbook: ExcelJS.Workbook, ws: ExcelJS.Worksheet, logoBase64: string): void {
+    try {
+        const imageId = workbook.addImage({ base64: logoBase64, extension: 'png' });
+        ws.addImage(imageId, 'A1:B5');
+    } catch {
+        console.warn('[generateISEMSEExcel] logo embed skipped');
+    }
+}
+
+async function embedLogo(workbook: ExcelJS.Workbook, ws: ExcelJS.Worksheet, logoBase64?: string): Promise<void> {
+    if (logoBase64) {
+        embedLogoFromBase64(workbook, ws, logoBase64);
+        return;
+    }
     try {
         const response = await fetch('/sfit_logo.png');
         if (!response.ok) return;
@@ -262,7 +275,26 @@ function buildColMap(colDefs: ColDef[], fixedCols: number): ColMap {
 // ─────────────────────────────────────────────────────────────────────────────
 // Main export
 // ─────────────────────────────────────────────────────────────────────────────
+export async function generateISEMSEExcelBuffer(reportData: ReportResponse, logoBase64?: string): Promise<ArrayBuffer> {
+    return _buildISEMSEExcel(reportData, logoBase64);
+}
+
 export async function generateISEMSEExcel(reportData: ReportResponse): Promise<void> {
+    const buffer = await _buildISEMSEExcel(reportData);
+    const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `ISE-MSE-Attainment-${reportData.allotment.sub_id}.xlsx`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+}
+
+async function _buildISEMSEExcel(reportData: ReportResponse, logoBase64?: string): Promise<ArrayBuffer> {
     const { allotment, teacher, students, columnStructure, coList } = reportData;
 
     // ── Workbook ─────────────────────────────────────────────────────────────
@@ -356,7 +388,7 @@ export async function generateISEMSEExcel(reportData: ReportResponse): Promise<v
     ws.getRow(5).height = 6;
 
     // Logo — anchored ONLY to A1:B5, does not bleed into data columns
-    await embedLogo(workbook, ws);
+    await embedLogo(workbook, ws, logoBase64);
 
     // ═════════════════════════════════════════════════════════════════════════
     // SECTION B — Rows 6–9 : Report meta-info
@@ -868,21 +900,11 @@ export async function generateISEMSEExcel(reportData: ReportResponse): Promise<v
     });
 
     // ═════════════════════════════════════════════════════════════════════════
-    // SECTION H — Serialise & Download
-    // ═════════════════════════════════════════════════════════
+    // SECTION H — Serialise & return buffer
+    // ═════════════════════════════════════════════════════════════════════════
 
-    const buffer = await workbook.xlsx.writeBuffer();
-
-    const blob = new Blob([buffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `ISE-MSE-Attainment-${allotment.sub_id}.xlsx`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
+    // ExcelJS returns Buffer/Uint8Array — copy into a true ArrayBuffer for Web Worker transfer
+    const raw = await workbook.xlsx.writeBuffer();
+    const u8 = new Uint8Array(raw);
+    return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
 }

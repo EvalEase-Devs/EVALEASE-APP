@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { generateISEMSEExcel } from '../utils/generate-ise-mse-excel';
+import { exportISEMSEViaWorker } from '../utils/excel-worker-client';
 import { SUBJECT_TARGETS, ATTAINMENT_CRITERIA } from '../constants';
 
 interface ISETask {
@@ -94,10 +94,9 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
         if (!reportData) return;
         try {
             setExporting(true);
-            // generateISEMSEExcel builds the entire workbook (headers, student rows,
-            // attainment summary, criteria legend) and triggers the browser download
-            // automatically via Blob + URL.createObjectURL.
-            await generateISEMSEExcel(reportData);
+            // Offloaded to a Web Worker — the main thread stays at 60 fps
+            // while ExcelJS builds the workbook off-thread.
+            await exportISEMSEViaWorker(reportData);
             toast.success('Report downloaded successfully');
         } catch (error) {
             console.error('Error exporting:', error);

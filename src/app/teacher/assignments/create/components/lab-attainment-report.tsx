@@ -6,9 +6,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import * as XLSX from 'xlsx';
 import { SUBJECT_TARGETS } from '../constants';
-import { generateLabAttainmentExcel } from '../utils/generate-lab-excel';
+import { exportLabViaWorker } from '../utils/excel-worker-client';
 
 interface ExperimentData {
     exp_no: number;
@@ -86,7 +85,8 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
 
         try {
             setExporting(true);
-            await generateLabAttainmentExcel(reportData);
+            // Offloaded to a Web Worker for UI responsiveness
+            await exportLabViaWorker(reportData);
             toast.success('Report exported successfully');
         } catch (error) {
             console.error('Error exporting:', error);

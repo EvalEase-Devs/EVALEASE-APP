@@ -58,11 +58,16 @@ The following architectural bottlenecks have been identified. AI Agents are auth
   * Default `staleTime: 60s` means navigating between Dashboard ↔ Assignments ↔ Evaluations uses cached data instantly (no spinners).
   * Default `gcTime: 5min` keeps unused cache warm for quick back-navigation.
 
-### 🔴 Bottleneck 3: UI Thread Blocking on Excel Generation
-The `exceljs` generation scripts (`generate-ise-mse-excel.ts` and `generate-lab-excel.ts`) execute highly complex logic on the main browser thread. For massive student batches, this causes the UI to freeze/stutter.
+### ✅ Bottleneck 3: UI Thread Blocking on Excel Generation (RESOLVED)
+The `exceljs` generation scripts (`generate-ise-mse-excel.ts` and `generate-lab-excel.ts`) now run in a **Web Worker**, keeping the main UI thread at 60 fps.
 
-* **The Enterprise Fix:** * Refactor heavy report generation into a **Web Worker**.
-  * Offload the `exceljs` workbook building to a background thread so the main UI animations and loading spinners continue running at a smooth 60fps.
+* **What changed:**
+  * Both generators (`generateISEMSEExcelBuffer`, `generateLabAttainmentExcelBuffer`) now return `ArrayBuffer` instead of triggering a DOM download — making them worker-safe (no `document` dependency).
+  * `excel-worker.ts` — Web Worker entry point. Receives `{ type, reportData, logoBase64 }`, calls the appropriate generator, and transfers the finished buffer back via `postMessage` (zero-copy `Transferable`).
+  * `excel-worker-client.ts` — Main-thread helper. Pre-fetches the logo as base64 (cached), spins up the worker, posts the payload, receives the buffer, and triggers the browser download. Gracefully falls back to main-thread generation if `Worker` is unavailable.
+  * Consumer components (`ise-mse-report.tsx`, `lab-attainment-report.tsx`) now call `exportISEMSEViaWorker()` / `exportLabViaWorker()` instead of the direct generators.
+  * Removed stale `import * as XLSX from 'xlsx'` in `lab-attainment-report.tsx`.
+  * Removed unused `import { SUBJECT_TARGETS }` from `generate-ise-mse-excel.ts`.
 
 ### 🔴 Bottleneck 4: Missing Micro-Interactions & Form Lag
 Large assignment creation forms managed by raw React state can cause input lag. Additionally, API triggers lack consistent feedback.
