@@ -157,15 +157,18 @@ export default function StudentTestModal({ isOpen, onClose, taskId }: StudentTes
 
     const handleSubmit = async (answers: Record<string, number>) => {
         setIsSubmitting(true);
-        try {
-            const result = await submitMCQ(answers);
-            toast.success(`Test submitted! Score: ${result.score}/${result.maxMarks}`);
-            onClose();
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to submit');
-        } finally {
-            setIsSubmitting(false);
-        }
+        toast.promise(
+            submitMCQ(answers),
+            {
+                loading: 'Submitting test...',
+                success: (result) => {
+                    onClose();
+                    return `Test submitted! Score: ${result.score}/${result.maxMarks}`;
+                },
+                error: (err) => err instanceof Error ? err.message : 'Failed to submit',
+                finally: () => setIsSubmitting(false),
+            }
+        );
     };
 
     // Calculate time limit from start and end time

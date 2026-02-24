@@ -69,13 +69,19 @@ The `exceljs` generation scripts (`generate-ise-mse-excel.ts` and `generate-lab-
   * Removed stale `import * as XLSX from 'xlsx'` in `lab-attainment-report.tsx`.
   * Removed unused `import { SUBJECT_TARGETS }` from `generate-ise-mse-excel.ts`.
 
-### 🔴 Bottleneck 4: Missing Micro-Interactions & Form Lag
+### ✅ Bottleneck 4: Missing Micro-Interactions & Form Lag — RESOLVED
 Large assignment creation forms managed by raw React state can cause input lag. Additionally, API triggers lack consistent feedback.
 
 * **The Enterprise Fix:**
   * **Forms:** Ensure all complex forms are wrapped in `react-hook-form` + `@hookform/resolvers/zod` + shadcn `<Form>`. Do not rely on top-level `useState` for massive forms.
   * **Buttons:** Any button triggering an asynchronous action MUST have a visual loading state (spinner) and be `disabled` during execution.
   * **Toasts:** Refactor `sonner` usage to `toast.promise()` for long-running actions (like saving marks or generating PDFs) so users see a persistent "Loading..." toast that resolves to a "Success" checkmark.
+
+* **Changes Made:**
+  * **Forms:** Migrated `task-modal.tsx` from 15 `useState` calls + manual `validateForm()` to `react-hook-form` + `zod` (`taskModalSchema` in `task-schema.ts`). Uses `useForm`, `register()`, `setValue()`, `watch()`, `reset()`, and `formState.errors` for zero-lag input handling and declarative validation.
+  * **Buttons:** Added `disabled` + loading text to async buttons: `addingTask` on "Add Task" button, `deletingTaskId` on task delete button (prop-drilled to `TasksListModal`), `removingId` on un-allot button (prop-drilled from `create-assignment-content.tsx` to `AllottedSubjectsList`).
+  * **Toasts:** Migrated all 9 toast patterns across 8 files to `toast.promise()`: `allotted-subjects-list.tsx` (add task, delete task), `create-assignment-content.tsx` (add/remove allotment), `tasks-list-modal.tsx` (save marks), `batch-marks-report-modal.tsx` (save marks), `ise-mse-report.tsx` (export Excel), `lab-attainment-report.tsx` (export Excel), `student-test-modal.tsx` (submit test), `student/assignments/pending/page.tsx` (submit marks), `student/assignments/page.tsx` (submit marks).
+  * Installed `react-hook-form@7.71.2` and `@hookform/resolvers@5.2.2`.
 
 ---
 

@@ -46,9 +46,10 @@ import { Task as FormTask } from "@/lib/types";
 interface AllottedSubjectsListProps {
     subjects: AllottedSubject[];
     onRemove: (id: number) => void;
+    removingId?: number | null;
 }
 
-export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsListProps) {
+export function AllottedSubjectsList({ subjects, onRemove, removingId }: AllottedSubjectsListProps) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [subjectToDelete, setSubjectToDelete] = useState<number | null>(null);
 
@@ -71,6 +72,10 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
     // Lab Attainment Report Modal State
     const [isLabReportOpen, setIsLabReportOpen] = useState(false);
     const [selectedSubjectForLabReport, setSelectedSubjectForLabReport] = useState<AllottedSubject | null>(null);
+
+    // Loading states for async buttons
+    const [addingTask, setAddingTask] = useState(false);
+    const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
 
     // Use API hook for tasks
     const { tasks: allTasks, loading: tasksLoading, createTask, deleteTask, fetchTasks } = useTasks();
@@ -134,39 +139,48 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
     const handleAddTask = async (newTask: FormTask) => {
         if (!selectedSubjectForTask) return;
 
-        try {
-            // Map the frontend task (camelCase) to API format (snake_case)
-            const apiTask = {
-                allotment_id: selectedSubjectForTask.allotment_id,
-                title: newTask.title,
-                task_type: newTask.type as 'Lec' | 'Lab',
-                assessment_type: (newTask.assessmentType as 'ISE' | 'MSE') || null,
-                assessment_sub_type: (newTask.assessmentSubType as 'Subjective' | 'MCQ') || null,
-                sub_id: selectedSubjectForTask.sub_id,
-                exp_no: newTask.experimentNumber || null,
-                max_marks: newTask.maxMarks,
-                start_time: newTask.startTime || null,
-                end_time: newTask.endTime || null,
-                mcq_questions: newTask.mcqQuestions || null,
-                sub_questions: newTask.subQuestions || null,
-                mapped_cos: newTask.mappedCOs?.map((co: string) => parseInt(co.replace('CO', ''))) || []
-            };
+        setAddingTask(true);
+        const apiTask = {
+            allotment_id: selectedSubjectForTask.allotment_id,
+            title: newTask.title,
+            task_type: newTask.type as 'Lec' | 'Lab',
+            assessment_type: (newTask.assessmentType as 'ISE' | 'MSE') || null,
+            assessment_sub_type: (newTask.assessmentSubType as 'Subjective' | 'MCQ') || null,
+            sub_id: selectedSubjectForTask.sub_id,
+            exp_no: newTask.experimentNumber || null,
+            max_marks: newTask.maxMarks,
+            start_time: newTask.startTime || null,
+            end_time: newTask.endTime || null,
+            mcq_questions: newTask.mcqQuestions || null,
+            sub_questions: newTask.subQuestions || null,
+            mapped_cos: newTask.mappedCOs?.map((co: string) => parseInt(co.replace('CO', ''))) || []
+        };
 
-            await createTask(apiTask);
-            await fetchTasks();
-            toast.success(`Task "${newTask.title}" created successfully!`);
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Failed to create task");
-        }
+        toast.promise(
+            (async () => {
+                await createTask(apiTask);
+                await fetchTasks();
+            })(),
+            {
+                loading: `Creating task "${newTask.title}"...`,
+                success: `Task "${newTask.title}" created successfully!`,
+                error: (err) => err instanceof Error ? err.message : "Failed to create task",
+                finally: () => setAddingTask(false),
+            }
+        );
     };
 
     const handleDeleteTask = async (taskId: number) => {
-        try {
-            await deleteTask(taskId);
-            toast.success("Task deleted");
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Failed to delete task");
-        }
+        setDeletingTaskId(taskId);
+        toast.promise(
+            deleteTask(taskId),
+            {
+                loading: 'Deleting task...',
+                success: 'Task deleted',
+                error: (err) => err instanceof Error ? err.message : "Failed to delete task",
+                finally: () => setDeletingTaskId(null),
+            }
+        );
     };
 
     const handlePublishTask = (taskId: number) => {
@@ -209,6 +223,7 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                    disabled={removingId === allotment.id}
                                                     onClick={() => handleUnAllot(allotment.id)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -263,10 +278,11 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                                                 <Button
                                                     className="flex-1"
                                                     size="sm"
+                                                    disabled={addingTask}
                                                     onClick={() => handleOpenTaskModal(allotment)}
                                                 >
                                                     <Plus className="mr-1.5 h-3.5 w-3.5" />
-                                                    Add Task
+                                                    {addingTask ? 'Adding...' : 'Add Task'}
                                                 </Button>
 
                                                 <DropdownMenu>
@@ -319,8 +335,8 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
-                            Un-Allot
+                        <AlertDialogAction onClick={confirmDelete} disabled={removingId !== null && removingId !== undefined} className="bg-destructive hover:bg-destructive/90">
+                            {removingId ? 'Removing...' : 'Un-Allot'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -357,6 +373,7 @@ export function AllottedSubjectsList({ subjects, onRemove }: AllottedSubjectsLis
                     }}
                     tasks={getTasksForAllotment(selectedSubjectForList.allotment_id)}
                     onDeleteTask={handleDeleteTask}
+                    deletingTaskId={deletingTaskId}
                     onPublishTask={handlePublishTask}
                     subjectName={selectedSubjectForList.subjectName}
                 />

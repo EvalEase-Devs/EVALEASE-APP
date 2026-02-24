@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Task, Subject, Question, SubQuestion } from '@/lib/types';
 import { Experiment, useExperimentLOs } from '@/hooks/use-api';
 import { EXPERIMENTS, COS } from '@/app/teacher/assignments/create/constants';
@@ -23,11 +25,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import {
-    validateTitle,
-    validateStartTime,
-    validateEndTime,
-    validateMaxMarks,
-    validateCOs,
+    taskModalSchema,
+    type TaskModalFormValues,
     validateMcqQuestion,
 } from '../schemas/task-schema';
 
@@ -52,14 +51,45 @@ const DEFAULT_MSE_QUESTIONS = [
 ];
 
 const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSubject, currentClass, currentBatch, experiments = [], experimentsLoading = false }) => {
-    // General State
-    const [title, setTitle] = useState('');
-    const [selectedExp, setSelectedExp] = useState<string>('');
-    const [assessmentType, setAssessmentType] = useState<'ISE' | 'MSE'>('ISE');
-    const [assessmentSubType, setAssessmentSubType] = useState<'Subjective' | 'MCQ'>('Subjective');
-    const [selectedCOs, setSelectedCOs] = useState<string[]>([]);
+    // ── React Hook Form ────────────────────────────────────────────────────────
+    const form = useForm<TaskModalFormValues>({
+        resolver: zodResolver(taskModalSchema),
+        defaultValues: {
+            assessmentType: 'ISE',
+            assessmentSubType: 'Subjective',
+            title: '',
+            startTime: '',
+            endTime: '',
+            maxMarks: 15,
+            selectedCOs: [],
+            selectedExp: '',
+            questions: [],
+            mseQuestions: DEFAULT_MSE_QUESTIONS,
+        },
+        mode: 'onTouched', // validate on blur, re-validate on change
+    });
 
-    // Fetch COs for the selected experiment
+    const { register, control, watch, setValue, getValues, reset, formState: { errors, touchedFields } } = form;
+
+    // Watched values for conditional rendering
+    const assessmentType = watch('assessmentType');
+    const assessmentSubType = watch('assessmentSubType');
+    const selectedExp = watch('selectedExp');
+    const startTime = watch('startTime');
+    const endTime = watch('endTime');
+    const maxMarks = watch('maxMarks');
+    const selectedCOs = watch('selectedCOs');
+    const questions = watch('questions');
+    const mseQuestions = watch('mseQuestions');
+
+    // MCQ question builder — local state (not part of the validated form until "Add" is clicked)
+    const [currentQText, setCurrentQText] = React.useState('');
+    const [currentOptions, setCurrentOptions] = React.useState<string[]>(['', '', '', '']);
+    const [currentCorrectOpt, setCurrentCorrectOpt] = React.useState(0);
+    const [currentQMarks, setCurrentQMarks] = React.useState(2);
+    const [currentQuestionError, setCurrentQuestionError] = React.useState<string | null>(null);
+
+    // Fetch LOs for selected experiment
     const { los: experimentLOs, loading: loLoading } = useExperimentLOs(
         currentSubject?.code || '',
         selectedExp ? parseInt(selectedExp) : null
@@ -68,150 +98,19 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
     // Initialize selectedExp when experiments are loaded
     useEffect(() => {
         if (experiments.length > 0 && !selectedExp) {
-            setSelectedExp(`${experiments[0].exp_no}`);
+            setValue('selectedExp', `${experiments[0].exp_no}`);
         }
-    }, [experiments, selectedExp]);
-
-    // Scheduling State
-    const [startTime, setStartTime] = useState('');
-    const [endTime, setEndTime] = useState('');
-
-    const [maxMarks, setMaxMarks] = useState<number>(15);
-
-    // MCQ Builder State
-    const [questions, setQuestions] = useState<Question[]>([]);
-    const [currentQText, setCurrentQText] = useState('');
-    const [currentOptions, setCurrentOptions] = useState<string[]>(['', '', '', '']);
-    const [currentCorrectOpt, setCurrentCorrectOpt] = useState(0);
-    const [currentQMarks, setCurrentQMarks] = useState(2);
-
-    // MSE Builder State
-    const [mseQuestions, setMseQuestions] = useState<SubQuestion[]>(DEFAULT_MSE_QUESTIONS);
-
-    // Validation Error State
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [touched, setTouched] = useState<Record<string, boolean>>({});
+    }, [experiments, selectedExp, setValue]);
 
     // Auto-calculate MSE Max Marks & COs
     useEffect(() => {
         if (assessmentType === 'MSE') {
             const total = mseQuestions.reduce((sum, q) => sum + q.marks, 0);
-            setMaxMarks(total);
-
+            setValue('maxMarks', total);
             const uniqueCOs = Array.from(new Set(mseQuestions.map(q => q.co)));
-            setSelectedCOs(uniqueCOs);
+            setValue('selectedCOs', uniqueCOs);
         }
-    }, [mseQuestions, assessmentType]);
-
-    // Clear errors when form type changes
-    useEffect(() => {
-        setErrors({});
-        setTouched({});
-    }, [assessmentType, assessmentSubType]);
-
-    // Field blur handler to mark fields as touched
-    const handleBlur = (field: string) => {
-        setTouched(prev => ({ ...prev, [field]: true }));
-        validateField(field);
-    };
-
-    // Single field validation
-    const validateField = (field: string): boolean => {
-        let error: string | null = null;
-
-        switch (field) {
-            case 'title':
-                if (!isLab && assessmentType !== 'MSE') {
-                    error = validateTitle(title);
-                }
-                break;
-            case 'startTime':
-                error = validateStartTime(startTime);
-                break;
-            case 'endTime':
-                if (isMCQ) {
-                    error = validateEndTime(startTime, endTime);
-                }
-                break;
-            case 'maxMarks':
-                if (!isLab && assessmentType !== 'MSE') {
-                    error = validateMaxMarks(maxMarks);
-                }
-                break;
-            case 'selectedCOs':
-                if (assessmentType !== 'MSE') {
-                    error = validateCOs(selectedCOs);
-                }
-                break;
-        }
-
-        setErrors(prev => {
-            if (error) {
-                return { ...prev, [field]: error };
-            } else {
-                const { [field]: _, ...rest } = prev;
-                return rest;
-            }
-        });
-
-        return error === null;
-    };
-
-    // Full form validation
-    const validateForm = (): boolean => {
-        const newErrors: Record<string, string> = {};
-
-        // Start Time validation (required for all)
-        const startTimeError = validateStartTime(startTime);
-        if (startTimeError) newErrors.startTime = startTimeError;
-
-        if (isLab) {
-            // Lab only needs startTime and experiment selection
-            if (!selectedExp) newErrors.selectedExp = "Select an experiment";
-        } else if (assessmentType === 'MSE') {
-            // MSE - COs and marks auto-calculated
-            const total = mseQuestions.reduce((sum, q) => sum + q.marks, 0);
-            if (total <= 0) newErrors.mseQuestions = "Total marks must be greater than 0";
-        } else if (assessmentType === 'ISE') {
-            // Title validation
-            const titleError = validateTitle(title);
-            if (titleError) newErrors.title = titleError;
-
-            // COs validation
-            const cosError = validateCOs(selectedCOs);
-            if (cosError) newErrors.selectedCOs = cosError;
-
-            // Max marks validation for subjective
-            if (assessmentSubType === 'Subjective') {
-                const marksError = validateMaxMarks(maxMarks);
-                if (marksError) newErrors.maxMarks = marksError;
-            }
-
-            // MCQ specific validation
-            if (assessmentSubType === 'MCQ') {
-                const endTimeError = validateEndTime(startTime, endTime);
-                if (endTimeError) newErrors.endTime = endTimeError;
-
-                if (questions.length === 0) {
-                    newErrors.questions = "Add at least one question";
-                }
-
-                // Check total MCQ marks
-                const totalMCQMarks = questions.reduce((sum, q) => sum + q.marks, 0);
-                if (totalMCQMarks <= 0) {
-                    newErrors.questions = "Total marks must be greater than 0";
-                }
-            }
-        }
-
-        setErrors(newErrors);
-        // Mark all fields as touched
-        const touchedFields: Record<string, boolean> = {};
-        Object.keys(newErrors).forEach(key => touchedFields[key] = true);
-        setTouched(prev => ({ ...prev, ...touchedFields }));
-
-        return Object.keys(newErrors).length === 0;
-    };
+    }, [mseQuestions, assessmentType, setValue]);
 
     if (!isOpen || !currentSubject) return null;
 
@@ -219,12 +118,22 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
     const isMCQ = !isLab && assessmentType === 'ISE' && assessmentSubType === 'MCQ';
 
     // Error display helper component
-    const FieldError = ({ field }: { field: string }) => {
-        if (!touched[field] || !errors[field]) return null;
+    const FieldError = ({ field }: { field: keyof TaskModalFormValues | 'currentQuestion' }) => {
+        if (field === 'currentQuestion') {
+            if (!currentQuestionError) return null;
+            return (
+                <div className="flex items-center gap-1 text-destructive text-xs mt-1">
+                    <AlertCircle size={12} />
+                    <span>{currentQuestionError}</span>
+                </div>
+            );
+        }
+        const err = errors[field];
+        if (!err) return null;
         return (
             <div className="flex items-center gap-1 text-destructive text-xs mt-1">
                 <AlertCircle size={12} />
-                <span>{errors[field]}</span>
+                <span>{err.message as string}</span>
             </div>
         );
     };
@@ -232,21 +141,16 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
     const handleMseChange = (index: number, field: keyof SubQuestion, value: any) => {
         const updated = [...mseQuestions];
         updated[index] = { ...updated[index], [field]: value };
-        setMseQuestions(updated);
+        setValue('mseQuestions', updated, { shouldValidate: true });
     };
 
     const handleAddQuestion = () => {
         const questionError = validateMcqQuestion(currentQText, currentOptions);
         if (questionError) {
-            setErrors(prev => ({ ...prev, currentQuestion: questionError }));
-            setTouched(prev => ({ ...prev, currentQuestion: true }));
+            setCurrentQuestionError(questionError);
             return;
         }
-        // Clear any previous question error
-        setErrors(prev => {
-            const { currentQuestion, ...rest } = prev;
-            return rest;
-        });
+        setCurrentQuestionError(null);
 
         const newQ: Question = {
             id: Date.now().toString(),
@@ -255,15 +159,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
             correctOptionIndex: currentCorrectOpt,
             marks: currentQMarks
         };
-        setQuestions([...questions, newQ]);
-
-        // Clear the questions error if we now have at least one
-        if (errors.questions) {
-            setErrors(prev => {
-                const { questions: _, ...rest } = prev;
-                return rest;
-            });
-        }
+        setValue('questions', [...questions, newQ], { shouldValidate: true });
 
         // Reset inputs
         setCurrentQText('');
@@ -272,58 +168,103 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
     };
 
     const handleRemoveQuestion = (id: string) => {
-        setQuestions(prev => prev.filter(q => q.id !== id));
+        setValue('questions', questions.filter(q => q.id !== id), { shouldValidate: true });
     };
 
-    const handleSubmit = () => {
-        // Run full validation
-        if (!validateForm()) {
+    const handleFormSubmit = () => {
+        // Manual validation for conditional fields since Zod superRefine
+        // doesn't know about isLab (external prop)
+        const values = getValues();
+
+        // startTime is required for all
+        if (!values.startTime) {
+            form.setError('startTime', { message: 'Start time is required' });
             return;
         }
 
-        // Get the selected experiment details
-        const selectedExperiment = experiments.find(exp => exp.exp_no === parseInt(selectedExp));
-
-        // Construct Title
-        let finalTitle = title;
-
         if (isLab) {
-            finalTitle = `${currentSubject.code} - Exp ${selectedExp}: ${selectedExperiment?.exp_name || 'Experiment'}`;
-        } else if (assessmentType === 'MSE') {
-            finalTitle = `${currentSubject.code} - MSE`;
+            if (!values.selectedExp) {
+                form.setError('selectedExp', { message: 'Select an experiment' });
+                return;
+            }
+        } else if (values.assessmentType === 'MSE') {
+            const total = values.mseQuestions.reduce((s, q) => s + q.marks, 0);
+            if (total <= 0) {
+                form.setError('mseQuestions', { message: 'Total marks must be greater than 0' });
+                return;
+            }
         } else {
             // ISE
-            finalTitle = `${currentSubject.code} - ${assessmentType} ${assessmentSubType === 'MCQ' ? '(MCQ)' : ''} - ${title}`;
+            if (!values.title.trim()) {
+                form.setError('title', { message: 'Title is required' });
+                return;
+            }
+            if (values.selectedCOs.length === 0) {
+                form.setError('selectedCOs', { message: 'Select at least one CO' });
+                return;
+            }
+            if (values.assessmentSubType === 'Subjective') {
+                if (values.maxMarks < 1) {
+                    form.setError('maxMarks', { message: 'Marks must be at least 1' });
+                    return;
+                }
+            }
+            if (values.assessmentSubType === 'MCQ') {
+                if (!values.endTime) {
+                    form.setError('endTime', { message: 'End time is required for MCQ' });
+                    return;
+                }
+                if (new Date(values.endTime) <= new Date(values.startTime)) {
+                    form.setError('endTime', { message: 'End time must be after start time' });
+                    return;
+                }
+                if (values.questions.length === 0) {
+                    form.setError('questions', { message: 'Add at least one question' });
+                    return;
+                }
+            }
+        }
+
+        // Get the selected experiment details
+        const selectedExperiment = experiments.find(exp => exp.exp_no === parseInt(values.selectedExp));
+
+        // Construct Title
+        let finalTitle = values.title;
+
+        if (isLab) {
+            finalTitle = `${currentSubject!.code} - Exp ${values.selectedExp}: ${selectedExperiment?.exp_name || 'Experiment'}`;
+        } else if (values.assessmentType === 'MSE') {
+            finalTitle = `${currentSubject!.code} - MSE`;
+        } else {
+            finalTitle = `${currentSubject!.code} - ${values.assessmentType} ${values.assessmentSubType === 'MCQ' ? '(MCQ)' : ''} - ${values.title}`;
         }
 
         // Auto-calculate maxMarks for MCQ from sum of all question marks
-        let calculatedMaxMarks = maxMarks;
+        let calculatedMaxMarks = values.maxMarks;
         if (isMCQ) {
-            calculatedMaxMarks = questions.reduce((sum, q) => sum + q.marks, 0);
+            calculatedMaxMarks = values.questions.reduce((sum, q) => sum + q.marks, 0);
         }
 
         // Convert local time to IST ISO string (preserve the local time, just add IST offset)
         const convertToIST = (localDateTime: string) => {
             if (!localDateTime) return undefined;
-            // datetime-local gives us: "2026-01-10T20:00"
-            // We want to keep this time and explicitly mark it as IST: "2026-01-10T20:00:00+05:30"
             return localDateTime.replace('T', 'T') + ':00+05:30';
         };
 
         const newTask: Task = {
             id: Math.random().toString(36).substr(2, 9),
             title: finalTitle,
-            startTime: convertToIST(startTime),
-            endTime: endTime ? convertToIST(endTime) : undefined,
-            type: currentSubject.type,
-            experimentNumber: isLab ? parseInt(selectedExp) : undefined,
-            assessmentType: !isLab ? assessmentType : undefined,
-            assessmentSubType: (!isLab && assessmentType === 'ISE') ? assessmentSubType : undefined,
-            mcqQuestions: (isMCQ) ? questions : undefined,
-            subQuestions: (!isLab && assessmentType === 'MSE') ? mseQuestions : undefined,
+            startTime: convertToIST(values.startTime),
+            endTime: values.endTime ? convertToIST(values.endTime) : undefined,
+            type: currentSubject!.type,
+            experimentNumber: isLab ? parseInt(values.selectedExp) : undefined,
+            assessmentType: !isLab ? values.assessmentType : undefined,
+            assessmentSubType: (!isLab && values.assessmentType === 'ISE') ? values.assessmentSubType : undefined,
+            mcqQuestions: (isMCQ) ? values.questions : undefined,
+            subQuestions: (!isLab && values.assessmentType === 'MSE') ? values.mseQuestions : undefined,
             maxMarks: calculatedMaxMarks,
-            mappedCOs: selectedCOs,
-            subjectCode: currentSubject.code,
+            mappedCOs: values.selectedCOs,
+            subjectCode: currentSubject!.code,
             classStr: currentClass,
             batch: currentBatch
         };
@@ -332,21 +273,18 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
     };
 
     const handleClose = () => {
-        // Reset form
-        setTitle('');
-        setSelectedCOs([]);
-        setQuestions([]);
-        setStartTime('');
-        setEndTime('');
-        setMaxMarks(15);
-        setErrors({});
-        setTouched({});
-        setMseQuestions(DEFAULT_MSE_QUESTIONS);
+        reset();
+        setCurrentQText('');
+        setCurrentOptions(['', '', '', '']);
+        setCurrentCorrectOpt(0);
+        setCurrentQuestionError(null);
         onClose();
     };
 
     const toggleCO = (co: string) => {
-        setSelectedCOs(prev => prev.includes(co) ? prev.filter(c => c !== co) : [...prev, co]);
+        const current = getValues('selectedCOs');
+        const next = current.includes(co) ? current.filter(c => c !== co) : [...current, co];
+        setValue('selectedCOs', next, { shouldValidate: true });
     };
 
     const updateOption = (index: number, val: string) => {
@@ -388,7 +326,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                         <>
                                             <div className="space-y-2">
                                                 <Label>Select Experiment <span className="text-destructive">*</span></Label>
-                                                <Select value={selectedExp} onValueChange={setSelectedExp}>
+                                                <Select value={selectedExp} onValueChange={(val) => setValue('selectedExp', val)}>
                                                     <SelectTrigger className="h-11">
                                                         <SelectValue placeholder="Choose an experiment..." />
                                                     </SelectTrigger>
@@ -464,7 +402,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                             type="radio"
                                                             className="h-4 w-4"
                                                             checked={assessmentType === 'ISE'}
-                                                            onChange={() => setAssessmentType('ISE')}
+                                                            onChange={() => setValue('assessmentType', 'ISE')}
                                                         />
                                                         <span className="text-sm font-medium">ISE</span>
                                                     </label>
@@ -473,7 +411,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                             type="radio"
                                                             className="h-4 w-4"
                                                             checked={assessmentType === 'MSE'}
-                                                            onChange={() => setAssessmentType('MSE')}
+                                                            onChange={() => setValue('assessmentType', 'MSE')}
                                                         />
                                                         <span className="text-sm font-medium">MSE</span>
                                                     </label>
@@ -490,7 +428,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                                 type="radio"
                                                                 className="h-4 w-4"
                                                                 checked={assessmentSubType === 'Subjective'}
-                                                                onChange={() => setAssessmentSubType('Subjective')}
+                                                                onChange={() => setValue('assessmentSubType', 'Subjective')}
                                                             />
                                                             <span className="text-sm font-medium">Subjective</span>
                                                         </label>
@@ -499,7 +437,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                                 type="radio"
                                                                 className="h-4 w-4"
                                                                 checked={assessmentSubType === 'MCQ'}
-                                                                onChange={() => setAssessmentSubType('MCQ')}
+                                                                onChange={() => setValue('assessmentSubType', 'MCQ')}
                                                             />
                                                             <span className="text-sm font-medium">MCQ (Quiz)</span>
                                                         </label>
@@ -514,10 +452,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                     <Input
                                                         type="text"
                                                         placeholder="e.g. Module 1 Test"
-                                                        value={title}
-                                                        onChange={(e) => setTitle(e.target.value)}
-                                                        onBlur={() => handleBlur('title')}
-                                                        className={errors.title && touched.title ? 'border-destructive' : ''}
+                                                        {...register('title')}
+                                                        className={errors.title ? 'border-destructive' : ''}
                                                     />
                                                     <FieldError field="title" />
                                                 </div>
@@ -532,10 +468,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                         </Label>
                                                         <Input
                                                             type="datetime-local"
-                                                            value={startTime}
-                                                            onChange={(e) => setStartTime(e.target.value)}
-                                                            onBlur={() => handleBlur('startTime')}
-                                                            className={errors.startTime && touched.startTime ? 'border-destructive' : ''}
+                                                            {...register('startTime')}
+                                                            className={errors.startTime ? 'border-destructive' : ''}
                                                         />
                                                         <FieldError field="startTime" />
                                                     </div>
@@ -545,10 +479,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                         </Label>
                                                         <Input
                                                             type="datetime-local"
-                                                            value={endTime}
-                                                            onChange={(e) => setEndTime(e.target.value)}
-                                                            onBlur={() => handleBlur('endTime')}
-                                                            className={errors.endTime && touched.endTime ? 'border-destructive' : ''}
+                                                            {...register('endTime')}
+                                                            className={errors.endTime ? 'border-destructive' : ''}
                                                         />
                                                         <FieldError field="endTime" />
                                                     </div>
@@ -560,10 +492,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                     </Label>
                                                     <Input
                                                         type="datetime-local"
-                                                        value={startTime}
-                                                        onChange={(e) => setStartTime(e.target.value)}
-                                                        onBlur={() => handleBlur('startTime')}
-                                                        className={errors.startTime && touched.startTime ? 'border-destructive' : ''}
+                                                        {...register('startTime')}
+                                                        className={errors.startTime ? 'border-destructive' : ''}
                                                     />
                                                     <FieldError field="startTime" />
                                                 </div>
@@ -575,10 +505,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                     <Label>Max Marks <span className="text-destructive">*</span></Label>
                                                     <Input
                                                         type="number"
-                                                        value={maxMarks}
-                                                        onChange={(e) => setMaxMarks(parseInt(e.target.value) || 0)}
-                                                        onBlur={() => handleBlur('maxMarks')}
-                                                        className={errors.maxMarks && touched.maxMarks ? 'border-destructive' : ''}
+                                                        {...register('maxMarks', { valueAsNumber: true })}
+                                                        className={errors.maxMarks ? 'border-destructive' : ''}
                                                     />
                                                     <FieldError field="maxMarks" />
                                                 </div>
@@ -595,10 +523,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                                     type="checkbox"
                                                                     className="h-4 w-4 rounded"
                                                                     checked={selectedCOs.includes(co)}
-                                                                    onChange={() => {
-                                                                        toggleCO(co);
-                                                                        setTouched(prev => ({ ...prev, selectedCOs: true }));
-                                                                    }}
+                                                                    onChange={() => toggleCO(co)}
                                                                 />
                                                                 <span className="text-sm">{co}</span>
                                                             </label>
@@ -655,7 +580,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                                 placeholder="Question Text"
                                                                 value={currentQText}
                                                                 onChange={(e) => setCurrentQText(e.target.value)}
-                                                                className={errors.currentQuestion && touched.currentQuestion ? 'border-destructive' : ''}
+                                                                className={currentQuestionError ? 'border-destructive' : ''}
                                                             />
                                                             <Input
                                                                 type="number"
@@ -763,10 +688,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                         </Label>
                                         <Input
                                             type="datetime-local"
-                                            value={startTime}
-                                            onChange={(e) => setStartTime(e.target.value)}
-                                            onBlur={() => handleBlur('startTime')}
-                                            className={errors.startTime && touched.startTime ? 'border-destructive' : ''}
+                                            {...register('startTime')}
+                                            className={errors.startTime ? 'border-destructive' : ''}
                                         />
                                         <FieldError field="startTime" />
                                     </div>
@@ -784,7 +707,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                         </div>
                         <div className="flex gap-2">
                             <Button variant="outline" onClick={handleClose}>Cancel</Button>
-                            <Button onClick={handleSubmit}>
+                            <Button onClick={handleFormSubmit}>
                                 {isMCQ ? <Clock size={18} className="mr-2" /> : <CheckCircle2 size={18} className="mr-2" />}
                                 {isMCQ ? 'Schedule Task' : 'Create Task'}
                             </Button>

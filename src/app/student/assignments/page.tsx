@@ -70,16 +70,20 @@ export default function StudentAssignmentsPage() {
 
         const marks = parseFloat(marksInput);
 
-        try {
-            await submitMarks(selectedAssignment.mark_id, marks);
-            toast.success("Marks submitted successfully!");
-            setShowConfirmDialog(false);
-            setSelectedAssignment(null);
-            setMarksInput("");
-            refetch();
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Failed to submit marks");
-        }
+        toast.promise(
+            submitMarks(selectedAssignment.mark_id, marks),
+            {
+                loading: 'Submitting marks...',
+                success: () => {
+                    setShowConfirmDialog(false);
+                    setSelectedAssignment(null);
+                    setMarksInput("");
+                    refetch();
+                    return 'Marks submitted successfully!';
+                },
+                error: (err) => err instanceof Error ? err.message : 'Failed to submit marks',
+            }
+        );
     };
 
     if (assignmentsLoading) {

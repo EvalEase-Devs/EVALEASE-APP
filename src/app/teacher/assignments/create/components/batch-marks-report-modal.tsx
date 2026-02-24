@@ -83,44 +83,38 @@ export function BatchMarksReportModal({
     }
 
     setSaving(true);
-    try {
-      // Prepare marks updates
-      const updates = Object.entries(editedMarks).map(([key, marks]) => {
-        const [pid, expNo] = key.split("-").map(Number);
-        const originalMark = data?.marksMatrix[pid]?.[expNo];
 
-        return {
-          marksId: originalMark?.mark_id,
-          marks,
-        };
-      }).filter(update => update.marksId);
+    const updates = Object.entries(editedMarks).map(([key, marks]) => {
+      const [pid, expNo] = key.split("-").map(Number);
+      const originalMark = data?.marksMatrix[pid]?.[expNo];
+      return { marksId: originalMark?.mark_id, marks };
+    }).filter(update => update.marksId);
 
-      // Send updates to API
-      for (const update of updates) {
-        const response = await fetch(`/api/marks/${update.marksId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ total_marks_obtained: update.marks }),
-        });
+    toast.promise(
+      (async () => {
+        for (const update of updates) {
+          const response = await fetch(`/api/marks/${update.marksId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ total_marks_obtained: update.marks }),
+          });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Failed to update marks:", errorData);
-          throw new Error(errorData.error || "Failed to update marks");
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to update marks");
+          }
         }
+
+        setEditedMarks({});
+        window.location.reload();
+      })(),
+      {
+        loading: `Saving ${updates.length} mark change(s)...`,
+        success: "Marks updated successfully",
+        error: (err) => err instanceof Error ? err.message : "Failed to save marks",
+        finally: () => setSaving(false),
       }
-
-      toast.success("Marks updated successfully");
-      setEditedMarks({});
-
-      // Optionally refresh the data
-      window.location.reload();
-    } catch (err) {
-      console.error("Error saving marks:", err);
-      toast.error("Failed to save marks");
-    } finally {
-      setSaving(false);
-    }
+    );
   };
 
   const handleDownloadExcel = () => {

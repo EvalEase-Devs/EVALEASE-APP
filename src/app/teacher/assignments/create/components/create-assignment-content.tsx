@@ -35,6 +35,7 @@ function getSemesterFromClass(className: string): Semester {
 
 export function CreateAssignmentContent() {
     const [showFilterBar, setShowFilterBar] = useState(false);
+    const [removingId, setRemovingId] = useState<number | null>(null);
     const { allotments, loading, createAllotment, deleteAllotment, fetchAllotments } = useAllotments();
 
     // Transform API allotments to component format
@@ -52,8 +53,8 @@ export function CreateAssignmentContent() {
     }));
 
     const handleAddAllotment = async (allotment: Omit<AllottedSubject, "id" | "allotment_id">) => {
-        try {
-            await createAllotment({
+        toast.promise(
+            createAllotment({
                 sub_id: allotment.sub_id || allotment.subject.split(' - ')[0],
                 sub_name: allotment.subjectName,
                 class_name: allotment.class,
@@ -62,21 +63,29 @@ export function CreateAssignmentContent() {
                 course: 'Computer Engineering',
                 type: allotment.type,
                 current_sem: allotment.semester
-            });
-            toast.success("Subject allotted successfully");
-            setShowFilterBar(false);
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Failed to allot subject");
-        }
+            }),
+            {
+                loading: 'Allotting subject...',
+                success: () => {
+                    setShowFilterBar(false);
+                    return 'Subject allotted successfully';
+                },
+                error: (err) => err instanceof Error ? err.message : 'Failed to allot subject',
+            }
+        );
     };
 
     const handleRemoveAllotment = async (id: number) => {
-        try {
-            await deleteAllotment(id);
-            toast.success("Subject un-allotted successfully");
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Failed to remove allotment");
-        }
+        setRemovingId(id);
+        toast.promise(
+            deleteAllotment(id),
+            {
+                loading: 'Un-allotting subject...',
+                success: 'Subject un-allotted successfully',
+                error: (err) => err instanceof Error ? err.message : 'Failed to remove allotment',
+                finally: () => setRemovingId(null),
+            }
+        );
     };
 
     if (loading) {
@@ -112,6 +121,7 @@ export function CreateAssignmentContent() {
                 <AllottedSubjectsList
                     subjects={allottedSubjects}
                     onRemove={handleRemoveAllotment}
+                    removingId={removingId}
                 />
             )}
 

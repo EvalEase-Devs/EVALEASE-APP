@@ -82,18 +82,16 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
 
     const exportToExcel = async () => {
         if (!reportData) return;
-
-        try {
-            setExporting(true);
-            // Offloaded to a Web Worker for UI responsiveness
-            await exportLabViaWorker(reportData);
-            toast.success('Report exported successfully');
-        } catch (error) {
-            console.error('Error exporting:', error);
-            toast.error('Failed to export report');
-        } finally {
-            setExporting(false);
-        }
+        setExporting(true);
+        toast.promise(
+            exportLabViaWorker(reportData),
+            {
+                loading: 'Generating Lab Attainment report...',
+                success: 'Report exported successfully',
+                error: 'Failed to export report',
+                finally: () => setExporting(false),
+            }
+        );
     };
 
     if (loading) {

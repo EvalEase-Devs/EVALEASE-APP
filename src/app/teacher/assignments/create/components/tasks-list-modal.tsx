@@ -15,9 +15,10 @@ interface TasksListModalProps {
     onDeleteTask: (id: number) => void;
     onPublishTask: (id: number) => void;
     subjectName: string;
+    deletingTaskId?: number | null;
 }
 
-const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks, onDeleteTask, subjectName }) => {
+const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks, onDeleteTask, subjectName, deletingTaskId }) => {
     const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
     const [students, setStudents] = useState<any[]>([]);
     const [loadingStudents, setLoadingStudents] = useState(false);
@@ -78,48 +79,45 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
         }
 
         setSavingMarks(true);
-        try {
-            const isMSE = selectedTask?.assessment_type === 'MSE';
-            let totalMarks: number;
-            let questionMarks: Record<string, number> | null = null;
 
-            if (isMSE && typeof editedMarks === 'object') {
-                questionMarks = editedMarks;
-                totalMarks = Object.values(editedMarks).reduce((sum, val) => sum + (typeof val === 'number' ? val : parseFloat(val) || 0), 0);
-            } else {
-                totalMarks = typeof editedMarks === 'number' ? editedMarks : parseFloat(editedMarks as any) || 0;
-            }
+        const isMSE = selectedTask?.assessment_type === 'MSE';
+        let totalMarks: number;
+        let questionMarks: Record<string, number> | null = null;
 
-
-            const response = await fetch(`/api/marks/${markId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    total_marks_obtained: totalMarks,
-                    question_marks: questionMarks,
-                }),
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                console.error('Response error:', error);
-                throw new Error(error.error || 'Failed to update marks');
-            }
-
-            const result = await response.json();
-
-            toast.success('Marks updated successfully');
-            setEditingMarkId(null);
-            setEditedMarks(0);
-
-            // Refresh students list
-            await fetchStudents(selectedTaskId!);
-        } catch (error: any) {
-            console.error('Error updating marks:', error);
-            toast.error(error.message || 'Failed to update marks');
-        } finally {
-            setSavingMarks(false);
+        if (isMSE && typeof editedMarks === 'object') {
+            questionMarks = editedMarks;
+            totalMarks = Object.values(editedMarks).reduce((sum, val) => sum + (typeof val === 'number' ? val : parseFloat(val) || 0), 0);
+        } else {
+            totalMarks = typeof editedMarks === 'number' ? editedMarks : parseFloat(editedMarks as any) || 0;
         }
+
+        toast.promise(
+            (async () => {
+                const response = await fetch(`/api/marks/${markId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        total_marks_obtained: totalMarks,
+                        question_marks: questionMarks,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to update marks');
+                }
+
+                setEditingMarkId(null);
+                setEditedMarks(0);
+                await fetchStudents(selectedTaskId!);
+            })(),
+            {
+                loading: 'Updating marks...',
+                success: 'Marks updated successfully',
+                error: (err) => err instanceof Error ? err.message : 'Failed to update marks',
+                finally: () => setSavingMarks(false),
+            }
+        );
     };
 
     const handleQuestionMarkChange = (label: string, value: string) => {
@@ -338,6 +336,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                                             variant="ghost"
                                                             size="sm"
                                                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                            disabled={deletingTaskId === task.task_id}
                                                             onClick={() => onDeleteTask(task.task_id)}
                                                             title="Delete Task"
                                                         >

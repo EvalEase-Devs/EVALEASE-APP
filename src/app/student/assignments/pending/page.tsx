@@ -146,17 +146,21 @@ export default function PendingAssignmentsPage() {
             });
         }
 
-        try {
-            await submitMarks(selectedAssignment.mark_id, marks, questionMarksJson);
-            toast.success("Marks submitted successfully!");
-            setShowConfirmDialog(false);
-            setSelectedAssignment(null);
-            setMarksInput("");
-            setQuestionMarks({});
-            refetch();
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Failed to submit marks");
-        }
+        toast.promise(
+            submitMarks(selectedAssignment.mark_id, marks, questionMarksJson),
+            {
+                loading: 'Submitting marks...',
+                success: () => {
+                    setShowConfirmDialog(false);
+                    setSelectedAssignment(null);
+                    setMarksInput("");
+                    setQuestionMarks({});
+                    refetch();
+                    return 'Marks submitted successfully!';
+                },
+                error: (err) => err instanceof Error ? err.message : 'Failed to submit marks',
+            }
+        );
     };
 
     if (assignmentsLoading) {

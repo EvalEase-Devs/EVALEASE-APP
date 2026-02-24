@@ -23,6 +23,7 @@ const baseTaskSchema = z.object({
 
 // Schema for MCQ Question
 export const mcqQuestionSchema = z.object({
+    id: z.string(),
     text: z.string().min(1, "Question text is required"),
     options: z
         .array(z.string().min(1, "Option cannot be empty"))
@@ -37,6 +38,40 @@ export const mseQuestionSchema = z.object({
     co: z.string().min(1, "CO is required"),
     marks: z.number().min(0, "Marks cannot be negative"),
 });
+
+// ── Unified flat schema used by react-hook-form ──────────────────────────────
+// All fields are present; conditional validation is handled by superRefine.
+
+export const taskModalSchema = z.object({
+    // Discriminators (always present)
+    assessmentType: z.enum(['ISE', 'MSE']),
+    assessmentSubType: z.enum(['Subjective', 'MCQ']),
+
+    // Common
+    title: z.string().max(100, "Title must be less than 100 characters"),
+    startTime: z.string(),
+    endTime: z.string(),
+    maxMarks: z.number(),
+    selectedCOs: z.array(z.string()),
+
+    // Lab-specific
+    selectedExp: z.string(),
+
+    // MCQ builder
+    questions: z.array(mcqQuestionSchema),
+
+    // MSE builder
+    mseQuestions: z.array(mseQuestionSchema),
+}).superRefine((data, ctx) => {
+    // startTime is required for all
+    if (!data.startTime) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Start time is required", path: ["startTime"] });
+    }
+    // The rest of the validation is conditional on isLab (checked at component level)
+    // since the schema doesn't know about the Subject type.
+});
+
+export type TaskModalFormValues = z.infer<typeof taskModalSchema>;
 
 // Lab Task Schema
 export const labTaskSchema = z.object({

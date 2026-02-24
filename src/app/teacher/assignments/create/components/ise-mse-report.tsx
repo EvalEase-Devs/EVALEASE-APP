@@ -92,18 +92,16 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
 
     const exportToExcel = async () => {
         if (!reportData) return;
-        try {
-            setExporting(true);
-            // Offloaded to a Web Worker — the main thread stays at 60 fps
-            // while ExcelJS builds the workbook off-thread.
-            await exportISEMSEViaWorker(reportData);
-            toast.success('Report downloaded successfully');
-        } catch (error) {
-            console.error('Error exporting:', error);
-            toast.error('Failed to export report');
-        } finally {
-            setExporting(false);
-        }
+        setExporting(true);
+        toast.promise(
+            exportISEMSEViaWorker(reportData),
+            {
+                loading: 'Generating ISE-MSE report...',
+                success: 'Report downloaded successfully',
+                error: 'Failed to export report',
+                finally: () => setExporting(false),
+            }
+        );
     };
 
     if (loading) {
