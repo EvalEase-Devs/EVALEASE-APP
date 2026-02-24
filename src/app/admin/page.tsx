@@ -1,16 +1,15 @@
-"use client";
-
-import { useSession } from "next-auth/react";
+import { cookies } from "next/headers";
+import { auth } from "@/lib/auth";
 import { AppSidebarAdmin } from "@/components/app-sidebar-admin";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FadeIn } from "@/components/ui/fade-in";
-import { IconUsers, IconUserCheck, IconShieldCheck } from "@tabler/icons-react";
+import { AdminDashboardContent } from "./components/admin-dashboard-content";
 
-export default function AdminDashboard() {
-  const { data: session } = useSession();
+export default async function AdminDashboard() {
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
+  const session = await auth();
   const user = {
     name: session?.user?.name || "Admin",
     email: session?.user?.email || "",
@@ -18,7 +17,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebarAdmin user={user} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -34,67 +33,8 @@ export default function AdminDashboard() {
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          {/* Quick Stats */}
-          <div className="grid auto-rows-min gap-4 md:grid-cols-4">
-            <FadeIn delay={0.1}>
-              <Card className="hover-lift">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                  <IconUsers className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">System users</p>
-                </CardContent>
-              </Card>
-            </FadeIn>
-            <FadeIn delay={0.2}>
-              <Card className="hover-lift">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Teachers</CardTitle>
-                  <IconUserCheck className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">Teaching staff</p>
-                </CardContent>
-              </Card>
-            </FadeIn>
-            <FadeIn delay={0.3}>
-              <Card className="hover-lift">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Students</CardTitle>
-                  <IconUsers className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">Enrolled students</p>
-                </CardContent>
-              </Card>
-            </FadeIn>
-            <FadeIn delay={0.4}>
-              <Card className="hover-lift">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">System Status</CardTitle>
-                  <IconShieldCheck className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">✓</div>
-                  <p className="text-xs text-muted-foreground">All systems operational</p>
-                </CardContent>
-              </Card>
-            </FadeIn>
-          </div>
-        </div>
-        {/* Main Content */}
-        <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 p-4 md:min-h-min">
-          <h2 className="text-lg font-semibold mb-4">System Overview</h2>
-          <p className="text-sm text-muted-foreground">
-            System analytics and management tools will be available here.
-          </p>
-      </div>
-    </SidebarInset>
-  </SidebarProvider >
+        <AdminDashboardContent />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

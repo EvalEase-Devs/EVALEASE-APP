@@ -1,8 +1,47 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import {
+    useQuery,
+    useMutation,
+    useQueryClient,
+} from "@tanstack/react-query";
 
-// Types
+// ============ SHARED FETCHER ============
+
+async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
+    const res = await fetch(url, init);
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Request failed: ${res.status}`);
+    }
+    return res.json();
+}
+
+// ============ QUERY KEY FACTORY ============
+// Centralised keys make cache invalidation predictable.
+
+export const queryKeys = {
+    allotments: ["allotments"] as const,
+    tasks: (allotmentId?: number) =>
+        allotmentId ? (["tasks", allotmentId] as const) : (["tasks"] as const),
+    students: (className?: string, batch?: number | null) =>
+        ["students", className, batch] as const,
+    marks: (taskId?: number) => ["marks", taskId] as const,
+    studentTasks: ["student-tasks"] as const,
+    studentTask: (taskId: number) => ["student-task", taskId] as const,
+    experiments: (subId: string) => ["experiments", subId] as const,
+    experimentLOs: (subId: string, expNo: string | number | null) =>
+        ["experiment-los", subId, expNo] as const,
+    studentAssignments: (status?: string) =>
+        status
+            ? (["student-assignments", status] as const)
+            : (["student-assignments"] as const),
+    batchMarksReport: (allotmentId: number | null) =>
+        ["batch-marks-report", allotmentId] as const,
+};
+
+// ============ TYPES (unchanged) ============
+
 export interface Allotment {
     allotment_id: number;
     teacher_id: number;
@@ -12,7 +51,7 @@ export interface Allotment {
     batch_no: number | null;
     is_subject_incharge: boolean;
     course: string | null;
-    type: 'Lec' | 'Lab';
+    type: "Lec" | "Lab";
     current_sem?: string;
 }
 
@@ -29,9 +68,9 @@ export interface Task {
     task_id: number;
     allotment_id: number;
     title: string;
-    task_type: 'Lec' | 'Lab';
-    assessment_type: 'ISE' | 'MSE' | null;
-    assessment_sub_type: 'Subjective' | 'MCQ' | null;
+    task_type: "Lec" | "Lab";
+    assessment_type: "ISE" | "MSE" | null;
+    assessment_sub_type: "Subjective" | "MCQ" | null;
     sub_id: string;
     exp_no: number | null;
     max_marks: number;
@@ -63,303 +102,12 @@ export interface MarksEntry {
     student?: Student;
 }
 
-// Fetch Allotments
-export function useAllotments() {
-    const [allotments, setAllotments] = useState<Allotment[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchAllotments = useCallback(async () => {
-        try {
-            setLoading(true);
-            const res = await fetch('/api/allotments');
-            if (!res.ok) throw new Error('Failed to fetch allotments');
-            const data = await res.json();
-            setAllotments(data);
-            setError(null);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchAllotments();
-    }, [fetchAllotments]);
-
-    const createAllotment = async (allotment: Omit<Allotment, 'allotment_id' | 'teacher_id'>) => {
-        const res = await fetch('/api/allotments', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(allotment)
-        });
-        if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.error || 'Failed to create allotment');
-        }
-        const newAllotment = await res.json();
-        setAllotments(prev => [...prev, newAllotment]);
-        return newAllotment;
-    };
-
-    const deleteAllotment = async (id: number) => {
-        const res = await fetch(`/api/allotments/${id}`, { method: 'DELETE' });
-        if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.error || 'Failed to delete allotment');
-        }
-        setAllotments(prev => prev.filter(a => a.allotment_id !== id));
-    };
-
-    return { allotments, loading, error, fetchAllotments, createAllotment, deleteAllotment };
-}
-
-// Fetch Tasks
-export function useTasks(allotmentId?: number) {
-    const [tasks, setTasks] = useState<Task[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchTasks = useCallback(async () => {
-        try {
-            setLoading(true);
-            const url = allotmentId
-                ? `/api/tasks?allotment_id=${allotmentId}`
-                : '/api/tasks';
-            const res = await fetch(url);
-            if (!res.ok) throw new Error('Failed to fetch tasks');
-            const data = await res.json();
-            setTasks(data);
-            setError(null);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-        } finally {
-            setLoading(false);
-        }
-    }, [allotmentId]);
-
-    useEffect(() => {
-        fetchTasks();
-    }, [fetchTasks]);
-
-    const createTask = async (task: any) => {
-        const res = await fetch('/api/tasks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(task)
-        });
-        if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.error || 'Failed to create task');
-        }
-        const newTask = await res.json();
-        setTasks(prev => [newTask, ...prev]);
-        return newTask;
-    };
-
-    const deleteTask = async (id: number) => {
-        const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
-        if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.error || 'Failed to delete task');
-        }
-        setTasks(prev => prev.filter(t => t.task_id !== id));
-    };
-
-    return { tasks, loading, error, fetchTasks, createTask, deleteTask };
-}
-
-// Fetch Students by class
-export function useStudents(className?: string, batch?: number | null) {
-    const [students, setStudents] = useState<Student[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchStudents = useCallback(async () => {
-        if (!className) return;
-
-        try {
-            setLoading(true);
-            let url = `/api/students?class_name=${encodeURIComponent(className)}`;
-            if (batch) {
-                url += `&batch=${batch}`;
-            }
-            const res = await fetch(url);
-            if (!res.ok) throw new Error('Failed to fetch students');
-            const data = await res.json();
-            setStudents(data);
-            setError(null);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-        } finally {
-            setLoading(false);
-        }
-    }, [className, batch]);
-
-    useEffect(() => {
-        fetchStudents();
-    }, [fetchStudents]);
-
-    return { students, loading, error, fetchStudents };
-}
-
-// Fetch Marks for a task
-export function useMarks(taskId?: number) {
-    const [marks, setMarks] = useState<MarksEntry[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchMarks = useCallback(async () => {
-        if (!taskId) return;
-
-        try {
-            setLoading(true);
-            const res = await fetch(`/api/marks?task_id=${taskId}`);
-            if (!res.ok) throw new Error('Failed to fetch marks');
-            const data = await res.json();
-            setMarks(data);
-            setError(null);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-        } finally {
-            setLoading(false);
-        }
-    }, [taskId]);
-
-    useEffect(() => {
-        fetchMarks();
-    }, [fetchMarks]);
-
-    const saveMarks = async (taskId: number, marksEntries: any[]) => {
-        const res = await fetch('/api/marks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ task_id: taskId, marks_entries: marksEntries })
-        });
-        if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.error || 'Failed to save marks');
-        }
-        const savedMarks = await res.json();
-        await fetchMarks();
-        return savedMarks;
-    };
-
-    return { marks, loading, error, fetchMarks, saveMarks };
-}
-
-// Student hooks
-export function useStudentTasks() {
-    const [tasks, setTasks] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchTasks = useCallback(async () => {
-        try {
-            setLoading(true);
-            const res = await fetch('/api/student/tasks');
-            if (!res.ok) throw new Error('Failed to fetch tasks');
-            const data = await res.json();
-            setTasks(data);
-            setError(null);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchTasks();
-    }, [fetchTasks]);
-
-    return { tasks, loading, error, fetchTasks };
-}
-
-export function useStudentTask(taskId: number) {
-    const [task, setTask] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchTask = useCallback(async () => {
-        try {
-            setLoading(true);
-            const res = await fetch(`/api/student/tasks/${taskId}`);
-            if (!res.ok) throw new Error('Failed to fetch task');
-            const data = await res.json();
-            setTask(data);
-            setError(null);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-        } finally {
-            setLoading(false);
-        }
-    }, [taskId]);
-
-    useEffect(() => {
-        fetchTask();
-    }, [fetchTask]);
-
-    const submitMCQ = async (answers: Record<string, number>) => {
-        const res = await fetch('/api/marks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ task_id: taskId, answers })
-        });
-        if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.error || 'Failed to submit');
-        }
-        const result = await res.json();
-        await fetchTask();
-        return result;
-    };
-
-    return { task, loading, error, fetchTask, submitMCQ };
-}
-
-// Fetch Experiments
 export interface Experiment {
     sub_id: string;
     exp_no: number;
     exp_name: string;
 }
 
-export function useExperiments(subId: string) {
-    const [experiments, setExperiments] = useState<Experiment[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchExperiments = useCallback(async () => {
-        if (!subId) {
-            setExperiments([]);
-            return;
-        }
-
-        try {
-            setLoading(true);
-            const res = await fetch(`/api/experiments?sub_id=${subId}`);
-            if (!res.ok) throw new Error('Failed to fetch experiments');
-            const data = await res.json();
-            setExperiments(data);
-            setError(null);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-            setExperiments([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [subId]);
-
-    useEffect(() => {
-        fetchExperiments();
-    }, [fetchExperiments]);
-
-    return { experiments, loading, error, fetchExperiments };
-}
-
-// Fetch LOs for a specific experiment
 export interface ExperimentLO {
     lo_no: number;
     lo?: {
@@ -368,58 +116,18 @@ export interface ExperimentLO {
     };
 }
 
-export function useExperimentLOs(subId: string, expNo: string | number | null) {
-    const [los, setLos] = useState<ExperimentLO[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchExperimentLOs = useCallback(async () => {
-        if (!subId || !expNo) {
-            setLos([]);
-            return;
-        }
-
-        try {
-            setLoading(true);
-            const url = `/api/experiments/${subId}?exp_no=${expNo}`;
-            const res = await fetch(url);
-            if (!res.ok) {
-                throw new Error(`Failed to fetch experiment LOs: ${res.status}`);
-            }
-            const data = await res.json();
-            setLos(data);
-            setError(null);
-        } catch (err) {
-            const errorMsg = err instanceof Error ? err.message : 'An error occurred';
-            console.error('Error in useExperimentLOs:', errorMsg);
-            setError(errorMsg);
-            setLos([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [subId, expNo]);
-
-    useEffect(() => {
-        fetchExperimentLOs();
-    }, [fetchExperimentLOs]);
-
-    return { los, loading, error, fetchExperimentLOs };
-}
-
-// ============ STUDENT ASSIGNMENTS ============
-
 export interface StudentAssignment {
     mark_id: number;
     task_id: number;
     total_marks_obtained: number | null;
-    status: 'Pending' | 'Submitted';
+    status: "Pending" | "Submitted";
     submitted_at: string | null;
     task: {
         task_id: number;
         title: string;
-        task_type: 'Lec' | 'Lab';
-        assessment_type: 'ISE' | 'MSE' | null;
-        assessment_sub_type: 'Subjective' | 'MCQ' | null;
+        task_type: "Lec" | "Lab";
+        assessment_type: "ISE" | "MSE" | null;
+        assessment_sub_type: "Subjective" | "MCQ" | null;
         sub_id: string;
         exp_no: number | null;
         max_marks: number;
@@ -434,79 +142,6 @@ export interface StudentAssignment {
     };
 }
 
-// Hook: Get student's assignments
-export function useStudentAssignments(status?: 'Pending' | 'Submitted') {
-    const [assignments, setAssignments] = useState<StudentAssignment[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchAssignments = useCallback(async () => {
-        try {
-            setLoading(true);
-            const url = status ? `/api/student/assignments?status=${status}` : '/api/student/assignments';
-            const res = await fetch(url);
-            if (!res.ok) {
-                throw new Error(`Failed to fetch assignments: ${res.status}`);
-            }
-            const data = await res.json();
-            setAssignments(data);
-            setError(null);
-        } catch (err) {
-            const errorMsg = err instanceof Error ? err.message : 'An error occurred';
-            console.error('Error in useStudentAssignments:', errorMsg);
-            setError(errorMsg);
-            setAssignments([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [status]);
-
-    useEffect(() => {
-        fetchAssignments();
-    }, [fetchAssignments]);
-
-    return { assignments, loading, error, refetch: fetchAssignments };
-}
-
-// Hook: Submit marks for an assignment
-export function useSubmitAssignmentMarks() {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const submitMarks = useCallback(async (marksId: number, marksObtained: number, questionMarks?: Record<string, number> | null) => {
-        try {
-            setLoading(true);
-            const res = await fetch(`/api/student/assignments/${marksId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    marks_obtained: marksObtained,
-                    question_marks: questionMarks
-                })
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || `Failed to submit marks: ${res.status}`);
-            }
-
-            const data = await res.json();
-            setError(null);
-            return data;
-        } catch (err) {
-            const errorMsg = err instanceof Error ? err.message : 'An error occurred';
-            console.error('Error in useSubmitAssignmentMarks:', errorMsg);
-            setError(errorMsg);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    return { submitMarks, loading, error };
-}
-
-// Hook to fetch batch marks report
 export interface BatchMarksReportData {
     allotment: Allotment;
     students: {
@@ -520,49 +155,391 @@ export interface BatchMarksReportData {
         exp_name: string;
         los: string[];
     }[];
-    marksMatrix: Record<number, Record<number, {
-        mark_id: number;
-        marks: number;
-        max_marks: number;
-        status: string;
-    }>>;
+    marksMatrix: Record<
+        number,
+        Record<
+            number,
+            {
+                mark_id: number;
+                marks: number;
+                max_marks: number;
+                status: string;
+            }
+        >
+    >;
 }
 
-export function useBatchMarksReport(allotmentId: number | null) {
-    const [data, setData] = useState<BatchMarksReportData | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+// ============ HOOKS ============
 
-    const fetchReport = useCallback(async () => {
-        if (!allotmentId) return;
+// ---- Allotments ----
 
-        setLoading(true);
-        setError(null);
+export function useAllotments() {
+    const queryClient = useQueryClient();
 
-        try {
-            const res = await fetch(`/api/marks/batch-report?allotment_id=${allotmentId}`);
+    const { data: allotments = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.allotments,
+        queryFn: () => apiFetch<Allotment[]>("/api/allotments"),
+    });
 
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || 'Failed to fetch batch marks report');
+    const error = queryError ? queryError.message : null;
+
+    const createMutation = useMutation({
+        mutationFn: (allotment: Omit<Allotment, "allotment_id" | "teacher_id">) =>
+            apiFetch<Allotment>("/api/allotments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(allotment),
+            }),
+        onSuccess: (newAllotment) => {
+            queryClient.setQueryData<Allotment[]>(queryKeys.allotments, (old) =>
+                old ? [...old, newAllotment] : [newAllotment]
+            );
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) =>
+            apiFetch<void>(`/api/allotments/${id}`, { method: "DELETE" }),
+        onSuccess: (_data, id) => {
+            queryClient.setQueryData<Allotment[]>(queryKeys.allotments, (old) =>
+                old ? old.filter((a) => a.allotment_id !== id) : []
+            );
+        },
+    });
+
+    const createAllotment = async (
+        allotment: Omit<Allotment, "allotment_id" | "teacher_id">
+    ) => createMutation.mutateAsync(allotment);
+
+    const deleteAllotment = async (id: number) =>
+        deleteMutation.mutateAsync(id);
+
+    const fetchAllotments = async () => {
+        await refetch();
+    };
+
+    return { allotments, loading, error, fetchAllotments, createAllotment, deleteAllotment };
+}
+
+// ---- Tasks ----
+
+export function useTasks(allotmentId?: number) {
+    const queryClient = useQueryClient();
+
+    const { data: tasks = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.tasks(allotmentId),
+        queryFn: () => {
+            const url = allotmentId
+                ? `/api/tasks?allotment_id=${allotmentId}`
+                : "/api/tasks";
+            return apiFetch<Task[]>(url);
+        },
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const createMutation = useMutation({
+        mutationFn: (task: any) =>
+            apiFetch<Task>("/api/tasks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(task),
+            }),
+        onSuccess: (newTask) => {
+            queryClient.setQueryData<Task[]>(
+                queryKeys.tasks(allotmentId),
+                (old) => (old ? [newTask, ...old] : [newTask])
+            );
+            // Also invalidate the unfiltered tasks list
+            queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) =>
+            apiFetch<void>(`/api/tasks/${id}`, { method: "DELETE" }),
+        onSuccess: (_data, id) => {
+            queryClient.setQueryData<Task[]>(
+                queryKeys.tasks(allotmentId),
+                (old) => (old ? old.filter((t) => t.task_id !== id) : [])
+            );
+            queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        },
+    });
+
+    const createTask = async (task: any) => createMutation.mutateAsync(task);
+
+    const deleteTask = async (id: number) => deleteMutation.mutateAsync(id);
+
+    const fetchTasks = async () => {
+        await refetch();
+    };
+
+    return { tasks, loading, error, fetchTasks, createTask, deleteTask };
+}
+
+// ---- Students ----
+
+export function useStudents(className?: string, batch?: number | null) {
+    const { data: students = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.students(className, batch),
+        queryFn: () => {
+            let url = `/api/students?class_name=${encodeURIComponent(className!)}`;
+            if (batch) url += `&batch=${batch}`;
+            return apiFetch<Student[]>(url);
+        },
+        enabled: !!className,
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const fetchStudents = async () => {
+        await refetch();
+    };
+
+    return { students, loading, error, fetchStudents };
+}
+
+// ---- Marks ----
+
+export function useMarks(taskId?: number) {
+    const queryClient = useQueryClient();
+
+    const { data: marks = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.marks(taskId),
+        queryFn: () => apiFetch<MarksEntry[]>(`/api/marks?task_id=${taskId}`),
+        enabled: !!taskId,
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const saveMutation = useMutation({
+        mutationFn: ({
+            taskId,
+            marksEntries,
+        }: {
+            taskId: number;
+            marksEntries: any[];
+        }) =>
+            apiFetch<MarksEntry[]>("/api/marks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ task_id: taskId, marks_entries: marksEntries }),
+            }),
+        // Optimistic update: reflect marks in the cache immediately
+        onMutate: async ({ taskId: tid, marksEntries }) => {
+            await queryClient.cancelQueries({ queryKey: queryKeys.marks(tid) });
+            const previous = queryClient.getQueryData<MarksEntry[]>(
+                queryKeys.marks(tid)
+            );
+            queryClient.setQueryData<MarksEntry[]>(
+                queryKeys.marks(tid),
+                (old) => {
+                    if (!old) return old;
+                    const map = new Map(old.map((m) => [m.stud_pid, m]));
+                    for (const entry of marksEntries) {
+                        const existing = map.get(entry.stud_pid);
+                        if (existing) {
+                            map.set(entry.stud_pid, { ...existing, ...entry });
+                        } else {
+                            map.set(entry.stud_pid, entry);
+                        }
+                    }
+                    return Array.from(map.values());
+                }
+            );
+            return { previous };
+        },
+        onError: (_err, { taskId: tid }, context) => {
+            // Rollback on error
+            if (context?.previous) {
+                queryClient.setQueryData(queryKeys.marks(tid), context.previous);
             }
+        },
+        onSettled: (_data, _error, { taskId: tid }) => {
+            // Refetch to ensure consistency
+            queryClient.invalidateQueries({ queryKey: queryKeys.marks(tid) });
+        },
+    });
 
-            const reportData = await res.json();
-            setData(reportData);
-        } catch (err) {
-            const errorMsg = err instanceof Error ? err.message : 'An error occurred';
-            console.error('Error fetching batch marks report:', errorMsg);
-            setError(errorMsg);
-        } finally {
-            setLoading(false);
-        }
-    }, [allotmentId]);
+    const saveMarks = async (taskId: number, marksEntries: any[]) =>
+        saveMutation.mutateAsync({ taskId, marksEntries });
 
-    useEffect(() => {
-        if (allotmentId) {
-            fetchReport();
-        }
-    }, [allotmentId, fetchReport]);
+    const fetchMarks = async () => {
+        await refetch();
+    };
 
-    return { data, loading, error, refetch: fetchReport };
+    return { marks, loading, error, fetchMarks, saveMarks };
+}
+
+// ---- Student Tasks ----
+
+export function useStudentTasks() {
+    const { data: tasks = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.studentTasks,
+        queryFn: () => apiFetch<any[]>("/api/student/tasks"),
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const fetchTasks = async () => {
+        await refetch();
+    };
+
+    return { tasks, loading, error, fetchTasks };
+}
+
+export function useStudentTask(taskId: number) {
+    const queryClient = useQueryClient();
+
+    const { data: task = null, isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.studentTask(taskId),
+        queryFn: () => apiFetch<any>(`/api/student/tasks/${taskId}`),
+        enabled: !!taskId,
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const submitMCQMutation = useMutation({
+        mutationFn: (answers: Record<string, number>) =>
+            apiFetch<any>("/api/marks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ task_id: taskId, answers }),
+            }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.studentTask(taskId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: ["student-assignments"],
+            });
+        },
+    });
+
+    const submitMCQ = async (answers: Record<string, number>) =>
+        submitMCQMutation.mutateAsync(answers);
+
+    const fetchTask = async () => {
+        await refetch();
+    };
+
+    return { task, loading, error, fetchTask, submitMCQ };
+}
+
+// ---- Experiments ----
+
+export function useExperiments(subId: string) {
+    const { data: experiments = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.experiments(subId),
+        queryFn: () => apiFetch<Experiment[]>(`/api/experiments?sub_id=${subId}`),
+        enabled: !!subId,
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const fetchExperiments = async () => {
+        await refetch();
+    };
+
+    return { experiments, loading, error, fetchExperiments };
+}
+
+// ---- Experiment LOs ----
+
+export function useExperimentLOs(
+    subId: string,
+    expNo: string | number | null
+) {
+    const { data: los = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.experimentLOs(subId, expNo),
+        queryFn: () =>
+            apiFetch<ExperimentLO[]>(
+                `/api/experiments/${subId}?exp_no=${expNo}`
+            ),
+        enabled: !!subId && expNo !== null && expNo !== undefined,
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const fetchExperimentLOs = async () => {
+        await refetch();
+    };
+
+    return { los, loading, error, fetchExperimentLOs };
+}
+
+// ---- Student Assignments ----
+
+export function useStudentAssignments(status?: "Pending" | "Submitted") {
+    const { data: assignments = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.studentAssignments(status),
+        queryFn: () => {
+            const url = status
+                ? `/api/student/assignments?status=${status}`
+                : "/api/student/assignments";
+            return apiFetch<StudentAssignment[]>(url);
+        },
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    return { assignments, loading, error, refetch };
+}
+
+// ---- Submit Assignment Marks ----
+
+export function useSubmitAssignmentMarks() {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: ({
+            marksId,
+            marksObtained,
+            questionMarks,
+        }: {
+            marksId: number;
+            marksObtained: number;
+            questionMarks?: Record<string, number> | null;
+        }) =>
+            apiFetch<any>(`/api/student/assignments/${marksId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    marks_obtained: marksObtained,
+                    question_marks: questionMarks,
+                }),
+            }),
+        onSuccess: () => {
+            // Invalidate all student-assignment queries to refresh lists
+            queryClient.invalidateQueries({
+                queryKey: ["student-assignments"],
+            });
+        },
+    });
+
+    const submitMarks = async (
+        marksId: number,
+        marksObtained: number,
+        questionMarks?: Record<string, number> | null
+    ) => mutation.mutateAsync({ marksId, marksObtained, questionMarks });
+
+    return { submitMarks, loading: mutation.isPending, error: mutation.error?.message ?? null };
+}
+
+// ---- Batch Marks Report ----
+
+export function useBatchMarksReport(allotmentId: number | null) {
+    const { data = null, isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.batchMarksReport(allotmentId),
+        queryFn: () =>
+            apiFetch<BatchMarksReportData>(
+                `/api/marks/batch-report?allotment_id=${allotmentId}`
+            ),
+        enabled: !!allotmentId,
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    return { data, loading, error, refetch };
 }

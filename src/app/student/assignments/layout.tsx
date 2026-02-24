@@ -1,19 +1,14 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { cookies } from "next/headers";
+import { auth } from "@/lib/auth";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { AppSidebarStudent } from "@/components/app-sidebar-student";
 
-export default function StudentAssignmentsLayout({ children }: { children: React.ReactNode }) {
-    const [mounted, setMounted] = useState(false);
-    const { data: session } = useSession();
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+export default async function StudentAssignmentsLayout({ children }: { children: React.ReactNode }) {
+    const cookieStore = await cookies();
+    const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
+    const session = await auth();
 
     const user = {
         name: session?.user?.name || "Student",
@@ -21,10 +16,8 @@ export default function StudentAssignmentsLayout({ children }: { children: React
         avatar: session?.user?.image || "",
     };
 
-    if (!mounted) return null;
-
     return (
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={defaultOpen}>
             <AppSidebarStudent user={user} />
             <SidebarInset>
                 <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
