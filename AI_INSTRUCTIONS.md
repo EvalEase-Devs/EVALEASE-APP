@@ -105,6 +105,23 @@ Large assignment creation forms managed by raw React state can cause input lag. 
   * **Portal-aware 404:** `src/app/teacher/not-found.tsx` catches invalid URLs within `/teacher/*` while preserving the sidebar and providing a "Back to Dashboard" button.
   * **Zero dead links remain** — every sidebar URL now resolves to a valid page.
 
+### ✅ Bottleneck 7: Missing Shared Layouts (DOM Thrashing) — RESOLVED
+~~When global navigation elements (like `SidebarProvider` and `AppSidebar`) are hardcoded into individual `page.tsx` files, Next.js destroys and re-renders the entire DOM tree on every route change, causing severe performance degradation and loss of UI state.~~
+
+* **Status: COMPLETE** (2026-02-25)
+* **What was done:**
+  * **Created `src/app/student/layout.tsx`** — shared layout for all student pages. Uses `cookies()` + `auth()`, wraps children in `SidebarProvider > AppSidebarStudent > SidebarInset`. Modelled after the existing `teacher/layout.tsx`.
+  * **Created `src/app/admin/layout.tsx`** — shared layout for all admin pages. Same pattern with `AppSidebarAdmin`.
+  * **Stripped 4 student files** of duplicate sidebar shell:
+    * `student/page.tsx` — now a lightweight server component with `auth()` only for `firstName` derivation, renders fragment with header + `StudentDashboardContent`.
+    * `student/assignments/layout.tsx` — removed `SidebarProvider`/`AppSidebarStudent`/`SidebarInset`, now renders fragment with header + content wrapper.
+    * `student/notifications/page.tsx` — stripped to stateless fragment.
+    * `student/settings/page.tsx` — stripped to stateless fragment.
+  * **Stripped 12 admin files** of duplicate sidebar shell:
+    * `admin/page.tsx` — now renders fragment with header + `AdminDashboardContent`.
+    * 11 Coming Soon pages (`analytics/`, `notifications/`, `settings/`, `users/`, `users/all/`, `users/teachers/`, `users/students/`, `users/add/`, `system/`, `system/overview/`, `system/logs/`, `system/backups/`) — all stripped to stateless fragments.
+  * **All 3 portals now follow the same pattern:** `layout.tsx` owns `SidebarProvider` + sidebar + `SidebarInset`; child `page.tsx` files render only headers and content as fragments.
+  * **Zero compile errors** confirmed after all changes.
 ---
 
 ## 🛠️ 3. Execution Workflow for AI Agents

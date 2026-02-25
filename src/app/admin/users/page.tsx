@@ -1,25 +1,11 @@
-import { cookies } from "next/headers";
-import { auth } from "@/lib/auth";
-import { AppSidebarAdmin } from "@/components/app-sidebar-admin";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Users, Hammer } from "lucide-react";
 
-export default async function UserManagementPage() {
-  const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
-  const session = await auth();
-  const user = {
-    name: session?.user?.name || "Admin",
-    email: session?.user?.email || "",
-    avatar: session?.user?.image || "",
-  };
-
+export default function UserManagementPage() {
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebarAdmin user={user} />
-      <SidebarInset>
+    <>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
@@ -48,7 +34,6 @@ export default async function UserManagementPage() {
             The user management dashboard is under development. You&apos;ll soon be able to view, add, and manage all teachers and students from here.
           </p>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+    </>
   );
 }
