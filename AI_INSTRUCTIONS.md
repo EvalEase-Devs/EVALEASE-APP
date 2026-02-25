@@ -122,6 +122,27 @@ Large assignment creation forms managed by raw React state can cause input lag. 
     * 11 Coming Soon pages (`analytics/`, `notifications/`, `settings/`, `users/`, `users/all/`, `users/teachers/`, `users/students/`, `users/add/`, `system/`, `system/overview/`, `system/logs/`, `system/backups/`) — all stripped to stateless fragments.
   * **All 3 portals now follow the same pattern:** `layout.tsx` owns `SidebarProvider` + sidebar + `SidebarInset`; child `page.tsx` files render only headers and content as fragments.
   * **Zero compile errors** confirmed after all changes.
+
+
+### ✅ Bottleneck 8: Missing Error Boundaries (`error.tsx`) — RESOLVED
+~~Runtime errors or 500 API responses currently crash the entire screen, exposing raw Next.js error overlays and breaking the user out of the App Shell.~~
+
+* **Status: COMPLETE** (2026-02-25)
+* **What was done:**
+  * **Created `error.tsx` boundaries** in all 3 portal routes: `teacher/error.tsx`, `student/error.tsx`, `admin/error.tsx`.
+  * Each file is a `"use client"` component (required by Next.js) that receives `{ error, reset }` props.
+  * **Preserves the App Shell:** Uses the fragment pattern (`<>header + content</>`) so the `layout.tsx` sidebar remains intact during errors.
+  * **UI pattern:** `AlertTriangle` icon in `destructive/10` circle, "Something went wrong" heading, portal-specific description, optional `error.digest` display, and two actions: "Try Again" (`reset()`) and "Back to Dashboard" (hard navigation to portal root).
+  * **Header styles match each portal:** Teacher/Admin use `h-16` with collapsible transition; Student uses `h-14` with backdrop blur.
+  * **Console logging:** Each boundary logs the error with a portal-specific prefix (e.g., `"Teacher Portal Error:"`) for debugging.
+
+### 🔴 Bottleneck 9: Static Metadata (Tab Titles)
+Browser tabs currently display a generic title across the entire application. 
+* **The Enterprise Fix:** Export static or dynamic `metadata` objects from every `page.tsx` file (e.g., `title: "Create Assignment | Evalease"`) to improve multi-tab UX and enterprise feel.
+
+### 🔴 Bottleneck 10: Unoptimized Images
+Logos (`sfit_logo.png`) and avatars may be using standard `<img>` tags, causing layout shift and performance hits.
+* **The Enterprise Fix:** Replace all raw image tags with Next.js `<Image src="..." alt="..." width={x} height={y} />` components.
 ---
 
 ## 🛠️ 3. Execution Workflow for AI Agents
