@@ -30,6 +30,15 @@ Evalease is built on a bleeding-edge, tier-one enterprise foundation. Future cod
 ## 🚀 2. Active Optimization Roadmap
 The following architectural bottlenecks have been identified. AI Agents are authorized to refactor the codebase to resolve these issues, adhering strictly to the "Enterprise Fix" patterns.
 
+### ✅ Bottleneck 5: Route Transition Freezes — RESOLVED
+~~Navigation between major routes (e.g., clicking sidebar links to go from Dashboard to Analytics) causes a 2-3 second UI freeze where the sidebar highlight refuses to update.~~
+
+* **Status: COMPLETE** (2026-02-25)
+* **What was done:**
+  * **Added `loading.tsx` boundaries** in 6 route folders: `teacher/`, `teacher/assignments/`, `teacher/evaluations/`, `student/`, `admin/`, `dashboard/`. Each file renders purpose-built skeleton layouts using the centralised `StatsSkeleton`, `CardsGridSkeleton`, `TableSkeleton`, and `ContentSkeleton` components from `src/components/skeletons.tsx`. Next.js now instantly transitions the URL and streams the skeleton while server components resolve.
+  * **Migrated all `<a href>` to `<Link href>`** across 5 navigation components: `nav-main.tsx` (2 instances — top-level items and sub-items), `app-sidebar-teacher.tsx`, `app-sidebar-student.tsx`, `app-sidebar-admin.tsx`, `nav-projects.tsx`. This enables Next.js client-side navigation with background pre-fetching, eliminating full-page reloads.
+  * **Verified "dumb" Server Components:** All `page.tsx` files in `teacher/`, `teacher/evaluations/`, `teacher/assignments/create/`, `student/`, and `admin/` are confirmed lightweight — they only run `await auth()` / `await cookies()` and immediately render client content components. No heavy data fetching blocks the server render.
+
 ### ✅ Bottleneck 1: The `"use client"` Anti-Pattern in Pages — RESOLVED
 ~~Currently, top-level page components have `"use client"` at the top of the file. This forces the entire layout, sidebar, and breadcrumbs to render on the client, bloating the JavaScript bundle.~~
 
@@ -92,5 +101,3 @@ When tasked with fixing one of the bottlenecks above, follow this strict protoco
 2. **Isolate:** Do not attempt to fix all bottlenecks at once. If asked to fix `"use client"` pushdown, DO NOT simultaneously rewrite the data fetching. 
 3. **Refactor & Retain:** When migrating to a new pattern (e.g., React Query), ensure the exact same TypeScript interfaces (like `Allotment`, `Task`, `StudentData`) are strictly retained.
 4. **Clean up:** Remove unused imports or old `xlsx` dependencies once they are safely replaced.
-
-*End of Guidelines.*
