@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -8,6 +9,10 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+}
 import {
   SidebarInset,
   SidebarProvider,

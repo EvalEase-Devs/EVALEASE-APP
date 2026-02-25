@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -8,6 +9,10 @@ import {
   BreadcrumbLink,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+
+export const metadata: Metadata = {
+  title: "Create Assignment",
+};
 import { CreateAssignmentContent } from "@/app/teacher/assignments/create/components/create-assignment-content";
 
 export default async function CreateAssignmentPage() {

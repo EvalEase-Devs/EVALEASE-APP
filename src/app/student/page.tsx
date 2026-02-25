@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { StudentDashboardContent } from "./components/student-dashboard-content";

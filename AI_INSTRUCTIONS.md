@@ -136,9 +136,19 @@ Large assignment creation forms managed by raw React state can cause input lag. 
   * **Header styles match each portal:** Teacher/Admin use `h-16` with collapsible transition; Student uses `h-14` with backdrop blur.
   * **Console logging:** Each boundary logs the error with a portal-specific prefix (e.g., `"Teacher Portal Error:"`) for debugging.
 
-### 🔴 Bottleneck 9: Static Metadata (Tab Titles)
-Browser tabs currently display a generic title across the entire application. 
-* **The Enterprise Fix:** Export static or dynamic `metadata` objects from every `page.tsx` file (e.g., `title: "Create Assignment | Evalease"`) to improve multi-tab UX and enterprise feel.
+### ✅ Bottleneck 9: Static Metadata (Tab Titles) — RESOLVED
+~~Browser tabs currently display a generic title across the entire application.~~
+
+* **Status: COMPLETE** (2026-02-25)
+* **What was done:**
+  * **Updated root `layout.tsx`** to use `title.template: "%s | Evalease"` with `title.default: "Evalease"`. Child pages only need to set a short title string and get `" | Evalease"` appended automatically.
+  * **Added `export const metadata` to 22 server-component files:**
+    * **Root:** `page.tsx` ("Home"), `login/page.tsx` ("Sign In"), `dashboard/page.tsx` ("Dashboard").
+    * **Teacher (6):** `teacher/page.tsx` ("Dashboard"), `teacher/assignments/create/page.tsx` ("Create Assignment"), `teacher/evaluations/page.tsx` ("Evaluations"), `teacher/analytics/page.tsx` ("Analytics"), `teacher/notifications/page.tsx` ("Notifications"), `teacher/settings/page.tsx` ("Settings").
+    * **Student (4):** `student/page.tsx` ("Dashboard"), `student/assignments/layout.tsx` ("Assignments" — covers all 3 client-component child pages), `student/notifications/page.tsx` ("Notifications"), `student/settings/page.tsx` ("Settings").
+    * **Admin (12):** `admin/page.tsx` ("Admin Dashboard"), `admin/analytics/page.tsx` ("Analytics"), `admin/notifications/page.tsx` ("Notifications"), `admin/settings/page.tsx` ("Settings"), `admin/users/page.tsx` ("User Management"), `admin/users/all/page.tsx` ("All Users"), `admin/users/teachers/page.tsx` ("Teachers"), `admin/users/students/page.tsx` ("Students"), `admin/users/add/page.tsx` ("Add User"), `admin/system/page.tsx` ("System Management"), `admin/system/overview/page.tsx` ("System Overview"), `admin/system/logs/page.tsx` ("Audit Logs"), `admin/system/backups/page.tsx` ("Backups").
+  * **Client components handled via layout:** The 3 `student/assignments/` client pages (`page.tsx`, `pending/page.tsx`, `submitted/page.tsx`) inherit the "Assignments | Evalease" title from their parent `layout.tsx`.
+  * **Zero compile errors** confirmed after all changes.
 
 ### 🔴 Bottleneck 10: Unoptimized Images
 Logos (`sfit_logo.png`) and avatars may be using standard `<img>` tags, causing layout shift and performance hits.

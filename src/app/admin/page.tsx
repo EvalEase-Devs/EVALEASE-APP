@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { AdminDashboardContent } from "./components/admin-dashboard-content";
+
+export const metadata: Metadata = {
+  title: "Admin Dashboard",
+};
 
 export default function AdminDashboard() {
   return (

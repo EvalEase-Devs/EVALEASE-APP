@@ -26,7 +26,10 @@ const fontHeading = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Evalease",
+  title: {
+    default: "Evalease",
+    template: "%s | Evalease",
+  },
   description: "An online evaluation platform for schools and colleges.",
   icons: {
     icon: "/favicon.ico",

@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { BarChartBig, Hammer } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Analytics",
+};
 
 export default async function AnalyticsPage() {
   return (

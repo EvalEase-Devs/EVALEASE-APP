@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { EvaluationsContent } from "./components/evaluations-content";
+
+export const metadata: Metadata = {
+  title: "Evaluations",
+};
 
 export default async function EvaluationsPage() {
   return (

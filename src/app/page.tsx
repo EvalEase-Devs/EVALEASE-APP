@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+
+export const metadata: Metadata = {
+  title: "Home",
+};
 
 // Exception emails for testing/special access (must match auth.ts)
 const EXCEPTION_EMAILS = {
