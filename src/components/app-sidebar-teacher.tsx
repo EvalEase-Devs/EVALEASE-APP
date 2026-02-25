@@ -25,22 +25,8 @@ const data = {
     },
     {
       title: "Assignments",
-      url: "/teacher/assignments",
+      url: "/teacher/assignments/create",
       icon: ClipboardList,
-      items: [
-        {
-          title: "Create New",
-          url: "/teacher/assignments/create",
-        },
-        {
-          title: "Active",
-          url: "/teacher/assignments/active",
-        },
-        {
-          title: "Expired",
-          url: "/teacher/assignments/expired",
-        },
-      ],
     },
     {
       title: "Evaluations",

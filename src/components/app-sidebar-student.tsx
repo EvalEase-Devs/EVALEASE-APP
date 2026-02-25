@@ -27,16 +27,6 @@ const data = {
       title: "Assignments",
       url: "/student/assignments",
       icon: ClipboardList,
-      items: [
-        {
-          title: "Pending",
-          url: "/student/assignments/pending",
-        },
-        {
-          title: "Submitted",
-          url: "/student/assignments/submitted",
-        },
-      ],
     },
     {
       title: "Notifications",
