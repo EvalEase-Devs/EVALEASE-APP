@@ -92,6 +92,19 @@ Large assignment creation forms managed by raw React state can cause input lag. 
   * **Toasts:** Migrated all 9 toast patterns across 8 files to `toast.promise()`: `allotted-subjects-list.tsx` (add task, delete task), `create-assignment-content.tsx` (add/remove allotment), `tasks-list-modal.tsx` (save marks), `batch-marks-report-modal.tsx` (save marks), `ise-mse-report.tsx` (export Excel), `lab-attainment-report.tsx` (export Excel), `student-test-modal.tsx` (submit test), `student/assignments/pending/page.tsx` (submit marks), `student/assignments/page.tsx` (submit marks).
   * Installed `react-hook-form@7.71.2` and `@hookform/resolvers@5.2.2`.
 
+### ✅ Bottleneck 6: Ungraceful 404 & Empty States — RESOLVED
+~~Hitting a route that doesn't exist (or isn't built yet, like `/teacher/analytics` or `/teacher/notifications`) currently drops the user into the raw Next.js 404 page, destroying the app shell and breaking immersion.~~
+
+* **Status: COMPLETE** (2026-02-25)
+* **What was done:**
+  * **Full sidebar URL audit** across `app-sidebar-teacher.tsx`, `app-sidebar-student.tsx`, `app-sidebar-admin.tsx`, and `nav-user.tsx`. Identified **15 dead links** (routes referenced in the UI with no corresponding `page.tsx`).
+  * **Scaffolded 15 "Coming Soon" pages** — each preserves the full sidebar/header shell with breadcrumbs, a feature-specific icon with a hammer badge, and a contextual description:
+    * **Teacher (2):** `notifications/`, `settings/` — fragment pattern (renders inside shared `teacher/layout.tsx`).
+    * **Student (2):** `notifications/`, `settings/` — full shell pattern (`SidebarProvider` + `AppSidebarStudent` + `SidebarInset`).
+    * **Admin (11):** `users/`, `users/all/`, `users/teachers/`, `users/students/`, `users/add/`, `system/`, `system/overview/`, `system/logs/`, `system/backups/`, `analytics/`, `notifications/`, `settings/` — full shell pattern.
+  * **Portal-aware 404:** `src/app/teacher/not-found.tsx` catches invalid URLs within `/teacher/*` while preserving the sidebar and providing a "Back to Dashboard" button.
+  * **Zero dead links remain** — every sidebar URL now resolves to a valid page.
+
 ---
 
 ## 🛠️ 3. Execution Workflow for AI Agents
