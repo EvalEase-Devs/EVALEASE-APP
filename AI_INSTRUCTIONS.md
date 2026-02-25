@@ -150,9 +150,16 @@ Large assignment creation forms managed by raw React state can cause input lag. 
   * **Client components handled via layout:** The 3 `student/assignments/` client pages (`page.tsx`, `pending/page.tsx`, `submitted/page.tsx`) inherit the "Assignments | Evalease" title from their parent `layout.tsx`.
   * **Zero compile errors** confirmed after all changes.
 
-### 🔴 Bottleneck 10: Unoptimized Images
-Logos (`sfit_logo.png`) and avatars may be using standard `<img>` tags, causing layout shift and performance hits.
-* **The Enterprise Fix:** Replace all raw image tags with Next.js `<Image src="..." alt="..." width={x} height={y} />` components.
+### ✅ Bottleneck 10: Unoptimized Images — RESOLVED
+~~Logos (`sfit_logo.png`) and avatars may be using standard `<img>` tags, causing layout shift and performance hits.~~
+
+* **Status: COMPLETE** (2026-02-25)
+* **Audit findings:** A full codebase audit revealed **zero raw `<img>` tags** in the rendered UI. All sidebar logos use Lucide icons (`FileCheck`, `Sparkles`, `ShieldCheck`), and `sfit_logo.png` is only fetched as binary data for embedding in Excel exports (never rendered in the DOM).
+* **What was done:**
+  * **Configured `remotePatterns` in `next.config.ts`** for Google avatar images (`lh3.googleusercontent.com`). This enables the `next/image` optimization pipeline for user profile pictures served via OAuth, providing automatic format conversion (WebP/AVIF), responsive `srcSet`, and lazy loading.
+  * **Removed dead `import Image from 'next/image'`** from `lab-attainment-report.tsx` — the Image component was imported but its only usage was commented out.
+  * **Removed commented-out `<Image>` JSX** from `lab-attainment-report.tsx` (dead code cleanup).
+  * **No `<img>` → `<Image>` migrations needed** — the codebase was already clean. User avatars render via shadcn/ui `AvatarImage` (Radix primitive), which is the correct pattern for external auth provider images with built-in fallback.
 ---
 
 ## 🛠️ 3. Execution Workflow for AI Agents

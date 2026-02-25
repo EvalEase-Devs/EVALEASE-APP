@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -186,9 +185,6 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
                             Subject Target: {subjectTarget}%
                         </p>
                     </div>
-                    {/* <div className="flex-shrink-0 ml-4">
-                        <Image src="/sfit_logo.png" alt="SFIT Logo" width={80} height={80} className="object-contain" />
-                    </div> */}
                 </CardContent>
             </Card>
 
