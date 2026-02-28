@@ -38,7 +38,7 @@ export default function StudentsPage() {
             <Users className="h-10 w-10 text-primary" />
             <Hammer className="h-5 w-5 text-muted-foreground absolute -bottom-1 -right-1" />
           </div>
-          <h2 className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>Students</h2>
+          <h2 className="text-page-title">Students</h2>
           <p className="text-muted-foreground mt-2 max-w-md">
             The student management panel is under development. You&apos;ll soon be able to view and manage all registered students.
           </p>

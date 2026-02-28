@@ -34,7 +34,7 @@ export default async function AnalyticsPage() {
           <BarChartBig className="h-10 w-10 text-primary" />
           <Hammer className="h-5 w-5 text-muted-foreground absolute -bottom-1 -right-1" />
         </div>
-        <h2 className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>Analytics Dashboard</h2>
+        <h2 className="text-page-title">Analytics Dashboard</h2>
         <p className="text-muted-foreground mt-2 max-w-md">
           We are currently building powerful, batch-wide analytics and performance tracking. This feature will be available in an upcoming release.
         </p>

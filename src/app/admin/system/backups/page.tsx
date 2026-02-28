@@ -38,7 +38,7 @@ export default function BackupsPage() {
             <DatabaseBackup className="h-10 w-10 text-primary" />
             <Hammer className="h-5 w-5 text-muted-foreground absolute -bottom-1 -right-1" />
           </div>
-          <h2 className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>Backups</h2>
+          <h2 className="text-page-title">Backups</h2>
           <p className="text-muted-foreground mt-2 max-w-md">
             The backup management dashboard is under development. You&apos;ll soon be able to schedule, manage, and restore database backups.
           </p>

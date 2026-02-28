@@ -108,7 +108,7 @@ export function AppSidebarAdmin({
                   <ShieldCheck className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="truncate font-bold text-base tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>EvalEase</span>
+                  <span className="truncate font-bold text-base tracking-tight font-heading">EvalEase</span>
                   <span className="inline-flex items-center w-fit px-2 py-0.5 rounded-full bg-muted/80 text-[9px] uppercase tracking-wider font-medium text-muted-foreground">Admin Portal</span>
                 </div>
               </Link>

@@ -32,7 +32,7 @@ export default function AdminError({
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10 mb-6">
           <AlertTriangle className="h-10 w-10 text-destructive" />
         </div>
-        <h2 className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>Something went wrong</h2>
+        <h2 className="text-page-title">Something went wrong</h2>
         <p className="text-muted-foreground mt-2 max-w-md">
           An unexpected error occurred in the Admin portal. This has been logged automatically. You can try again or return to the dashboard.
         </p>

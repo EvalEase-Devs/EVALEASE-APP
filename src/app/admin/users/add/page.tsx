@@ -38,7 +38,7 @@ export default function AddUserPage() {
             <UserPlus className="h-10 w-10 text-primary" />
             <Hammer className="h-5 w-5 text-muted-foreground absolute -bottom-1 -right-1" />
           </div>
-          <h2 className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>Add User</h2>
+          <h2 className="text-page-title">Add User</h2>
           <p className="text-muted-foreground mt-2 max-w-md">
             The user registration form is under development. You&apos;ll soon be able to add new teachers and students to the platform.
           </p>

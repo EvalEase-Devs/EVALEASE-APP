@@ -266,6 +266,19 @@ In `components/ui/card.tsx`, update `CardTitle`:
 ### Verification check
 After this phase, a page should show clearly distinct visual weight between: page title → section heading → card title → body text → labels → captions → metadata. You should be able to distinguish all six tiers at a glance. Space Grotesk should be visible on all card titles and section headings.
 
+### What was done
+1. **Heading base rule fixed** — Added `font-weight: 600;` to the `h1–h6` rule in `@layer base` so all native headings get the correct weight
+2. **Semantic typography scale added** — 7 utility classes (`.text-page-title`, `.text-section-title`, `.text-card-title`, `.text-body`, `.text-label`, `.text-caption`, `.text-meta`) added to `@layer utilities` in `globals.css`. Note: Used `var(--foreground)` directly instead of `hsl(var(--foreground))` since Tailwind v4 CSS variables store the full `hsl(...)` value. Used `color-mix(in srgb, var(--muted-foreground) 80%, transparent)` for `.text-meta` opacity
+3. **All 26 inline `style={{ fontFamily: 'var(--font-heading)' }}` instances removed** across 24 files:
+   - 21 page headings (`<h2>`) across teacher/student/admin portals → replaced `text-2xl font-semibold tracking-tight` + inline style with single `text-page-title` class
+   - 3 sidebar brand names (`app-sidebar-teacher/student/admin.tsx`) → removed inline style, added `font-heading` utility class (available via `@theme { --font-family-heading }`)
+   - 2 login page instances (`login-content.tsx`) → replaced with `text-page-title`
+4. **CardTitle updated** in `components/ui/card.tsx` — Changed from `cn("font-semibold leading-none tracking-tight", className)` to `cn("text-card-title", className)` so all card titles use the heading font at 15px/600 weight
+
+**Files changed:** `src/app/globals.css`, `src/components/ui/card.tsx`, `src/app/login/components/login-content.tsx`, `src/components/app-sidebar-teacher.tsx`, `src/components/app-sidebar-student.tsx`, `src/components/app-sidebar-admin.tsx`, `src/app/teacher/error.tsx`, `src/app/teacher/not-found.tsx`, `src/app/teacher/analytics/page.tsx`, `src/app/teacher/notifications/page.tsx`, `src/app/teacher/settings/page.tsx`, `src/app/student/error.tsx`, `src/app/student/notifications/page.tsx`, `src/app/student/settings/page.tsx`, `src/app/admin/error.tsx`, `src/app/admin/analytics/page.tsx`, `src/app/admin/notifications/page.tsx`, `src/app/admin/settings/page.tsx`, `src/app/admin/users/page.tsx`, `src/app/admin/users/all/page.tsx`, `src/app/admin/users/add/page.tsx`, `src/app/admin/users/teachers/page.tsx`, `src/app/admin/users/students/page.tsx`, `src/app/admin/system/page.tsx`, `src/app/admin/system/overview/page.tsx`, `src/app/admin/system/logs/page.tsx`, `src/app/admin/system/backups/page.tsx`  
+**Build status:** ✅ Compiles successfully (`bun run build` — TypeScript passes, all routes build)  
+**Status:** FIXED
+
 ---
 
 ## PHASE 3: Complete the Design Token System (Semantic Color Tokens)

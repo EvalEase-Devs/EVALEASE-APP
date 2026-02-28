@@ -52,7 +52,7 @@ export function LoginContent() {
                     <div className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex size-8 items-center justify-center rounded-lg shadow-sm">
                         <Sparkles className="size-4" />
                     </div>
-                    <span className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+                    <span className="text-page-title">
                         EvalEase
                     </span>
                 </a>
@@ -60,7 +60,7 @@ export function LoginContent() {
                 {/* Login Card - Floating Sheet */}
                 <Card className="border-none shadow-xl">
                     <CardHeader className="text-center">
-                        <CardTitle className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+                        <CardTitle className="text-page-title">
                             Welcome back
                         </CardTitle>
                         <CardDescription>

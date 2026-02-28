@@ -232,6 +232,76 @@
   .card-premium:hover {
     box-shadow: var(--shadow-md);        /* Tier 3 on hover — perceptible elevation change */
   }
+
+  /* ============================================
+     SEMANTIC TYPOGRAPHY SCALE
+     Use these instead of raw text-sm/text-xs/font-semibold combos.
+     Each tier has a distinct visual weight.
+     ============================================ */
+
+  /* PAGE LEVEL — main page titles */
+  .text-page-title {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;       /* 24px */
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    color: var(--foreground);
+  }
+
+  /* SECTION LEVEL — section headings within a page */
+  .text-section-title {
+    font-family: var(--font-heading);
+    font-size: 1.125rem;     /* 18px */
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    color: var(--foreground);
+  }
+
+  /* CARD LEVEL — card headings */
+  .text-card-title {
+    font-family: var(--font-heading);
+    font-size: 0.9375rem;    /* 15px */
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+    color: var(--foreground);
+  }
+
+  /* BODY — standard body text */
+  .text-body {
+    font-size: 0.875rem;     /* 14px */
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--foreground);
+  }
+
+  /* LABEL — field labels, stat labels */
+  .text-label {
+    font-size: 0.8125rem;    /* 13px */
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1.4;
+    color: var(--muted-foreground);
+  }
+
+  /* CAPTION — dates, secondary info, helper text */
+  .text-caption {
+    font-size: 0.75rem;      /* 12px */
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--muted-foreground);
+  }
+
+  /* METADATA — timestamps, counts, tiny labels */
+  .text-meta {
+    font-size: 0.6875rem;    /* 11px */
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    color: color-mix(in srgb, var(--muted-foreground) 80%, transparent);
+  }
 }
 
 @layer base {
@@ -244,7 +314,7 @@
   h6 {
     font-family: var(--font-heading);
     letter-spacing: -0.025em;
-    /* Tight tracking for that "Tech" look */
+    font-weight: 600;
   }
 
   /* Micro-interactions for better UX */

@@ -19,7 +19,7 @@ export default function TeacherNotFound() {
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10 mb-6">
           <FileQuestion className="h-10 w-10 text-destructive" />
         </div>
-        <h2 className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>Page Not Found</h2>
+        <h2 className="text-page-title">Page Not Found</h2>
         <p className="text-muted-foreground mt-2 max-w-md">
           The page you&apos;re looking for doesn&apos;t exist or has been moved. Please check the URL or navigate back to the dashboard.
         </p>

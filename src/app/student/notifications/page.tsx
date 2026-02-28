@@ -34,7 +34,7 @@ export default function StudentNotificationsPage() {
           <Bell className="h-10 w-10 text-primary" />
           <Hammer className="h-5 w-5 text-muted-foreground absolute -bottom-1 -right-1" />
         </div>
-        <h2 className="text-2xl font-semibold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>Notifications</h2>
+        <h2 className="text-page-title">Notifications</h2>
         <p className="text-muted-foreground mt-2 max-w-md">
           We are currently building the notification center to keep you updated on assignment deadlines and submission confirmations. This feature will be available in an upcoming release.
         </p>
