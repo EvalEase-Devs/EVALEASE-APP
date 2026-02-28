@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { IconChartBar, IconHammer } from "@tabler/icons-react";
+import { ComingSoon } from "@/components/ui/coming-soon";
 
 export const metadata: Metadata = {
   title: "Analytics",
@@ -29,16 +29,7 @@ export default function AdminAnalyticsPage() {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 mb-6 relative">
-            <IconChartBar size={40} className="text-primary" />
-            <IconHammer size={20} className="text-muted-foreground absolute -bottom-1 -right-1" />
-          </div>
-          <h2 className="text-page-title">Analytics</h2>
-          <p className="text-muted-foreground mt-2 max-w-md">
-            Platform-wide analytics and usage metrics are under development. You&apos;ll soon be able to track adoption rates, activity trends, and performance insights.
-          </p>
-        </div>
+        <ComingSoon variant="admin" title="Analytics" description="Platform-wide analytics and usage metrics will be available soon." />
     </>
   );
 }

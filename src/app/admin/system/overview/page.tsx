@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { IconDeviceDesktop, IconHammer } from "@tabler/icons-react";
+import { ComingSoon } from "@/components/ui/coming-soon";
 
 export const metadata: Metadata = {
   title: "System Overview",
@@ -33,16 +33,7 @@ export default function SystemOverviewPage() {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 mb-6 relative">
-            <IconDeviceDesktop size={40} className="text-primary" />
-            <IconHammer size={20} className="text-muted-foreground absolute -bottom-1 -right-1" />
-          </div>
-          <h2 className="text-page-title">System Overview</h2>
-          <p className="text-muted-foreground mt-2 max-w-md">
-            The system health dashboard is under development. You&apos;ll soon be able to monitor server status, database performance, and resource usage.
-          </p>
-        </div>
+        <ComingSoon variant="admin" title="System Overview" description="Server status, database performance, and resource usage monitoring coming soon." />
     </>
   );
 }

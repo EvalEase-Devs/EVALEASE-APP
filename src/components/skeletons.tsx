@@ -15,12 +15,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface CardsGridSkeletonProps {
     count?: number;
+    cols?: 2 | 3 | 4;
     className?: string;
 }
 
-export function CardsGridSkeleton({ count = 3, className }: CardsGridSkeletonProps) {
+const colsMap = {
+    2: "grid grid-cols-1 md:grid-cols-2 gap-4",
+    3: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4",
+    4: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4",
+};
+
+export function CardsGridSkeleton({ count = 3, cols, className }: CardsGridSkeletonProps) {
     return (
-        <div className={className || "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"}>
+        <div className={className || (cols ? colsMap[cols] : colsMap[3])}>
             {Array.from({ length: count }).map((_, i) => (
                 <Card key={i} className="overflow-hidden">
                     <CardHeader className="space-y-2">

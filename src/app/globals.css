@@ -441,68 +441,31 @@
 }
 
 /* ============================================
-   GLOBAL SCROLLBAR STYLING
-   Applied OUTSIDE layers for maximum specificity
+   SCROLLBAR STYLING
+   Scoped to sidebar scroll areas only — not global
    ============================================ */
 
 /* Firefox */
-html,
-body,
-* {
-  scrollbar-width: thin !important;
-  scrollbar-color: hsl(220 15% 20%) transparent !important;
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
 }
 
 /* Webkit (Chrome, Edge, Safari, Vivaldi, Arc, Brave) */
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-*::-webkit-scrollbar {
-  width: 6px !important;
-  height: 6px !important;
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
 
-html::-webkit-scrollbar-track,
-body::-webkit-scrollbar-track,
-*::-webkit-scrollbar-track {
-  background: transparent !important;
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb,
-*::-webkit-scrollbar-thumb {
-  background: hsl(220 15% 20%) !important;
-  border-radius: 10px !important;
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
 }
 
-html::-webkit-scrollbar-button,
-body::-webkit-scrollbar-button,
-*::-webkit-scrollbar-button {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  appearance: none !important;
-  -webkit-appearance: none !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-/* Force hide scrollbar buttons - alternative approach */
-*::-webkit-scrollbar-button:single-button {
-  display: none !important;
-  height: 0 !important;
-}
-
-*::-webkit-scrollbar-button:start {
-  display: none !important;
-}
-
-*::-webkit-scrollbar-button:end {
-  display: none !important;
-}
-
-/* Additional Vivaldi-specific overrides */
-html::-webkit-scrollbar-corner,
-body::-webkit-scrollbar-corner,
-*::-webkit-scrollbar-corner {
-  background: transparent !important;
+.sidebar-scroll::-webkit-scrollbar-corner {
+  background: transparent;
 }
