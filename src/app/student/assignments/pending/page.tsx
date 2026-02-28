@@ -402,8 +402,8 @@ function AssignmentCard({
         <Card className="overflow-hidden">
             <CardHeader className="pb-3">
                 <div className="space-y-2">
-                    <h4 className="font-bold text-sm line-clamp-2" title={assignment.task.title.split("-").slice(-1)[0].toUpperCase()}>
-                          {assignment.task.title.split("-").slice(-1)[0].toUpperCase()}
+                    <h4 className="font-bold text-sm line-clamp-2" title={assignment.task.title.split("-").slice(-1)[0]}>
+                          {assignment.task.title.split("-").slice(-1)[0]}
                     </h4>
                     <h3 className="font-bold text-sm line-clamp-2">
                         {assignment.task.allotment.sub_name}

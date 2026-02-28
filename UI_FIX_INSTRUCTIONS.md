@@ -597,6 +597,16 @@ className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
 ### Verification check
 Navigate between all student portal pages — the header should be the same height and style on every page. Hovering over a stat card on the teacher dashboard should produce no lift effect. The dashboard pages should not have a massive empty scroll area below the stat cards.
 
+### Status: FIXED
+**All 5 steps implemented:**
+- **Step 1 (Headers):** Standardized 5 student portal files (`student/page.tsx`, `student/error.tsx`, `student/notifications/page.tsx`, `student/settings/page.tsx`, `student/loading.tsx`) from `h-14 border-b bg-background/95 backdrop-blur` to `h-16 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12` matching teacher/admin style. `student/assignments/layout.tsx` already had the standard header.
+- **Step 2 (hover-lift):** Removed `hover-lift` from all 12 non-interactive stat card instances across `teacher-dashboard-content.tsx` (4), `admin-dashboard-content.tsx` (4), `evaluations-content.tsx` (3), and `student/stat-card.tsx` (1). CSS utility class retained for genuinely clickable elements.
+- **Step 3 (min-h-[100vh]):** Replaced viewport-height placeholder divs in both `teacher-dashboard-content.tsx` and `admin-dashboard-content.tsx` with compact dashed-border placeholder using `text-label`/`text-caption` semantic typography.
+- **Step 4 (.toUpperCase()):** Removed `.toUpperCase()` from 8 instances across `student/assignments/page.tsx` (4), `student/assignments/pending/page.tsx` (2), `student/assignments/submitted/page.tsx` (2). Natural casing preserved.
+- **Step 5 (grid breakpoint):** Fixed duplicate `md:grid-cols-2 md:grid-cols-4` → `md:grid-cols-2 lg:grid-cols-4` in `allotted-subjects-list.tsx`.
+
+Build: Compiled successfully + all 42 pages generated.
+
 ---
 
 ## PHASE 6: Differentiate the Coming Soon Pages and Final Polish

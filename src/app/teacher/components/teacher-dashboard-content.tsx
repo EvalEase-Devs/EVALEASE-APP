@@ -10,7 +10,7 @@ export function TeacherDashboardContent() {
             {/* Quick Stats */}
             <div className="grid auto-rows-min gap-4 md:grid-cols-4">
                 <FadeIn delay={0.1}>
-                    <Card className="hover-lift">
+                    <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Students</CardTitle>
                             <IconUsers className="h-4 w-4 text-muted-foreground" />
@@ -22,7 +22,7 @@ export function TeacherDashboardContent() {
                     </Card>
                 </FadeIn>
                 <FadeIn delay={0.2}>
-                    <Card className="hover-lift">
+                    <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
                             <IconFileCheck className="h-4 w-4 text-muted-foreground" />
@@ -34,7 +34,7 @@ export function TeacherDashboardContent() {
                     </Card>
                 </FadeIn>
                 <FadeIn delay={0.3}>
-                    <Card className="hover-lift">
+                    <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Assignments</CardTitle>
                             <IconClipboardList className="h-4 w-4 text-muted-foreground" />
@@ -46,7 +46,7 @@ export function TeacherDashboardContent() {
                     </Card>
                 </FadeIn>
                 <FadeIn delay={0.4}>
-                    <Card className="hover-lift">
+                    <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
                             <IconChartLine className="h-4 w-4 text-muted-foreground" />
@@ -59,11 +59,9 @@ export function TeacherDashboardContent() {
                 </FadeIn>
             </div>
             {/* Main Content */}
-            <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 p-4 md:min-h-min">
-                <h2 className="text-lg font-semibold mb-4">Pending Evaluations</h2>
-                <p className="text-sm text-muted-foreground">
-                    Student submissions that require your review will appear here. You're all caught up!
-                </p>
+            <div className="rounded-xl border border-dashed border-border/60 bg-muted/30 p-8 text-center">
+                <p className="text-label">More features coming soon</p>
+                <p className="text-caption mt-1">This area will show recent activity and quick actions</p>
             </div>
         </div>
     );

@@ -33,7 +33,7 @@ export function StatCard({ icon: Icon, value, label, variant = "default" }: Stat
   const styles = variantStyles[variant];
 
   return (
-    <Card className="flex flex-col justify-center hover-lift">
+    <Card className="flex flex-col justify-center">
       <CardContent className="p-4 text-center">
         <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full ${styles.iconBg} mb-2`}>
           <Icon className={`h-5 w-5 ${styles.iconColor}`} />

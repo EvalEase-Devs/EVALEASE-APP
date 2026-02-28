@@ -65,7 +65,7 @@ export function EvaluationsContent() {
                 {/* Stats Cards */}
                 <div className="grid auto-rows-min gap-4 md:grid-cols-3">
                     <FadeIn delay={0.1}>
-                        <Card className="hover-lift">
+                        <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Allotted Subjects</CardTitle>
                                 <IconFileText size={16} className="text-muted-foreground" />
@@ -79,7 +79,7 @@ export function EvaluationsContent() {
                         </Card>
                     </FadeIn>
                     <FadeIn delay={0.2}>
-                        <Card className="hover-lift">
+                        <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Lecture Reports</CardTitle>
                                 <IconChartBar size={16} className="text-muted-foreground" />
@@ -93,7 +93,7 @@ export function EvaluationsContent() {
                         </Card>
                     </FadeIn>
                     <FadeIn delay={0.3}>
-                        <Card className="hover-lift">
+                        <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Lab Reports</CardTitle>
                                 <IconMicroscope size={16} className="text-muted-foreground" />

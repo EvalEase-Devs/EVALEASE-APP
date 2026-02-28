@@ -210,7 +210,7 @@ export function AllottedSubjectsList({ subjects, onRemove, removingId }: Allotte
                         </div>
 
                         {/* Grid of Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                             {groupSubjects.map((allotment, index) => {
                                 const parsed = parseSubject(allotment.subject);
                                 return (
