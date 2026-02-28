@@ -114,8 +114,11 @@ export async function getTeacherByEmail(email: string): Promise<Teacher | null> 
         .single();
 
     if (error) {
+        // PGRST116 = "not found" (0 rows) — that's a valid null result
+        if (error.code === 'PGRST116') return null;
+        // Any other error (connection, auth, etc.) should propagate
         console.error('Error fetching teacher:', error);
-        return null;
+        throw new Error(error.message || 'Failed to fetch teacher');
     }
     return data;
 }
@@ -130,8 +133,9 @@ export async function getStudentByEmail(email: string): Promise<Student | null> 
         .single();
 
     if (error) {
+        if (error.code === 'PGRST116') return null;
         console.error('Error fetching student:', error);
-        return null;
+        throw new Error(error.message || 'Failed to fetch student');
     }
     return data;
 }
