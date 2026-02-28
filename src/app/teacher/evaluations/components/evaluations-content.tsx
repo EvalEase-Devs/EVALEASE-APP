@@ -226,7 +226,7 @@ export function EvaluationsContent() {
 
                 {/* Info Section */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+                    <Card className="bg-info-subtle border-info dark:bg-blue-950 dark:border-blue-800">
                         <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2">
                                 <BarChart3 className="h-5 w-5" />
@@ -246,7 +246,7 @@ export function EvaluationsContent() {
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-emerald-50 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-800">
+                    <Card className="bg-success-subtle border-success dark:bg-emerald-950 dark:border-emerald-800">
                         <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2">
                                 <Microscope className="h-5 w-5" />

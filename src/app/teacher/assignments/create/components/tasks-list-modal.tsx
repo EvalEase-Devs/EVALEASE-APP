@@ -236,18 +236,18 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                         {tasks.length > 0 && orderedCategories.map((category) => {
                             const categoryTasks = groupedTasks[category];
                             const categoryColors: Record<string, string> = {
-                                'MCQ': 'bg-blue-100 dark:bg-blue-900',
-                                'Subjective': 'bg-green-100 dark:bg-green-900',
+                                'MCQ': 'bg-info-subtle dark:bg-blue-900',
+                                'Subjective': 'bg-success-subtle dark:bg-green-900',
                                 'MSE': 'bg-purple-100 dark:bg-purple-900',
                                 'Experiments': 'bg-orange-100 dark:bg-orange-900',
-                                'Other': 'bg-gray-100 dark:bg-gray-900'
+                                'Other': 'bg-muted dark:bg-gray-900'
                             };
                             const categoryBorders: Record<string, string> = {
-                                'MCQ': 'border-l-blue-500',
-                                'Subjective': 'border-l-green-500',
+                                'MCQ': 'border-l-info',
+                                'Subjective': 'border-l-success',
                                 'MSE': 'border-l-purple-500',
                                 'Experiments': 'border-l-orange-500',
-                                'Other': 'border-l-gray-500'
+                                'Other': 'border-l-border'
                             };
 
                             return (

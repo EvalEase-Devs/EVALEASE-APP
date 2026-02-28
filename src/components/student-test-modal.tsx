@@ -85,7 +85,7 @@ function CountdownDisplay({ startTime, endTime }: { startTime: string | null; en
 
     return (
         <div className="flex items-center gap-2">
-            <Timer className="h-5 w-5 text-blue-500" />
+            <Timer className="h-5 w-5 text-info" />
             <span className="text-sm font-medium">{timeText}</span>
         </div>
     );
@@ -400,7 +400,7 @@ function StudentTestModalInner({
             >
                 {/* Violation Warning Banner */}
                 {showWarning && (
-                    <div className="fixed top-0 left-0 right-0 bg-red-500 text-white py-3 px-4 flex items-center gap-2 z-50 animate-pulse">
+                    <div className="fixed top-0 left-0 right-0 bg-destructive text-destructive-foreground py-3 px-4 flex items-center gap-2 z-50 animate-pulse">
                         <AlertTriangle className="w-5 h-5" />
                         <span className="font-semibold">{warningMessage}</span>
                         <span className="ml-auto text-sm">Violations: {violations}/2</span>
@@ -415,22 +415,22 @@ function StudentTestModalInner({
                 </DialogHeader>
 
                 {/* Header with Progress and Timer */}
-                <div className="space-y-4 bg-slate-50 p-4 rounded-lg select-none">
+                <div className="space-y-4 bg-muted/50 p-4 rounded-lg select-none">
                     <div className="flex justify-between items-center">
                         <div>
-                            <p className="text-sm font-medium text-slate-600">
+                            <p className="text-sm font-medium text-muted-foreground">
                                 Question {currentQuestionIndex + 1} of {questions.length}
                             </p>
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-muted-foreground">
                                 Answered: {answeredCount}/{questions.length}
                             </p>
                             {violations > 0 && (
-                                <p className="text-sm text-red-600 font-semibold mt-1">
+                                <p className="text-sm text-danger font-semibold mt-1">
                                     ⚠️ Violations: {violations}/2
                                 </p>
                             )}
                         </div>
-                        <div className="flex items-center gap-2 text-lg font-semibold text-red-600">
+                        <div className="flex items-center gap-2 text-lg font-semibold text-danger">
                             <Clock className="w-5 h-5" />
                             {formatTime(timeRemaining)}
                         </div>
@@ -442,29 +442,29 @@ function StudentTestModalInner({
                     <>
                         {/* Question */}
                         <div className="space-y-6 py-6">
-                            <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 select-none">
-                                <h3 className="text-lg font-semibold text-slate-800 mb-2 select-none">
+                            <Card className="p-6 bg-gradient-to-br from-info-subtle to-info-subtle/60 border-info select-none">
+                                <h3 className="text-lg font-semibold text-foreground mb-2 select-none">
                                     Q{currentQuestionIndex + 1}. {currentQuestion.text}
                                 </h3>
-                                <p className="text-sm text-slate-600 select-none">
+                                <p className="text-sm text-muted-foreground select-none">
                                     Marks: <span className="font-semibold">{currentQuestion.marks}</span>
                                 </p>
                             </Card>
 
                             {/* Options */}
                             <div className="space-y-3">
-                                <p className="text-sm font-medium text-slate-700 select-none">Select your answer:</p>
+                                <p className="text-sm font-medium text-muted-foreground select-none">Select your answer:</p>
                                 <RadioGroup
                                     value={answers[currentQuestion.id]?.toString() ?? ''}
                                     onValueChange={(value) => handleSelectAnswer(parseInt(value))}
                                 >
                                     <div className="space-y-3">
                                         {currentQuestion.options.map((option, index) => (
-                                            <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-slate-50 transition cursor-pointer select-none">
+                                            <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/30 transition cursor-pointer select-none">
                                                 <RadioGroupItem value={index.toString()} id={`option-${index}`} />
                                                 <Label
                                                     htmlFor={`option-${index}`}
-                                                    className="cursor-pointer flex-1 text-slate-700 font-medium select-none"
+                                                    className="cursor-pointer flex-1 text-muted-foreground font-medium select-none"
                                                 >
                                                     {String.fromCharCode(65 + index)}. {option}
                                                 </Label>
@@ -490,7 +490,7 @@ function StudentTestModalInner({
                             <Button
                                 variant="outline"
                                 onClick={() => setShowReview(true)}
-                                className="text-slate-700"
+                                className="text-muted-foreground"
                             >
                                 Review All ({answeredCount}/{questions.length})
                             </Button>
@@ -508,7 +508,7 @@ function StudentTestModalInner({
                         {/* Submit Button */}
                         <Button
                             onClick={handleSubmitTest}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold"
+                            className="w-full bg-success hover:bg-success/90 text-white py-2 rounded-lg font-semibold"
                             disabled={answeredCount === 0}
                         >
                             Submit Test ({answeredCount}/{questions.length} Answered)
@@ -518,14 +518,14 @@ function StudentTestModalInner({
                     <>
                         {/* Review Section */}
                         <div className="space-y-4 py-6 select-none">
-                            <h3 className="font-semibold text-lg text-slate-800 select-none">Review Your Answers</h3>
+                            <h3 className="font-semibold text-lg text-foreground select-none">Review Your Answers</h3>
                             <div className="space-y-3 max-h-96 overflow-y-auto">
                                 {questions.map((question, index) => (
                                     <Card
                                         key={question.id}
                                         className={`p-4 cursor-pointer transition select-none ${answers[question.id] !== undefined
-                                            ? 'bg-green-50 border-green-300'
-                                            : 'bg-yellow-50 border-yellow-300'
+                                            ? 'bg-success-subtle border-success'
+                                            : 'bg-warning-subtle border-warning'
                                             }`}
                                         onClick={() => {
                                             setCurrentQuestionIndex(index);
@@ -534,23 +534,23 @@ function StudentTestModalInner({
                                     >
                                         <div className="flex justify-between items-start">
                                             <div className="flex-1">
-                                                <p className="font-medium text-slate-800">
+                                                <p className="font-medium text-foreground">
                                                     Q{index + 1}. {question.text}
                                                 </p>
                                                 {answers[question.id] !== undefined && (
-                                                    <p className="text-sm text-green-700 mt-1">
+                                                    <p className="text-sm text-success mt-1">
                                                         Your Answer: {String.fromCharCode(65 + answers[question.id])}. {question.options[answers[question.id]]}
                                                     </p>
                                                 )}
                                                 {answers[question.id] === undefined && (
-                                                    <p className="text-sm text-yellow-700 mt-1">
+                                                    <p className="text-sm text-warning mt-1">
                                                         ⚠ Not answered
                                                     </p>
                                                 )}
                                             </div>
                                             <span className={`text-sm font-semibold px-3 py-1 rounded ${answers[question.id] !== undefined
-                                                ? 'bg-green-200 text-green-800'
-                                                : 'bg-yellow-200 text-yellow-800'
+                                                ? 'bg-success-subtle text-success'
+                                                : 'bg-warning-subtle text-warning'
                                                 }`}>
                                                 {question.marks}M
                                             </span>
@@ -569,7 +569,7 @@ function StudentTestModalInner({
                                 </Button>
                                 <Button
                                     onClick={handleSubmitTest}
-                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                    className="flex-1 bg-success hover:bg-success/90 text-white"
                                     disabled={answeredCount === 0}
                                 >
                                     Submit Test

@@ -393,6 +393,17 @@ Search the entire codebase for each pattern and replace:
 ### Verification check
 After this phase, grep for `bg-slate`, `bg-blue`, `bg-green`, `bg-yellow`, `bg-red`, `bg-emerald`, `bg-indigo`, `text-slate`, `text-blue`, `text-green`, `text-yellow`, `text-red` in all component files. There should be zero results. Every semantic color usage now goes through the token system and will harmonize with the warm cream palette.
 
+**Status:** FIXED
+
+### Implementation notes
+- CSS variables store full `hsl()` values (e.g., `--success: hsl(142 45% 38%);`) matching existing codebase convention
+- Colors registered in `@theme inline` as `--color-success: var(--success)` for full Tailwind v4 modifier support (`bg-success/90`, `from-info-subtle`, gradient stops, opacity)
+- Custom `@layer utilities` overrides auto-generated `text-*` and `border-*` with darker readable text shades and medium border shades
+- 11 component files updated (46 total replacements): admin-dashboard-content, login-content, batch-marks-report-modal, tasks-list-modal, student-submit-modal, evaluations-content, student/assignments/pending/page, student/assignments/page, student-test-modal, lab-attainment-report, ise-mse-report
+- Only light-mode classes replaced; all `dark:` variant classes preserved unchanged
+- Report table files (lab-attainment-report, ise-mse-report) use `bg-primary/40` for structural table headers replacing `bg-slate-400`
+- Build verified: ✔ Compiled successfully
+
 ---
 
 ## PHASE 4: Fix the Icon System and Global Interaction Rules

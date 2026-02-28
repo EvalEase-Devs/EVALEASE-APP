@@ -51,6 +51,32 @@
   --sidebar-border: hsl(30 10% 90%);
   --sidebar-ring: hsl(220 15% 20%);
 
+  /* SUCCESS — warm green, harmonized with cream background */
+  --success: hsl(142 45% 38%);
+  --success-foreground: hsl(0 0% 100%);
+  --success-subtle: hsl(142 35% 94%);
+  --success-border: hsl(142 35% 75%);
+  --success-text: hsl(142 45% 30%);
+
+  /* WARNING — warm amber */
+  --warning: hsl(38 85% 48%);
+  --warning-foreground: hsl(0 0% 100%);
+  --warning-subtle: hsl(38 80% 94%);
+  --warning-border: hsl(38 70% 72%);
+  --warning-text: hsl(38 75% 32%);
+
+  /* INFO — warm blue, less cold than default Tailwind blue */
+  --info: hsl(215 60% 45%);
+  --info-foreground: hsl(0 0% 100%);
+  --info-subtle: hsl(215 50% 94%);
+  --info-border: hsl(215 45% 72%);
+  --info-text: hsl(215 60% 35%);
+
+  /* DANGER — extends existing destructive with subtle variants */
+  --danger-subtle: hsl(0 70% 94%);
+  --danger-border: hsl(0 60% 75%);
+  --danger-text: hsl(0 70% 38%);
+
   --font-sans: Geist, sans-serif;
   --font-serif: "Lora", Georgia, serif;
   --font-mono: "Fira Code", "Courier New", monospace;
@@ -189,6 +215,18 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Semantic state colors */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-subtle: var(--info-subtle);
+  --color-danger-subtle: var(--danger-subtle);
+
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
@@ -232,6 +270,25 @@
   .card-premium:hover {
     box-shadow: var(--shadow-md);        /* Tier 3 on hover — perceptible elevation change */
   }
+
+  /* ============================================
+     SEMANTIC STATE COLOR UTILITIES
+     Override Tailwind's auto-generated text/border classes
+     with darker, more readable shades for text
+     and medium shades for borders.
+     ============================================ */
+
+  /* Text colors — darker shades for readability on light backgrounds */
+  .text-success    { color: var(--success-text); }
+  .text-warning    { color: var(--warning-text); }
+  .text-info       { color: var(--info-text); }
+  .text-danger     { color: var(--danger-text); }
+
+  /* Border colors — medium shades, visible but not overwhelming */
+  .border-success  { border-color: var(--success-border); }
+  .border-warning  { border-color: var(--warning-border); }
+  .border-info     { border-color: var(--info-border); }
+  .border-danger   { border-color: var(--danger-border); }
 
   /* ============================================
      SEMANTIC TYPOGRAPHY SCALE

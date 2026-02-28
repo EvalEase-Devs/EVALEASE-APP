@@ -220,8 +220,8 @@ export default function StudentAssignmentsPage() {
                 <AlertDialogContent className="max-w-md">
                     <AlertDialogHeader>
                         <div className="flex items-center justify-center mb-4">
-                            <div className="rounded-full bg-yellow-100 p-3">
-                                <AlertTriangle className="h-6 w-6 text-yellow-600" />
+                            <div className="rounded-full bg-warning-subtle p-3">
+                                <AlertTriangle className="h-6 w-6 text-warning" />
                             </div>
                         </div>
                         <AlertDialogTitle className="text-center text-xl">Confirm Submission</AlertDialogTitle>
@@ -236,12 +236,12 @@ export default function StudentAssignmentsPage() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
 
-                    <div className="rounded-lg border-2 border-red-200 bg-red-50 p-4 space-y-2">
+                    <div className="rounded-lg border-2 border-danger bg-danger-subtle p-4 space-y-2">
                         <div className="flex items-start gap-2">
-                            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                            <AlertTriangle className="h-5 w-5 text-danger mt-0.5 flex-shrink-0" />
                             <div className="space-y-1">
-                                <div className="text-sm font-bold text-red-900">Strict Warning: Academic Integrity</div>
-                                <p className="text-xs text-red-800 leading-relaxed">
+                                <div className="text-sm font-bold text-danger">Strict Warning: Academic Integrity</div>
+                                <p className="text-xs text-danger leading-relaxed">
                                     You certify that the marks entered above match your actual graded paper. Any mismatch detected during verification will result in <span className="font-bold">0 marks</span> for this subject and strict disciplinary action will be taken.
                                 </p>
                             </div>
@@ -260,7 +260,7 @@ export default function StudentAssignmentsPage() {
                         <Button
                             onClick={handleConfirmSubmit}
                             disabled={submittingLoading}
-                            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
+                            className="w-full sm:w-auto bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                         >
                             {submittingLoading ? (
                                 <>

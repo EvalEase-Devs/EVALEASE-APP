@@ -83,16 +83,16 @@ const StudentSubmitModal: React.FC<StudentSubmitModalProps> = ({ isOpen, onClose
                     </div>
 
                     {task.submission ? (
-                        <Card className="bg-green-50 border-green-200">
+                        <Card className="bg-success-subtle border-success">
                             <CardContent className="pt-4">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-sm text-muted-foreground">Your Score</p>
-                                        <p className="text-2xl font-bold text-green-600">
+                                        <p className="text-2xl font-bold text-success">
                                             {task.submission.marks_obtained}/{task.max_marks}
                                         </p>
                                     </div>
-                                    <Badge variant="default" className="bg-green-600">
+                                    <Badge variant="default" className="bg-success">
                                         {task.submission.status}
                                     </Badge>
                                 </div>
@@ -104,9 +104,9 @@ const StudentSubmitModal: React.FC<StudentSubmitModalProps> = ({ isOpen, onClose
                             </CardContent>
                         </Card>
                     ) : (
-                        <Card className="bg-yellow-50 border-yellow-200">
+                        <Card className="bg-warning-subtle border-warning">
                             <CardContent className="pt-4">
-                                <p className="text-sm text-yellow-700">
+                                <p className="text-sm text-warning">
                                     This task has not been graded yet. Check back later for your marks.
                                 </p>
                             </CardContent>

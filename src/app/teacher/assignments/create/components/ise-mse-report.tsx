@@ -127,7 +127,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                     <CardTitle>ISE-MSE Attainment Report</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-red-500">Failed to load report data</p>
+                    <p className="text-danger">Failed to load report data</p>
                 </CardContent>
             </Card>
         );
@@ -226,7 +226,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                     <p className="font-bold text-xs">ST. FRANCIS INSTITUTE OF TECHNOLOGY</p>
                     <p className="text-xs">Subject: {allotment.sub_id} | Class: {allotment.class_name} | Semester: {allotment.current_sem}</p>
                     <p className="text-xs">Teacher: {teacher.teacher_name}</p>
-                    <p className="text-xs font-semibold text-blue-600 border-t border-slate-300 pt-2 mt-2">Subject Target: {subjectTarget}%</p>
+                    <p className="text-xs font-semibold text-info border-t border-border pt-2 mt-2">Subject Target: {subjectTarget}%</p>
                 </CardContent>
 
             </Card>
@@ -244,7 +244,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                     <table className="w-full text-[10px] border-collapse border-4 border-black">
                         <thead>
                             {/* Level 1: CO Headers */}
-                            <tr className="bg-gradient-to-r from-slate-400 to-slate-300 text-slate-900">
+                            <tr className="bg-gradient-to-r from-primary/40 to-primary/30 text-foreground">
                                 <th className="border-2 border-black px-2 py-1 h-10 font-bold text-center text-[9px]" rowSpan={3}>Roll No</th>
                                 <th className="border-2 border-black px-2 py-1 h-10 font-bold text-center text-[9px]" rowSpan={3}>PID</th>
                                 <th className="border-2 border-black px-2 py-1 h-10 font-bold text-center text-[9px]" rowSpan={3}>Name</th>
@@ -260,7 +260,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                             </tr>
 
                             {/* Level 2: ISE/MSE Headers */}
-                            <tr className="bg-slate-300 text-slate-900">
+                            <tr className="bg-primary/30 text-foreground">
                                 {coList.map(co => (
                                     <React.Fragment key={`ise-mse-${co}`}>
                                         {columnStructure[co].ise.length > 0 && (
@@ -280,7 +280,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                                             </th>
                                         )}
                                         <th
-                                            className="border-2 border-black px-1 py-1 font-semibold text-center bg-amber-400 text-slate-900 text-[9px]"
+                                            className="border-2 border-black px-1 py-1 font-semibold text-center bg-warning text-foreground text-[9px]"
                                             colSpan={3}
                                         >
                                             Summary
@@ -290,7 +290,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                             </tr>
 
                             {/* Level 3: Task/Question Names */}
-                            <tr className="bg-slate-200 text-slate-900">
+                            <tr className="bg-muted text-foreground">
                                 {coList.map(co => (
                                     <React.Fragment key={`tasks-${co}`}>
                                         {columnStructure[co].ise.map(iseTask => (
@@ -299,7 +299,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                                                 className="border-2 border-black px-1 py-1 text-center font-semibold text-[8px]"
                                             >
                                                 <div>{formatISETitle(iseTask.title)}</div>
-                                                <div className="text-[7px] text-slate-600 font-normal">({iseTask.max_marks})</div>
+                                                <div className="text-[7px] text-muted-foreground font-normal">({iseTask.max_marks})</div>
                                             </th>
                                         ))}
                                         {columnStructure[co].mse.map(mseQuestion => (
@@ -308,16 +308,16 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                                                 className="border-2 border-black px-1 py-1 text-center font-semibold text-[8px]"
                                             >
                                                 <div>{mseQuestion.question_label}</div>
-                                                <div className="text-[7px] text-slate-600 font-normal">({mseQuestion.max_marks})</div>
+                                                <div className="text-[7px] text-muted-foreground font-normal">({mseQuestion.max_marks})</div>
                                             </th>
                                         ))}
-                                        <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-amber-300 text-slate-900">
+                                        <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-warning/70 text-foreground">
                                             <div className="text-[8px]">Obtained</div>
                                         </th>
-                                        <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-amber-300 text-slate-900">
+                                        <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-warning/70 text-foreground">
                                             <div className="text-[8px]">Attempted</div>
                                         </th>
-                                        <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-amber-300 text-slate-900">
+                                        <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-warning/70 text-foreground">
                                             <div className="text-[8px]">%</div>
                                         </th>
                                     </React.Fragment>
@@ -327,10 +327,10 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
 
                         <tbody>
                             {students.map(student => (
-                                <tr key={student.pid} className="hover:bg-slate-100 border-b-2 border-black">
-                                    <td className="border-2 border-black px-1 py-1 text-center font-bold bg-slate-100 text-[9px]">{student.roll_no}</td>
-                                    <td className="border-2 border-black px-1 py-1 text-center bg-slate-100 text-[9px]">{student.pid}</td>
-                                    <td className="border-2 border-black px-1 py-1 font-bold min-w-32 bg-slate-100 text-[9px]">{student.stud_name}</td>
+                                <tr key={student.pid} className="hover:bg-muted/50 border-b-2 border-black">
+                                    <td className="border-2 border-black px-1 py-1 text-center font-bold bg-muted/50 text-[9px]">{student.roll_no}</td>
+                                    <td className="border-2 border-black px-1 py-1 text-center bg-muted/50 text-[9px]">{student.pid}</td>
+                                    <td className="border-2 border-black px-1 py-1 font-bold min-w-32 bg-muted/50 text-[9px]">{student.stud_name}</td>
 
                                     {/* Data cells */}
                                     {coList.map(co => {
@@ -364,13 +364,13 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                                                 })}
 
                                                 {/* Summary columns */}
-                                                <td className="border-2 border-black px-1 py-1 text-center font-bold bg-amber-100 text-[9px]">
+                                                <td className="border-2 border-black px-1 py-1 text-center font-bold bg-warning-subtle text-[9px]">
                                                     {summary.totalObtained}
                                                 </td>
-                                                <td className="border-2 border-black px-1 py-1 text-center font-bold bg-amber-100 text-[9px]">
+                                                <td className="border-2 border-black px-1 py-1 text-center font-bold bg-warning-subtle text-[9px]">
                                                     {summary.totalAttempted}
                                                 </td>
-                                                <td className="border-2 border-black px-1 py-1 text-center font-bold bg-amber-100 text-[9px]">
+                                                <td className="border-2 border-black px-1 py-1 text-center font-bold bg-warning-subtle text-[9px]">
                                                     {summary.percentage}%
                                                 </td>
                                             </React.Fragment>
@@ -391,7 +391,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                 <CardContent className="px-4">
                     <table className="w-full text-[10px] border-collapse border-2 border-black">
                         <thead>
-                            <tr className="bg-slate-400">
+                            <tr className="bg-primary/40">
                                 <th className="border-2 border-black px-2 py-1 font-bold text-center">Criteria</th>
                                 {coList.map(co => (
                                     <th key={`summary-co-${co}`} className="border-2 border-black px-2 py-1 font-bold text-center">
@@ -401,7 +401,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                             </tr>
                         </thead>
                         <tbody>
-                            <tr className="bg-slate-100">
+                            <tr className="bg-muted/50">
                                 <td className="border-2 border-black px-2 py-1 font-bold">Count</td>
                                 {coList.map(co => (
                                     <td key={`count-${co}`} className="border-2 border-black px-2 py-1 text-center font-bold">
@@ -409,7 +409,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                                     </td>
                                 ))}
                             </tr>
-                            <tr className="bg-amber-100">
+                            <tr className="bg-warning-subtle">
                                 <td className="border-2 border-black px-2 py-1 font-bold">Percentage</td>
                                 {coList.map(co => (
                                     <td key={`percentage-${co}`} className="border-2 border-black px-2 py-1 text-center font-bold">
@@ -430,7 +430,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                 <CardContent className="px-4 space-y-4">
                     <table className="w-full text-[10px] border-collapse border-2 border-black">
                         <thead>
-                            <tr className="bg-slate-400">
+                            <tr className="bg-primary/40">
                                 <th className="border-2 border-black px-2 py-1 font-bold text-center">Attainment</th>
                                 {coList.map(co => (
                                     <th key={`attain-co-${co}`} className="border-2 border-black px-2 py-1 font-bold text-center">
@@ -440,7 +440,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                             </tr>
                         </thead>
                         <tbody>
-                            <tr className="bg-blue-100">
+                            <tr className="bg-info-subtle">
                                 <td className="border-2 border-black px-2 py-1 font-bold text-center">Scale (1-3)</td>
                                 {coList.map(co => (
                                     <td key={`attain-val-${co}`} className="border-2 border-black px-2 py-1 text-center font-bold text-lg">
@@ -454,21 +454,21 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
                     {/* Attainment Criteria Legend */}
                     <table className="w-full text-[10px] border-collapse border-2 border-black">
                         <thead>
-                            <tr className="bg-slate-400">
+                            <tr className="bg-primary/40">
                                 <th className="border-2 border-black px-2 py-1 font-bold text-center">Attainment</th>
                                 <th className="border-2 border-black px-2 py-1 font-bold text-left">Condition (Students scoring above {subjectTarget}%)</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr className="bg-green-100">
+                            <tr className="bg-success-subtle">
                                 <td className="border-2 border-black px-2 py-1 text-center font-bold text-lg">3</td>
                                 <td className="border-2 border-black px-2 py-1 text-xs">If 60% and above students have scored above {subjectTarget}%</td>
                             </tr>
-                            <tr className="bg-yellow-100">
+                            <tr className="bg-warning-subtle">
                                 <td className="border-2 border-black px-2 py-1 text-center font-bold text-lg">2</td>
                                 <td className="border-2 border-black px-2 py-1 text-xs">If 50% to 60% of students have scored above {subjectTarget}%</td>
                             </tr>
-                            <tr className="bg-red-100">
+                            <tr className="bg-danger-subtle">
                                 <td className="border-2 border-black px-2 py-1 text-center font-bold text-lg">1</td>
                                 <td className="border-2 border-black px-2 py-1 text-xs">If less than 50% students have scored above {subjectTarget}%</td>
                             </tr>

@@ -364,7 +364,7 @@ export function BatchMarksReportModal({
                                           type="number"
                                           value={currentValue ?? ""}
                                           onChange={(e) => handleMarkChange(student.pid, exp.exp_no, e.target.value)}
-                                          className={`w-22 h-8 text-center ${isEdited ? 'border-yellow-500 bg-yellow-50' : ''
+                                          className={`w-22 h-8 text-center ${isEdited ? 'border-warning bg-warning-subtle' : ''
                                             }`}
                                           min={0}
                                           max={mark.max_marks}

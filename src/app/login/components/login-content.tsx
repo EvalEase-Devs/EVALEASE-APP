@@ -72,13 +72,13 @@ export function LoginContent() {
                             <FieldGroup>
                                 {/* Helpful Note - Softer Warning */}
                                 <Field>
-                                    <div className="flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
-                                        <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+                                    <div className="flex items-start gap-3 rounded-lg border border-warning/20 bg-warning/10 p-3">
+                                        <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
                                         <div className="space-y-1 text-sm">
-                                            <p className="font-medium text-amber-900 dark:text-amber-100">
+                                            <p className="font-medium text-warning dark:text-amber-100">
                                                 SFIT Account Required
                                             </p>
-                                            <p className="text-amber-700 dark:text-amber-200">
+                                            <p className="text-warning dark:text-amber-200">
                                                 Please use your <strong>@sfit.ac.in</strong> email address to sign in.
                                             </p>
                                         </div>
