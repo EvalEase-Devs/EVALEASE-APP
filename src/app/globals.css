@@ -56,20 +56,35 @@
   --font-mono: "Fira Code", "Courier New", monospace;
   --font-heading: "Space Grotesk", sans-serif;
   --radius: 0.75rem;
-  --shadow-x: 1px;
-  --shadow-y: 2px;
-  --shadow-blur: 5px;
-  --shadow-spread: 1px;
-  --shadow-opacity: 0.06;
-  --shadow-color: hsl(0 0% 0%);
-  --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
-  --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
-  --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
-  --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
-  --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
-  --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
-  --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
-  --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+
+  /* SHADOW SYSTEM — Tuned for hsl(30 20% 97%) warm cream background */
+  /* Uses primary hue (220 15% 20%) for warmer, more premium shadows */
+
+  /* SHADOW USAGE GUIDE — follow this across all components:
+     --shadow-2xs → Barely-there edge definition
+     --shadow-xs  → Subtle lift for small elements
+     --shadow-sm  → Stat cards, inline info blocks (low hierarchy)
+     --shadow     → Standard content cards (default elevation)
+     --shadow-md  → Primary action cards, hovered cards
+     --shadow-lg  → Dropdowns, popovers, floating panels
+     --shadow-xl  → Dialogs, modals
+     --shadow-2xl → Full overlays
+  */
+  --shadow-2xs: 0px 1px 2px 0px hsl(220 15% 20% / 0.04);
+  --shadow-xs:  0px 1px 3px 0px hsl(220 15% 20% / 0.05),
+                0px 1px 2px 0px hsl(220 15% 20% / 0.04);
+  --shadow-sm:  0px 1px 2px 0px hsl(220 15% 20% / 0.06),
+                0px 1px 4px 0px hsl(220 15% 20% / 0.04);
+  --shadow:     0px 2px 4px 0px hsl(220 15% 20% / 0.07),
+                0px 4px 12px 0px hsl(220 15% 20% / 0.06);
+  --shadow-md:  0px 4px 8px 0px hsl(220 15% 20% / 0.08),
+                0px 8px 24px 0px hsl(220 15% 20% / 0.07);
+  --shadow-lg:  0px 8px 16px 0px hsl(220 15% 20% / 0.10),
+                0px 16px 40px 0px hsl(220 15% 20% / 0.09);
+  --shadow-xl:  0px 12px 24px 0px hsl(220 15% 20% / 0.12),
+                0px 24px 60px 0px hsl(220 15% 20% / 0.10);
+  --shadow-2xl: 0px 24px 48px 0px hsl(220 15% 20% / 0.14),
+                0px 48px 80px 0px hsl(220 15% 20% / 0.12);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 }
@@ -121,20 +136,23 @@
   --font-mono: "Fira Code", "Courier New", monospace;
   --font-heading: "Space Grotesk", sans-serif;
   --radius: 0.75rem;
-  --shadow-x: 1px;
-  --shadow-y: 2px;
-  --shadow-blur: 5px;
-  --shadow-spread: 1px;
-  --shadow-opacity: 0.06;
-  --shadow-color: hsl(0 0% 0%);
-  --shadow-2xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
-  --shadow-xs: 1px 2px 5px 1px hsl(0 0% 0% / 0.03);
-  --shadow-sm: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
-  --shadow: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 1px 2px 0px hsl(0 0% 0% / 0.06);
-  --shadow-md: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 2px 4px 0px hsl(0 0% 0% / 0.06);
-  --shadow-lg: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 4px 6px 0px hsl(0 0% 0% / 0.06);
-  --shadow-xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.06), 1px 8px 10px 0px hsl(0 0% 0% / 0.06);
-  --shadow-2xl: 1px 2px 5px 1px hsl(0 0% 0% / 0.15);
+
+  /* Dark mode shadows — same structure, slightly higher opacity */
+  --shadow-2xs: 0px 1px 2px 0px hsl(220 15% 10% / 0.08);
+  --shadow-xs:  0px 1px 3px 0px hsl(220 15% 10% / 0.10),
+                0px 1px 2px 0px hsl(220 15% 10% / 0.08);
+  --shadow-sm:  0px 1px 2px 0px hsl(220 15% 10% / 0.12),
+                0px 1px 4px 0px hsl(220 15% 10% / 0.08);
+  --shadow:     0px 2px 4px 0px hsl(220 15% 10% / 0.14),
+                0px 4px 12px 0px hsl(220 15% 10% / 0.12);
+  --shadow-md:  0px 4px 8px 0px hsl(220 15% 10% / 0.16),
+                0px 8px 24px 0px hsl(220 15% 10% / 0.14);
+  --shadow-lg:  0px 8px 16px 0px hsl(220 15% 10% / 0.20),
+                0px 16px 40px 0px hsl(220 15% 10% / 0.18);
+  --shadow-xl:  0px 12px 24px 0px hsl(220 15% 10% / 0.24),
+                0px 24px 60px 0px hsl(220 15% 10% / 0.20);
+  --shadow-2xl: 0px 24px 48px 0px hsl(220 15% 10% / 0.28),
+                0px 48px 80px 0px hsl(220 15% 10% / 0.24);
 }
 
 @theme inline {
@@ -207,12 +225,12 @@
   .card-premium {
     background: var(--card);
     border: none;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.2s ease;
+    box-shadow: var(--shadow);           /* Tier 2 at rest — visible float above background */
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
   }
 
   .card-premium:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md);        /* Tier 3 on hover — perceptible elevation change */
   }
 }
 
