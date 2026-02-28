@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Clock, AlertTriangle, Loader2, Timer } from 'lucide-react';
+import { IconChevronLeft, IconChevronRight, IconClock, IconAlertTriangle, IconLoader2, IconHourglass } from '@tabler/icons-react';
 import { useStudentTask } from '@/hooks/use-api';
 import { toast } from 'sonner';
 
@@ -85,7 +85,7 @@ function CountdownDisplay({ startTime, endTime }: { startTime: string | null; en
 
     return (
         <div className="flex items-center gap-2">
-            <Timer className="h-5 w-5 text-info" />
+            <IconHourglass size={20} className="text-info" />
             <span className="text-sm font-medium">{timeText}</span>
         </div>
     );
@@ -105,7 +105,7 @@ export default function StudentTestModal({ isOpen, onClose, taskId }: StudentTes
                         <DialogTitle>Loading Test...</DialogTitle>
                     </DialogHeader>
                     <div className="flex items-center justify-center py-12">
-                        <Loader2 className="h-8 w-8 animate-spin" />
+                        <IconLoader2 size={32} className="animate-spin" />
                     </div>
                 </DialogContent>
             </Dialog>
@@ -401,7 +401,7 @@ function StudentTestModalInner({
                 {/* Violation Warning Banner */}
                 {showWarning && (
                     <div className="fixed top-0 left-0 right-0 bg-destructive text-destructive-foreground py-3 px-4 flex items-center gap-2 z-50 animate-pulse">
-                        <AlertTriangle className="w-5 h-5" />
+                        <IconAlertTriangle size={20} />
                         <span className="font-semibold">{warningMessage}</span>
                         <span className="ml-auto text-sm">Violations: {violations}/2</span>
                     </div>
@@ -431,7 +431,7 @@ function StudentTestModalInner({
                             )}
                         </div>
                         <div className="flex items-center gap-2 text-lg font-semibold text-danger">
-                            <Clock className="w-5 h-5" />
+                            <IconClock size={20} />
                             {formatTime(timeRemaining)}
                         </div>
                     </div>
@@ -483,7 +483,7 @@ function StudentTestModalInner({
                                 disabled={currentQuestionIndex === 0}
                                 className="gap-2"
                             >
-                                <ChevronLeft className="w-4 h-4" />
+                                <IconChevronLeft size={16} />
                                 Previous
                             </Button>
 
@@ -501,7 +501,7 @@ function StudentTestModalInner({
                                 className="gap-2"
                             >
                                 Next
-                                <ChevronRight className="w-4 h-4" />
+                                <IconChevronRight size={16} />
                             </Button>
                         </div>
 

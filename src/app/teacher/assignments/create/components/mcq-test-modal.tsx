@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, Trash2, Save } from "lucide-react";
+import { IconPlus, IconTrash, IconDeviceFloppy } from "@tabler/icons-react";
 import { Question } from "@/lib/types";
 
 interface MCQTestModalProps {
@@ -123,7 +123,7 @@ export function MCQTestModal({ isOpen, onClose, onSubmit }: MCQTestModalProps) {
                                         onClick={() => removeQuestion(qIndex)}
                                         disabled={questions.length === 1}
                                     >
-                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                        <IconTrash size={16} className="text-destructive" />
                                     </Button>
                                 </div>
 
@@ -176,14 +176,14 @@ export function MCQTestModal({ isOpen, onClose, onSubmit }: MCQTestModalProps) {
 
                 <DialogFooter className="mt-4 gap-2">
                     <Button variant="outline" onClick={addQuestion} className="w-full sm:w-auto">
-                        <Plus className="mr-2 h-4 w-4" /> Add Question
+                        <IconPlus size={16} className="mr-2" /> Add Question
                     </Button>
                     <div className="flex-1" />
                     <Button variant="outline" onClick={onClose}>
                         Cancel
                     </Button>
                     <Button onClick={handleSubmit}>
-                        <Save className="mr-2 h-4 w-4" /> Save Test
+                        <IconDeviceFloppy size={16} className="mr-2" /> Save Test
                     </Button>
                 </DialogFooter>
             </DialogContent>

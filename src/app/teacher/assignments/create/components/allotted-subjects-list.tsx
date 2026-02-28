@@ -16,14 +16,14 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-    Trash2,
-    Plus,
-    LayoutGrid,
-    BarChart3,
-    Users,
-    MoreVertical,
-    Loader2
-} from "lucide-react";
+    IconTrash,
+    IconPlus,
+    IconLayoutGrid,
+    IconChartBar,
+    IconUsers,
+    IconDotsVertical,
+    IconLoader2
+} from "@tabler/icons-react";
 import { IconFileSpreadsheet } from "@tabler/icons-react";
 import {
     DropdownMenu,
@@ -226,7 +226,7 @@ export function AllottedSubjectsList({ subjects, onRemove, removingId }: Allotte
                                                     disabled={removingId === allotment.id}
                                                     onClick={() => handleUnAllot(allotment.id)}
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <IconTrash size={16} />
                                                 </Button>
                                             </div>
 
@@ -267,7 +267,7 @@ export function AllottedSubjectsList({ subjects, onRemove, removingId }: Allotte
                                                             variant="default"
                                                             className="text-[10px] font-bold flex items-center gap-1"
                                                         >
-                                                            <Users className="h-3 w-3" /> Incharge
+                                                            <IconUsers size={12} /> Incharge
                                                         </Badge>
                                                     )}
                                                 </div>
@@ -281,19 +281,19 @@ export function AllottedSubjectsList({ subjects, onRemove, removingId }: Allotte
                                                     disabled={addingTask}
                                                     onClick={() => handleOpenTaskModal(allotment)}
                                                 >
-                                                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                                                    <IconPlus size={14} className="mr-1.5" />
                                                     {addingTask ? 'Adding...' : 'Add Task'}
                                                 </Button>
 
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <Button variant="outline" size="sm" className="px-2">
-                                                            <MoreVertical className="h-4 w-4" />
+                                                            <IconDotsVertical size={16} />
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end" className="w-48">
                                                         <DropdownMenuItem onClick={() => handleOpenTasksList(allotment)}>
-                                                            <LayoutGrid className="mr-2 h-4 w-4" /> View All Tasks
+                                                            <IconLayoutGrid size={16} className="mr-2" /> View All Tasks
                                                         </DropdownMenuItem>
                                                         {allotment.type === 'Lab' && (
                                                             <DropdownMenuItem onClick={() => handleOpenMarksReport(allotment)}>
@@ -303,13 +303,13 @@ export function AllottedSubjectsList({ subjects, onRemove, removingId }: Allotte
 
                                                         {allotment.isIncharge && allotment.type === 'Lec' && (
                                                             <DropdownMenuItem onClick={() => handleOpenISEMSEReport(allotment)}>
-                                                                <BarChart3 className="mr-2 h-4 w-4" /> ISE-MSE Attainment Report
+                                                                <IconChartBar size={16} className="mr-2" /> ISE-MSE Attainment Report
                                                             </DropdownMenuItem>
                                                         )}
 
                                                         {allotment.isIncharge && allotment.type === 'Lab' && (
                                                             <DropdownMenuItem onClick={() => handleOpenLabReport(allotment)}>
-                                                                <BarChart3 className="mr-2 h-4 w-4" /> Lab Attainment Report
+                                                                <IconChartBar size={16} className="mr-2" /> Lab Attainment Report
                                                             </DropdownMenuItem>
                                                         )}
                                                     </DropdownMenuContent>

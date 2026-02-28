@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup } from "@/components/ui/field";
-import { AlertCircle, Sparkles } from "lucide-react";
+import { IconAlertCircle, IconSparkles } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 export function LoginContent() {
@@ -50,7 +50,7 @@ export function LoginContent() {
                 {/* Logo and Brand */}
                 <a href="#" className="flex items-center gap-2 self-center font-medium">
                     <div className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex size-8 items-center justify-center rounded-lg shadow-sm">
-                        <Sparkles className="size-4" />
+                        <IconSparkles size={16} />
                     </div>
                     <span className="text-page-title">
                         EvalEase
@@ -73,7 +73,7 @@ export function LoginContent() {
                                 {/* Helpful Note - Softer Warning */}
                                 <Field>
                                     <div className="flex items-start gap-3 rounded-lg border border-warning/20 bg-warning/10 p-3">
-                                        <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
+                                        <IconAlertCircle size={20} className="mt-0.5 shrink-0 text-warning" />
                                         <div className="space-y-1 text-sm">
                                             <p className="font-medium text-warning dark:text-amber-100">
                                                 SFIT Account Required

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { FileQuestion } from "lucide-react";
+import { IconFileSearch } from "@tabler/icons-react";
 
 export default function TeacherNotFound() {
   return (
@@ -17,7 +17,7 @@ export default function TeacherNotFound() {
 
       <div className="flex flex-1 flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10 mb-6">
-          <FileQuestion className="h-10 w-10 text-destructive" />
+          <IconFileSearch size={40} className="text-destructive" />
         </div>
         <h2 className="text-page-title">Page Not Found</h2>
         <p className="text-muted-foreground mt-2 max-w-md">

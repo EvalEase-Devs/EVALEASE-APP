@@ -6,7 +6,7 @@ import { FadeIn } from "@/components/ui/fade-in";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart3, FileText, Microscope } from "lucide-react";
+import { IconChartBar, IconFileText, IconMicroscope } from "@tabler/icons-react";
 import { ISEMSEReportModal } from "@/app/teacher/assignments/create/components/ise-mse-report-modal";
 import { LabAttainmentModal } from "@/app/teacher/assignments/create/components/lab-attainment-modal";
 import { useAllotments } from "@/hooks/use-api";
@@ -68,7 +68,7 @@ export function EvaluationsContent() {
                         <Card className="hover-lift">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Allotted Subjects</CardTitle>
-                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <IconFileText size={16} className="text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">
@@ -82,7 +82,7 @@ export function EvaluationsContent() {
                         <Card className="hover-lift">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Lecture Reports</CardTitle>
-                                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                                <IconChartBar size={16} className="text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">
@@ -96,7 +96,7 @@ export function EvaluationsContent() {
                         <Card className="hover-lift">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">Lab Reports</CardTitle>
-                                <Microscope className="h-4 w-4 text-muted-foreground" />
+                                <IconMicroscope size={16} className="text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">
@@ -125,7 +125,7 @@ export function EvaluationsContent() {
                             </div>
                         ) : lecAllotments.length === 0 ? (
                             <div className="py-8 text-center">
-                                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                                <IconFileText size={48} className="text-muted-foreground mx-auto mb-4 opacity-50" />
                                 <p className="text-muted-foreground">
                                     No lecture subjects allotted yet.{" "}
                                     <a href="/teacher/assignments/create" className="text-primary hover:underline">
@@ -155,7 +155,7 @@ export function EvaluationsContent() {
                                                 onClick={() => handleGenerateReport(allotment)}
                                                 size="sm"
                                             >
-                                                <BarChart3 className="h-4 w-4 mr-2" />
+                                                <IconChartBar size={16} className="mr-2" />
                                                 View Report
                                             </Button>
                                         </div>
@@ -183,7 +183,7 @@ export function EvaluationsContent() {
                             </div>
                         ) : labAllotments.length === 0 ? (
                             <div className="py-8 text-center">
-                                <Microscope className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                                <IconMicroscope size={48} className="text-muted-foreground mx-auto mb-4 opacity-50" />
                                 <p className="text-muted-foreground">
                                     No lab subjects allotted yet.{" "}
                                     <a href="/teacher/assignments/create" className="text-primary hover:underline">
@@ -213,7 +213,7 @@ export function EvaluationsContent() {
                                                 onClick={() => handleGenerateLabReport(allotment)}
                                                 size="sm"
                                             >
-                                                <Microscope className="h-4 w-4 mr-2" />
+                                                <IconMicroscope size={16} className="mr-2" />
                                                 View Report
                                             </Button>
                                         </div>
@@ -229,7 +229,7 @@ export function EvaluationsContent() {
                     <Card className="bg-info-subtle border-info dark:bg-blue-950 dark:border-blue-800">
                         <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2">
-                                <BarChart3 className="h-5 w-5" />
+                                <IconChartBar size={20} />
                                 About ISE-MSE Attainment Reports
                             </CardTitle>
                         </CardHeader>
@@ -249,7 +249,7 @@ export function EvaluationsContent() {
                     <Card className="bg-success-subtle border-success dark:bg-emerald-950 dark:border-emerald-800">
                         <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2">
-                                <Microscope className="h-5 w-5" />
+                                <IconMicroscope size={20} />
                                 About Lab Attainment Reports
                             </CardTitle>
                         </CardHeader>

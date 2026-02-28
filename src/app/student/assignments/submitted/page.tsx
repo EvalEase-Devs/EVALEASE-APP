@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useStudentAssignments } from "@/hooks/use-api";
-import { Loader2, BookOpen, CheckCircle2, FileText } from "lucide-react";
+import { IconLoader2, IconBook, IconCircleCheck, IconFileText } from "@tabler/icons-react";
 import type { StudentAssignment } from "@/hooks/use-api";
 
 export default function SubmittedAssignmentsPage() {
@@ -15,7 +15,7 @@ export default function SubmittedAssignmentsPage() {
     if (assignmentsLoading) {
         return (
             <div className="min-h-[50vh] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <IconLoader2 size={32} className="animate-spin text-muted-foreground" />
             </div>
         );
     }
@@ -56,9 +56,9 @@ function SubmittedAssignmentCard({ assignment }: { assignment: StudentAssignment
     const getTaskTypeIcon = (type: string) => {
         switch (type) {
             case "Lab":
-                return <BookOpen className="h-4 w-4" />;
+                return <IconBook size={16} />;
             case "Lec":
-                return <FileText className="h-4 w-4" />;
+                return <IconFileText size={16} />;
             default:
                 return null;
         }
@@ -115,7 +115,7 @@ function SubmittedAssignmentCard({ assignment }: { assignment: StudentAssignment
 
                 {/* Status Badge */}
                 <Badge variant="secondary" className="w-full justify-center">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    <IconCircleCheck size={12} className="mr-1" />
                     Submitted
                 </Badge>
             </CardContent>

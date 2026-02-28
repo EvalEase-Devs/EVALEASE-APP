@@ -23,7 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useBatchMarksReport } from "@/hooks/use-api";
 import { IconDownload, IconFileSpreadsheet, IconDeviceFloppy } from "@tabler/icons-react";
-import { Loader2 } from "lucide-react";
+import { IconLoader2 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -229,7 +229,7 @@ export function BatchMarksReportModal({
                   variant="default"
                 >
                   {saving ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <IconLoader2 size={16} className="mr-2 animate-spin" />
                   ) : (
                     <IconDeviceFloppy className="mr-2 h-4 w-4" />
                   )}
@@ -254,7 +254,7 @@ export function BatchMarksReportModal({
 
         {loading && (
           <div className="flex items-center justify-center py-12 px-6 flex-1">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <IconLoader2 size={32} className="animate-spin text-muted-foreground" />
           </div>
         )}
 

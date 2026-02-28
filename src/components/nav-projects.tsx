@@ -1,12 +1,12 @@
 "use client"
 
 import {
-  Folder,
-  Forward,
-  MoreHorizontal,
-  Trash2,
-  type LucideIcon,
-} from "lucide-react"
+  IconFolder,
+  IconShare,
+  IconDots,
+  IconTrash,
+  type TablerIcon,
+} from "@tabler/icons-react"
 import Link from "next/link"
 
 import {
@@ -32,7 +32,7 @@ export function NavProjects({
   projects: {
     name: string
     url: string
-    icon: LucideIcon
+    icon: TablerIcon
   }[]
 }) {
   const { isMobile } = useSidebar()
@@ -52,7 +52,7 @@ export function NavProjects({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction showOnHover>
-                  <MoreHorizontal />
+                  <IconDots size={16} />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
@@ -62,16 +62,16 @@ export function NavProjects({
                 align={isMobile ? "end" : "start"}
               >
                 <DropdownMenuItem>
-                  <Folder className="text-muted-foreground" />
+                  <IconFolder size={16} className="text-muted-foreground" />
                   <span>View Project</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Forward className="text-muted-foreground" />
+                  <IconShare size={16} className="text-muted-foreground" />
                   <span>Share Project</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Trash2 className="text-muted-foreground" />
+                  <IconTrash size={16} className="text-muted-foreground" />
                   <span>Delete Project</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -80,7 +80,7 @@ export function NavProjects({
         ))}
         <SidebarMenuItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">
-            <MoreHorizontal className="text-sidebar-foreground/70" />
+            <IconDots size={16} className="text-sidebar-foreground/70" />
             <span>More</span>
           </SidebarMenuButton>
         </SidebarMenuItem>

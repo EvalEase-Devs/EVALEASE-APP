@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Task, Subject, Question, SubQuestion } from '@/lib/types';
 import { Experiment, useExperimentLOs } from '@/hooks/use-api';
 import { EXPERIMENTS, COS } from '@/app/teacher/assignments/create/constants';
-import { Plus, Trash, Calendar, Clock, CheckCircle2, X, AlertCircle, BookOpen, Settings, FileText } from 'lucide-react';
+import { IconPlus, IconTrash, IconCalendar, IconClock, IconCircleCheck, IconX, IconAlertCircle, IconBook, IconSettings, IconFileText } from '@tabler/icons-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -123,7 +123,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
             if (!currentQuestionError) return null;
             return (
                 <div className="flex items-center gap-1 text-destructive text-xs mt-1">
-                    <AlertCircle size={12} />
+                    <IconAlertCircle size={12} />
                     <span>{currentQuestionError}</span>
                 </div>
             );
@@ -132,7 +132,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
         if (!err) return null;
         return (
             <div className="flex items-center gap-1 text-destructive text-xs mt-1">
-                <AlertCircle size={12} />
+                <IconAlertCircle size={12} />
                 <span>{err.message as string}</span>
             </div>
         );
@@ -314,7 +314,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                             {isLab && (
                                 <div className="bg-muted/30 p-4 rounded-xl border border-border/50 space-y-3">
                                     <div className="flex items-center gap-2 mb-3">
-                                        <BookOpen className="h-5 w-5 text-primary" />
+                                        <IconBook size={20} className="text-primary" />
                                         <h3 className="font-semibold text-base">Laboratory Experiment Selection</h3>
                                     </div>
 
@@ -389,7 +389,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                     <div className="lg:col-span-5 space-y-4">
                                         <div className="bg-muted/30 p-4 rounded-xl border border-border/50 space-y-3">
                                             <div className="flex items-center gap-2 mb-2">
-                                                <Settings className="h-5 w-5 text-primary" />
+                                                <IconSettings size={20} className="text-primary" />
                                                 <h3 className="font-semibold text-base">Step 1: Logistics</h3>
                                             </div>
 
@@ -464,7 +464,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="space-y-2">
                                                         <Label className="flex items-center gap-1">
-                                                            <Clock size={14} /> Start <span className="text-destructive">*</span>
+                                                            <IconClock size={14} /> Start <span className="text-destructive">*</span>
                                                         </Label>
                                                         <Input
                                                             type="datetime-local"
@@ -475,7 +475,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label className="flex items-center gap-1">
-                                                            <Calendar size={14} /> End <span className="text-destructive">*</span>
+                                                            <IconCalendar size={14} /> End <span className="text-destructive">*</span>
                                                         </Label>
                                                         <Input
                                                             type="datetime-local"
@@ -488,7 +488,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                             ) : (
                                                 <div className="space-y-2">
                                                     <Label className="flex items-center gap-1">
-                                                        <Calendar size={14} /> Start Time <span className="text-destructive">*</span>
+                                                        <IconCalendar size={14} /> Start Time <span className="text-destructive">*</span>
                                                     </Label>
                                                     <Input
                                                         type="datetime-local"
@@ -539,7 +539,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                     <div className="lg:col-span-7 space-y-4">
                                         <div className="bg-muted/30 p-4 rounded-xl border border-border/50 space-y-3">
                                             <div className="flex items-center gap-2 mb-2">
-                                                <FileText className="h-5 w-5 text-primary" />
+                                                <IconFileText size={20} className="text-primary" />
                                                 <h3 className="font-semibold text-base">Step 2: Content</h3>
                                             </div>
 
@@ -559,7 +559,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                                         {q.text} <span className="text-xs text-muted-foreground">({q.marks} Marks)</span>
                                                                     </div>
                                                                     <Button variant="ghost" size="sm" onClick={() => handleRemoveQuestion(q.id)} className="text-destructive">
-                                                                        <Trash size={14} />
+                                                                        <IconTrash size={14} />
                                                                     </Button>
                                                                 </div>
                                                             ))}
@@ -613,7 +613,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                                                             ))}
                                                         </div>
                                                         <Button variant="outline" size="sm" className="w-full" onClick={handleAddQuestion}>
-                                                            <Plus size={16} className="mr-2" /> Add Question
+                                                            <IconPlus size={16} className="mr-2" /> Add Question
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -678,12 +678,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                             {isLab && (
                                 <div className="bg-muted/30 p-4 rounded-xl border border-border/50 space-y-3">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Calendar className="h-5 w-5 text-primary" />
+                                        <IconCalendar size={20} className="text-primary" />
                                         <h3 className="font-semibold text-base">Scheduling</h3>
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="flex items-center gap-1">
-                                            <Clock size={14} /> Start Time <span className="text-destructive">*</span>
+                                            <IconClock size={14} /> Start Time <span className="text-destructive">*</span>
                                             <span className="text-xs text-muted-foreground">(IST)</span>
                                         </Label>
                                         <Input
@@ -708,7 +708,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onAdd, currentSu
                         <div className="flex gap-2">
                             <Button variant="outline" onClick={handleClose}>Cancel</Button>
                             <Button onClick={handleFormSubmit}>
-                                {isMCQ ? <Clock size={18} className="mr-2" /> : <CheckCircle2 size={18} className="mr-2" />}
+                                {isMCQ ? <IconClock size={18} className="mr-2" /> : <IconCircleCheck size={18} className="mr-2" />}
                                 {isMCQ ? 'Schedule Task' : 'Create Task'}
                             </Button>
                         </div>

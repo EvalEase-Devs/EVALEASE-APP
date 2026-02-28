@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Task as APITask } from '@/hooks/use-api';
-import { Trash2, X, Clock, AlertCircle, Pencil, Save, XCircle } from 'lucide-react';
+import { IconTrash, IconX, IconClock, IconAlertCircle, IconPencil, IconDeviceFloppy, IconCircleX } from '@tabler/icons-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -220,7 +220,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                             <p className="text-xs text-muted-foreground">Subject: {subjectName}</p>
                         </div>
                         <Button variant="ghost" size="icon" onClick={onClose}>
-                            <X size={20} />
+                            <IconX size={20} />
                         </Button>
                     </div>
 
@@ -315,11 +315,11 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                                         {/* Time Window Details */}
                                                         <div className="text-xs text-muted-foreground mt-2 bg-muted p-2 rounded">
                                                             <div className="flex items-center gap-1">
-                                                                <Clock size={10} />
+                                                                <IconClock size={10} />
                                                                 <span>Start: {task.start_time?.replace('T', ' ') || 'N/A'}</span>
                                                             </div>
                                                             <div className="flex items-center gap-1 mt-1">
-                                                                <AlertCircle size={10} />
+                                                                <IconAlertCircle size={10} />
                                                                 <span>End: {task.end_time?.replace('T', ' ') || 'N/A'}</span>
                                                             </div>
                                                         </div>
@@ -340,7 +340,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                                             onClick={() => onDeleteTask(task.task_id)}
                                                             title="Delete Task"
                                                         >
-                                                            <Trash2 size={18} />
+                                                            <IconTrash size={18} />
                                                         </Button>
                                                         <Button variant="ghost" size="sm">Edit</Button>
                                                     </CardFooter>
@@ -369,7 +369,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                 setStudents([]);
                                 setStudentError(null);
                             }}>
-                                <X size={18} />
+                                <IconX size={18} />
                             </Button>
                         </div>
 
@@ -465,7 +465,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                                                     onClick={() => handleSave(entry.mark_id)}
                                                                     disabled={savingMarks}
                                                                 >
-                                                                    <Save size={14} />
+                                                                    <IconDeviceFloppy size={14} />
                                                                 </Button>
                                                                 <Button
                                                                     variant="ghost"
@@ -474,7 +474,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                                                     onClick={handleCancel}
                                                                     disabled={savingMarks}
                                                                 >
-                                                                    <XCircle size={14} />
+                                                                    <IconCircleX size={14} />
                                                                 </Button>
                                                             </div>
                                                         ) : (
@@ -485,7 +485,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                                                                 onClick={() => handleEdit(entry)}
                                                                 disabled={editingMarkId !== null}
                                                             >
-                                                                <Pencil size={14} />
+                                                                <IconPencil size={14} />
                                                             </Button>
                                                         )
                                                     )}

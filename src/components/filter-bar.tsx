@@ -15,7 +15,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { IconX } from "@tabler/icons-react";
 
 interface FilterBarProps {
     filter: FilterState;
@@ -111,7 +111,7 @@ export function FilterBar({ filter, setFilter, onClear }: FilterBarProps) {
                 className="ml-auto"
                 title="Clear Filters"
             >
-                <X className="h-4 w-4" />
+                <IconX size={16} />
             </Button>
         </div>
     );

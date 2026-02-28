@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { LayoutDashboard, Users, ShieldCheck, ChartBar, Bell, Settings } from "lucide-react"
+import { IconLayoutDashboard, IconUsers, IconShieldCheck, IconChartBar, IconBell, IconSettings } from "@tabler/icons-react"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -21,12 +21,12 @@ const data = {
     {
       title: "Dashboard",
       url: "/admin",
-      icon: LayoutDashboard,
+      icon: IconLayoutDashboard,
     },
     {
       title: "User Management",
       url: "/admin/users",
-      icon: Users,
+      icon: IconUsers,
       items: [
         {
           title: "All Users",
@@ -49,7 +49,7 @@ const data = {
     {
       title: "System",
       url: "/admin/system",
-      icon: ShieldCheck,
+      icon: IconShieldCheck,
       items: [
         {
           title: "Overview",
@@ -68,17 +68,17 @@ const data = {
     {
       title: "Analytics",
       url: "/admin/analytics",
-      icon: ChartBar,
+      icon: IconChartBar,
     },
     {
       title: "Notifications",
       url: "/admin/notifications",
-      icon: Bell,
+      icon: IconBell,
     },
     {
       title: "Settings",
       url: "/admin/settings",
-      icon: Settings,
+      icon: IconSettings,
     },
   ],
 }
@@ -105,7 +105,7 @@ export function AppSidebarAdmin({
             >
               <Link href="/admin">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
-                  <ShieldCheck className="size-4" />
+                  <IconShieldCheck className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
                   <span className="truncate font-bold text-base tracking-tight font-heading">EvalEase</span>

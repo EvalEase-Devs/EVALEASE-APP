@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { LayoutDashboard, ClipboardList, FileCheck, ChartLine, Bell, Settings } from "lucide-react"
+import { IconLayoutDashboard, IconClipboardList, IconFileCheck, IconChartLine, IconBell, IconSettings } from "@tabler/icons-react"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -21,32 +21,32 @@ const data = {
     {
       title: "Dashboard",
       url: "/teacher",
-      icon: LayoutDashboard,
+      icon: IconLayoutDashboard,
     },
     {
       title: "Assignments",
       url: "/teacher/assignments/create",
-      icon: ClipboardList,
+      icon: IconClipboardList,
     },
     {
       title: "Evaluations",
       url: "/teacher/evaluations",
-      icon: FileCheck,
+      icon: IconFileCheck,
     },
     {
       title: "Analytics",
       url: "/teacher/analytics",
-      icon: ChartLine,
+      icon: IconChartLine,
     },
     {
       title: "Notifications",
       url: "/teacher/notifications",
-      icon: Bell,
+      icon: IconBell,
     },
     {
       title: "Settings",
       url: "/teacher/settings",
-      icon: Settings,
+      icon: IconSettings,
     },
   ],
 }
@@ -73,7 +73,7 @@ export function AppSidebarTeacher({
             >
               <Link href="/teacher">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
-                  <FileCheck className="size-4" />
+                  <IconFileCheck className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
                   <span className="truncate font-bold text-base tracking-tight font-heading">EvalEase</span>

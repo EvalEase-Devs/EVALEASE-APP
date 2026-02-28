@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { LayoutDashboard, ClipboardList, Bell, Settings, BookOpen } from "lucide-react"
+import { IconLayoutDashboard, IconClipboardList, IconBell, IconSettings, IconBook } from "@tabler/icons-react"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -21,22 +21,22 @@ const data = {
     {
       title: "Dashboard",
       url: "/student",
-      icon: LayoutDashboard,
+      icon: IconLayoutDashboard,
     },
     {
       title: "Assignments",
       url: "/student/assignments",
-      icon: ClipboardList,
+      icon: IconClipboardList,
     },
     {
       title: "Notifications",
       url: "/student/notifications",
-      icon: Bell,
+      icon: IconBell,
     },
     {
       title: "Settings",
       url: "/student/settings",
-      icon: Settings,
+      icon: IconSettings,
     },
   ],
 }
@@ -63,7 +63,7 @@ export function AppSidebarStudent({
             >
               <Link href="/student">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
-                  <BookOpen className="size-4" />
+                  <IconBook className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
                   <span className="truncate font-bold text-base tracking-tight font-heading">EvalEase</span>

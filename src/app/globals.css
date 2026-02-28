@@ -381,10 +381,14 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
   }
 
-  button:active:not(:disabled),
-  a:active:not(:disabled),
-  [role="button"]:active:not(:disabled) {
+  button:not(.no-press):active:not(:disabled),
+  [role="button"]:not(.no-press):active:not(:disabled) {
     transform: scale(0.98);
+  }
+
+  /* Explicitly exclude navigation and text links */
+  a:active {
+    transform: none;
   }
 
   /* Input focus animations */
@@ -429,6 +433,10 @@
 
   .press-scale:active {
     transform: scale(0.97);
+  }
+
+  .no-press:active {
+    transform: none !important;
   }
 }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import { IconChevronRight, type TablerIcon } from "@tabler/icons-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -29,7 +29,7 @@ function NavCollapsible({
   item: {
     title: string
     url: string
-    icon?: LucideIcon
+    icon?: TablerIcon
     isActive?: boolean
     items?: {
       title: string
@@ -64,7 +64,7 @@ function NavCollapsible({
           <SidebarMenuButton tooltip={item.title} isActive={isParentActive}>
             {item.icon && <item.icon />}
             <span>{item.title}</span>
-            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+            <IconChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" size={16} />
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -94,7 +94,7 @@ export function NavMain({
   items: {
     title: string
     url: string
-    icon?: LucideIcon
+    icon?: TablerIcon
     isActive?: boolean
     items?: {
       title: string

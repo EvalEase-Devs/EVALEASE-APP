@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { SubjectFilterBar } from "./subject-filter-bar";
 import { AllottedSubjectsList } from "./allotted-subjects-list";
 import { SlideIn } from "@/components/ui/slide-in";
-import { Plus } from "lucide-react";
+import { IconPlus } from "@tabler/icons-react";
 import { useAllotments } from "@/hooks/use-api";
 import { CardsGridSkeleton } from "@/components/skeletons";
 import { toast } from "sonner";
@@ -101,7 +101,7 @@ export function CreateAssignmentContent() {
                     size="lg"
                     className="w-fit"
                 >
-                    <Plus className="mr-2 h-5 w-5" />
+                    <IconPlus size={20} className="mr-2" />
                     Allot Subject
                 </Button>
             )}
@@ -131,7 +131,7 @@ export function CreateAssignmentContent() {
                     <div className="text-center space-y-3">
                         <p className="text-muted-foreground">No subjects allotted yet</p>
                         <Button onClick={() => setShowFilterBar(true)} size="lg">
-                            <Plus className="mr-2 h-4 w-4" />
+                            <IconPlus size={16} className="mr-2" />
                             Allot Your First Subject
                         </Button>
                     </div>

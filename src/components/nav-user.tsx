@@ -1,13 +1,13 @@
 "use client"
 
 import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut,
-  Sparkles,
-} from "lucide-react"
+  IconRosetteDiscountCheck,
+  IconBell,
+  IconSelector,
+  IconCreditCard,
+  IconLogout,
+  IconSparkles,
+} from "@tabler/icons-react"
 import { signOut } from "next-auth/react"
 
 import {
@@ -59,7 +59,7 @@ export function NavUser({
                 <span className="truncate font-semibold">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              <IconSelector className="ml-auto" size={16} />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -82,7 +82,7 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
-              <LogOut />
+              <IconLogout size={16} />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

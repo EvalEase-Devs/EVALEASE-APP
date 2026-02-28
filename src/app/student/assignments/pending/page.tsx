@@ -16,7 +16,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useStudentAssignments, useSubmitAssignmentMarks } from "@/hooks/use-api";
-import { Loader2, BookOpen, CheckCircle2, Clock, FileText, ClipboardEdit, AlertTriangle, ArrowLeft, Play } from "lucide-react";
+import { IconLoader2, IconBook, IconCircleCheck, IconClock, IconFileText, IconEdit, IconAlertTriangle, IconArrowLeft, IconPlayerPlay } from "@tabler/icons-react";
 import { toast } from "sonner";
 import StudentTestModal from "@/components/student-test-modal";
 import type { StudentAssignment } from "@/hooks/use-api";
@@ -166,7 +166,7 @@ export default function PendingAssignmentsPage() {
     if (assignmentsLoading) {
         return (
             <div className="min-h-[50vh] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <IconLoader2 size={32} className="animate-spin text-muted-foreground" />
             </div>
         );
     }
@@ -205,7 +205,7 @@ export default function PendingAssignmentsPage() {
                 <AlertDialogContent className="max-w-md">
                     <AlertDialogHeader>
                         <div className="flex items-center gap-2">
-                            <ClipboardEdit className="h-5 w-5" />
+                            <IconEdit size={20} />
                             <AlertDialogTitle>Submit Assessment</AlertDialogTitle>
                         </div>
                         <AlertDialogDescription asChild>
@@ -297,7 +297,7 @@ export default function PendingAssignmentsPage() {
                             className="bg-primary"
                         >
                             Proceed to Verify
-                            <CheckCircle2 className="ml-2 h-4 w-4" />
+                            <IconCircleCheck size={16} className="ml-2" />
                         </Button>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -309,7 +309,7 @@ export default function PendingAssignmentsPage() {
                     <AlertDialogHeader>
                         <div className="flex items-center justify-center mb-4">
                             <div className="rounded-full bg-warning-subtle p-3">
-                                <AlertTriangle className="h-6 w-6 text-warning" />
+                                <IconAlertTriangle size={24} className="text-warning" />
                             </div>
                         </div>
                         <AlertDialogTitle className="text-center text-xl">Confirm Submission</AlertDialogTitle>
@@ -326,7 +326,7 @@ export default function PendingAssignmentsPage() {
 
                     <div className="rounded-lg border-2 border-danger bg-danger-subtle p-4 space-y-2">
                         <div className="flex items-start gap-2">
-                            <AlertTriangle className="h-5 w-5 text-danger mt-0.5 flex-shrink-0" />
+                            <IconAlertTriangle size={20} className="text-danger mt-0.5 flex-shrink-0" />
                             <div className="space-y-1">
                                 <div className="text-sm font-bold text-danger">Strict Warning: Academic Integrity</div>
                                 <p className="text-xs text-danger leading-relaxed">
@@ -342,7 +342,7 @@ export default function PendingAssignmentsPage() {
                             onClick={handleBackToEdit}
                             className="w-full sm:w-auto"
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            <IconArrowLeft size={16} className="mr-2" />
                             Back to Edit
                         </Button>
                         <Button
@@ -352,7 +352,7 @@ export default function PendingAssignmentsPage() {
                         >
                             {submittingLoading ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <IconLoader2 size={16} className="mr-2 animate-spin" />
                                     Submitting...
                                 </>
                             ) : (
@@ -390,9 +390,9 @@ function AssignmentCard({
     const getTaskTypeIcon = (type: string) => {
         switch (type) {
             case "Lab":
-                return <BookOpen className="h-4 w-4" />;
+                return <IconBook size={16} />;
             case "Lec":
-                return <FileText className="h-4 w-4" />;
+                return <IconFileText size={16} />;
             default:
                 return null;
         }
@@ -439,7 +439,7 @@ function AssignmentCard({
 
                 {/* Status Badge */}
                 <Badge variant="default" className="w-full justify-center">
-                    <Clock className="h-3 w-3 mr-1" />
+                    <IconClock size={12} className="mr-1" />
                     Pending
                 </Badge>
 
@@ -450,7 +450,7 @@ function AssignmentCard({
                         size="sm"
                         onClick={() => onSubmit(assignment)}
                     >
-                        <Play className="h-4 w-4 mr-2" />
+                        <IconPlayerPlay size={16} className="mr-2" />
                         Give Test
                     </Button>
                 ) : (
@@ -459,7 +459,7 @@ function AssignmentCard({
                         size="sm"
                         onClick={() => onSubmit(assignment)}
                     >
-                        <ClipboardEdit className="h-4 w-4 mr-2" />
+                        <IconEdit size={16} className="mr-2" />
                         Add Marks
                     </Button>
                 )}

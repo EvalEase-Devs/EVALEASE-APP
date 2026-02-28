@@ -13,7 +13,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { IconArrowRight, IconLoader2 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { SUBJECT_MAP, SEMESTERS, CLASS_BY_SEM, BATCHES } from "@/app/teacher/assignments/create/constants";
 import type { Semester, AllottedSubject } from "./create-assignment-content";
@@ -188,9 +188,9 @@ export function SubjectFilterBar({ onAllot, onClose }: SubjectFilterBarProps) {
                         <Label>&nbsp;</Label>
                         <Button onClick={handleAllot} className="w-full" disabled={isLoading}>
                             {isLoading ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <IconLoader2 size={16} className="mr-2 animate-spin" />
                             ) : (
-                                <ArrowRight className="mr-2 h-4 w-4" />
+                                <IconArrowRight size={16} className="mr-2" />
                             )}
                             {isLoading ? 'Allotting...' : 'Allot'}
                         </Button>

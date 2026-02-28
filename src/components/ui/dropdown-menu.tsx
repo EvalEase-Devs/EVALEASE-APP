@@ -2,13 +2,23 @@
 
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
-import { Check, ChevronRight, Circle } from "lucide-react"
+import { IconCheck, IconChevronRight, IconCircle } from "@tabler/icons-react"
 
 import { cn } from "@/lib/utils"
 
 const DropdownMenu = DropdownMenuPrimitive.Root
 
-const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
+const DropdownMenuTrigger = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <DropdownMenuPrimitive.Trigger
+    ref={ref}
+    className={cn("no-press", className)}
+    {...props}
+  />
+))
+DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName
 
 const DropdownMenuGroup = DropdownMenuPrimitive.Group
 
@@ -34,7 +44,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
     {...props}
   >
     {children}
-    <ChevronRight className="ml-auto" />
+    <IconChevronRight className="ml-auto" size={16} />
   </DropdownMenuPrimitive.SubTrigger>
 ))
 DropdownMenuSubTrigger.displayName =
@@ -108,7 +118,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
+        <IconCheck size={16} />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>
     {children}
@@ -131,7 +141,7 @@ const DropdownMenuRadioItem = React.forwardRef<
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
-        <Circle className="h-2 w-2 fill-current" />
+        <IconCircle className="fill-current" size={8} />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>
     {children}

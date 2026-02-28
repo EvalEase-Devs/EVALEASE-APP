@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Task } from '@/lib/types';
-import { Upload, X, ClipboardCheck, AlertTriangle, ArrowLeft, Calculator, Loader2 } from 'lucide-react';
+import { IconLoader2 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,7 +27,7 @@ const StudentSubmitModal: React.FC<StudentSubmitModalProps> = ({ isOpen, onClose
             <Dialog open={isOpen} onOpenChange={onClose}>
                 <DialogContent className="max-w-md">
                     <div className="flex items-center justify-center py-12">
-                        <Loader2 className="h-8 w-8 animate-spin" />
+                        <IconLoader2 size={32} className="animate-spin" />
                     </div>
                 </DialogContent>
             </Dialog>
