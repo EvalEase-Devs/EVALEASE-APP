@@ -354,7 +354,7 @@ function SubjectRow({
                 <div className="flex items-center gap-2 shrink-0 ml-4">
                     <Button size="sm" asChild>
                         <Link
-                            href={`/teacher/assignments/create?allotmentId=${allotment.allotment_id}`}
+                            href={`/teacher/assignments/create/task?allotmentId=${allotment.allotment_id}`}
                         >
                             Create Task
                             <IconChevronRight size={16} className="ml-1" />
