@@ -99,6 +99,7 @@ export interface MarksEntry {
     total_marks_obtained: number;
     question_marks: Record<string, number> | null;
     status: string;
+    submitted_at?: string | null;
     student?: Student;
 }
 
