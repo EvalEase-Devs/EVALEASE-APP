@@ -47,6 +47,7 @@
     "xlsx": "^0.18.5",
     "zod": "^4.3.5"
   },
+  "packageManager": "npm@10.9.2",
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
