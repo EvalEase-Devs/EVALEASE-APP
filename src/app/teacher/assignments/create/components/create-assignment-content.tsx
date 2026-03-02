@@ -1,12 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { SubjectFilterBar } from "./subject-filter-bar";
 import { AllottedSubjectsList } from "./allotted-subjects-list";
-import { SlideIn } from "@/components/ui/slide-in";
-import { IconPlus } from "@tabler/icons-react";
 import { useAllotments } from "@/hooks/use-api";
 import { CardsGridSkeleton } from "@/components/skeletons";
 import { toast } from "sonner";
@@ -34,17 +28,15 @@ function getSemesterFromClass(className: string): Semester {
 }
 
 export function CreateAssignmentContent() {
-    const [showFilterBar, setShowFilterBar] = useState(false);
-    const [removingId, setRemovingId] = useState<number | null>(null);
-    const { allotments, loading, createAllotment, deleteAllotment, fetchAllotments } = useAllotments();
+    const { allotments, loading, createAllotment, deleteAllotment } = useAllotments();
 
     // Transform API allotments to component format
     const allottedSubjects: AllottedSubject[] = allotments.map(a => ({
         id: a.allotment_id,
         allotment_id: a.allotment_id,
         semester: (a.current_sem as Semester) || getSemesterFromClass(a.class_name),
-        subject: a.sub_id, // Just the subject code
-        subjectName: a.sub_name, // Full subject name
+        subject: a.sub_id,
+        subjectName: a.sub_name,
         class: a.class_name,
         batch: a.batch_no ? `Batch ${a.batch_no}` : 'All',
         isIncharge: a.is_subject_incharge,
@@ -66,26 +58,19 @@ export function CreateAssignmentContent() {
             }),
             {
                 loading: 'Allotting subject...',
-                success: () => {
-                    setShowFilterBar(false);
-                    return 'Subject allotted successfully';
-                },
+                success: 'Subject allotted successfully',
                 error: (err) => err instanceof Error ? err.message : 'Failed to allot subject',
             }
         );
     };
 
     const handleRemoveAllotment = async (id: number) => {
-        setRemovingId(id);
-        toast.promise(
-            deleteAllotment(id),
-            {
-                loading: 'Un-allotting subject...',
-                success: 'Subject un-allotted successfully',
-                error: (err) => err instanceof Error ? err.message : 'Failed to remove allotment',
-                finally: () => setRemovingId(null),
-            }
-        );
+        toast.promise(deleteAllotment(id), {
+            loading: "Removing subject...",
+            success: "Subject removed successfully",
+            error: (err) =>
+                err instanceof Error ? err.message : "Failed to remove subject",
+        });
     };
 
     if (loading) {
@@ -93,50 +78,10 @@ export function CreateAssignmentContent() {
     }
 
     return (
-        <>
-            {/* Allot Subject Button */}
-            {!showFilterBar && allottedSubjects.length > 0 && (
-                <Button
-                    onClick={() => setShowFilterBar(true)}
-                    size="lg"
-                    className="w-fit"
-                >
-                    <IconPlus size={20} className="mr-2" />
-                    Allot Subject
-                </Button>
-            )}
-
-            {/* Filter Bar */}
-            {showFilterBar && (
-                <SlideIn direction="up">
-                    <SubjectFilterBar
-                        onAllot={handleAddAllotment}
-                        onClose={() => setShowFilterBar(false)}
-                    />
-                </SlideIn>
-            )}
-
-            {/* Allotted Subjects List */}
-            {allottedSubjects.length > 0 && (
-                <AllottedSubjectsList
-                    subjects={allottedSubjects}
-                    onRemove={handleRemoveAllotment}
-                    removingId={removingId}
-                />
-            )}
-
-            {/* Empty State */}
-            {allottedSubjects.length === 0 && !showFilterBar && (
-                <div className="min-h-[50vh] flex-1 rounded-xl bg-muted/50 flex items-center justify-center">
-                    <div className="text-center space-y-3">
-                        <p className="text-muted-foreground">No subjects allotted yet</p>
-                        <Button onClick={() => setShowFilterBar(true)} size="lg">
-                            <IconPlus size={16} className="mr-2" />
-                            Allot Your First Subject
-                        </Button>
-                    </div>
-                </div>
-            )}
-        </>
+        <AllottedSubjectsList
+            subjects={allottedSubjects}
+            onAllot={handleAddAllotment}
+            onRemove={handleRemoveAllotment}
+        />
     );
 }

@@ -1,423 +1,609 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { FadeIn } from "@/components/ui/fade-in";
-import { Badge } from "@/components/ui/badge";
+import { useState, useMemo } from "react";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-    IconTrash,
     IconPlus,
-    IconLayoutGrid,
-    IconChartBar,
-    IconUsers,
+    IconFlask,
+    IconChevronRight,
+    IconBookOff,
+    IconArrowRight,
+    IconLoader2,
     IconDotsVertical,
-    IconLoader2
+    IconUsers,
+    IconList,
+    IconFileSpreadsheet,
+    IconChartBar,
+    IconTrash,
 } from "@tabler/icons-react";
-import { IconFileSpreadsheet } from "@tabler/icons-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
-    DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 import { toast } from "sonner";
-import type { AllottedSubject } from "./create-assignment-content";
-import { parseSubject } from "@/app/teacher/assignments/create/utils";
-import TaskModal from "./task-modal";
+import {
+    SUBJECT_MAP,
+    SEMESTERS,
+    CLASS_BY_SEM,
+    BATCHES,
+} from "@/app/teacher/assignments/create/constants";
+import { useTasks } from "@/hooks/use-api";
+import type { Semester, AllottedSubject } from "./create-assignment-content";
 import TasksListModal from "./tasks-list-modal";
 import { BatchMarksReportModal } from "./batch-marks-report-modal";
 import { ISEMSEReportModal } from "./ise-mse-report-modal";
 import { LabAttainmentModal } from "./lab-attainment-modal";
-import { useTasks, Task as APITask, useExperiments } from "@/hooks/use-api";
-import { Task as FormTask } from "@/lib/types";
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
 
 interface AllottedSubjectsListProps {
     subjects: AllottedSubject[];
-    onRemove: (id: number) => void;
-    removingId?: number | null;
+    onAllot: (
+        allotment: Omit<AllottedSubject, "id" | "allotment_id">,
+    ) => Promise<void>;
+    onRemove: (id: number) => Promise<void>;
 }
 
-export function AllottedSubjectsList({ subjects, onRemove, removingId }: AllottedSubjectsListProps) {
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [subjectToDelete, setSubjectToDelete] = useState<number | null>(null);
+// ---------------------------------------------------------------------------
+// Allot Subject Form (rendered inside a Dialog)
+// ---------------------------------------------------------------------------
 
-    // Task Creation Modal State
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedSubjectForTask, setSelectedSubjectForTask] = useState<AllottedSubject | null>(null);
+function AllotSubjectForm({
+    onAllot,
+    onClose,
+}: {
+    onAllot: (
+        allotment: Omit<AllottedSubject, "id" | "allotment_id">,
+    ) => Promise<void>;
+    onClose: () => void;
+}) {
+    const [selectedSemester, setSelectedSemester] = useState<Semester | "">("");
+    const [selectedSubject, setSelectedSubject] = useState("");
+    const [selectedClass, setSelectedClass] = useState("");
+    const [selectedBatch, setSelectedBatch] = useState("");
+    const [courseType, setCourseType] = useState<"Lec" | "Lab">("Lec");
+    const [isIncharge, setIsIncharge] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Tasks List Modal State
-    const [isTasksListOpen, setIsTasksListOpen] = useState(false);
-    const [selectedSubjectForList, setSelectedSubjectForList] = useState<AllottedSubject | null>(null);
+    const availableSubjects =
+        selectedSemester && selectedSemester in SUBJECT_MAP
+            ? SUBJECT_MAP[selectedSemester as keyof typeof SUBJECT_MAP]
+            : [];
 
-    // Batch Marks Report Modal State
-    const [isMarksReportOpen, setIsMarksReportOpen] = useState(false);
-    const [selectedSubjectForMarks, setSelectedSubjectForMarks] = useState<AllottedSubject | null>(null);
+    const availableClasses =
+        selectedSemester && selectedSemester in CLASS_BY_SEM
+            ? CLASS_BY_SEM[selectedSemester as keyof typeof CLASS_BY_SEM]
+            : [];
 
-    // ISE-MSE Report Modal State
-    const [isISEMSEReportOpen, setIsISEMSEReportOpen] = useState(false);
-    const [selectedSubjectForISEMSEReport, setSelectedSubjectForISEMSEReport] = useState<AllottedSubject | null>(null);
-
-    // Lab Attainment Report Modal State
-    const [isLabReportOpen, setIsLabReportOpen] = useState(false);
-    const [selectedSubjectForLabReport, setSelectedSubjectForLabReport] = useState<AllottedSubject | null>(null);
-
-    // Loading states for async buttons
-    const [addingTask, setAddingTask] = useState(false);
-    const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
-
-    // Use API hook for tasks
-    const { tasks: allTasks, loading: tasksLoading, createTask, deleteTask, fetchTasks } = useTasks();
-
-    // Use API hook for experiments (fetch when subject is selected)
-    const { experiments, loading: experimentsLoading } = useExperiments(selectedSubjectForTask?.sub_id || '');
-
-    // 1. Group the subjects by "Semester - Class"
-    const groupedSubjects = subjects.reduce((acc, subject) => {
-        const key = `${subject.semester} - ${subject.class}`;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(subject);
-        return acc;
-    }, {} as Record<string, AllottedSubject[]>);
-
-    // Sort groups by semester in ascending order
-    const sortedGroupedSubjects = Object.entries(groupedSubjects).sort((a, b) => {
-        const semesterA = parseInt(a[0].split(' ')[1]); // Extract number from "SEM 5"
-        const semesterB = parseInt(b[0].split(' ')[1]);
-        return semesterA - semesterB;
-    });
-
-    const handleUnAllot = (id: number) => {
-        setSubjectToDelete(id);
-        setDeleteDialogOpen(true);
+    // Derive subject code and name from selected subject string
+    const getSubjectCode = (): string => selectedSubject.split(" ")[0];
+    const getSubjectName = (): string => {
+        const withoutType = selectedSubject.replace(/\s*\([^)]*\)$/, "");
+        const parts = withoutType.split(" ");
+        return parts.slice(1).join(" ");
     };
 
-    const confirmDelete = () => {
-        if (subjectToDelete !== null) {
-            onRemove(subjectToDelete);
-            setSubjectToDelete(null);
+    const handleSubmit = async () => {
+        if (
+            !selectedSemester ||
+            !selectedSubject ||
+            !selectedClass ||
+            !selectedBatch
+        ) {
+            toast.error("Please fill all fields");
+            return;
         }
-        setDeleteDialogOpen(false);
+
+        setIsLoading(true);
+        try {
+            await onAllot({
+                semester: selectedSemester,
+                subject: selectedSubject,
+                subjectName: getSubjectName(),
+                class: selectedClass,
+                batch:
+                    selectedBatch === "All"
+                        ? "All"
+                        : `Batch ${selectedBatch}`,
+                isIncharge,
+                sub_id: getSubjectCode(),
+                type: courseType,
+            });
+            onClose();
+        } catch {
+            // Error handled by parent toast
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleOpenTaskModal = (allotment: AllottedSubject) => {
-        setSelectedSubjectForTask(allotment);
-        setIsModalOpen(true);
-    };
+    return (
+        <div className="flex flex-col gap-5">
+            {/* Semester + Subject (cascading) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                    <Label className="text-label">Semester</Label>
+                    <Select
+                        value={selectedSemester}
+                        onValueChange={(v) => {
+                            setSelectedSemester(v as Semester);
+                            setSelectedSubject("");
+                            setSelectedClass("");
+                        }}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select semester" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {SEMESTERS.map((sem) => (
+                                <SelectItem key={sem} value={sem}>
+                                    {sem}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex flex-col gap-2">
+                    <Label className="text-label">Subject</Label>
+                    <Select
+                        value={selectedSubject}
+                        onValueChange={setSelectedSubject}
+                        disabled={!selectedSemester}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select subject" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableSubjects.map((s) => {
+                                const val = `${s.code} ${s.fullName} (${s.type === "Lab" ? "Lab" : "Lec"})`;
+                                return (
+                                    <SelectItem key={s.code} value={val}>
+                                        {s.code} — {s.fullName}
+                                    </SelectItem>
+                                );
+                            })}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
 
-    const handleOpenTasksList = (allotment: AllottedSubject) => {
-        setSelectedSubjectForList(allotment);
-        setIsTasksListOpen(true);
-    };
+            {/* Class + Batch */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                    <Label className="text-label">Class</Label>
+                    <Select
+                        value={selectedClass}
+                        onValueChange={setSelectedClass}
+                        disabled={!selectedSemester}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select class" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableClasses.map((cls) => (
+                                <SelectItem key={cls} value={cls}>
+                                    {cls}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex flex-col gap-2">
+                    <Label className="text-label">Batch</Label>
+                    <Select
+                        value={selectedBatch}
+                        onValueChange={setSelectedBatch}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select batch" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {BATCHES.map((b) => (
+                                <SelectItem key={b} value={b}>
+                                    {b === "All" ? "All Batches" : `Batch ${b}`}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
 
-    const handleOpenMarksReport = (allotment: AllottedSubject) => {
-        setSelectedSubjectForMarks(allotment);
-        setIsMarksReportOpen(true);
-    };
+            {/* Course Type (Radio) */}
+            <div className="flex flex-col gap-2">
+                <Label className="text-label">Course Type</Label>
+                <RadioGroup
+                    value={courseType}
+                    onValueChange={(v) => setCourseType(v as "Lec" | "Lab")}
+                    className="flex items-center gap-6"
+                >
+                    <div className="flex items-center gap-2">
+                        <RadioGroupItem value="Lec" id="type-lec" />
+                        <Label htmlFor="type-lec" className="text-body">
+                            Lecture
+                        </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <RadioGroupItem value="Lab" id="type-lab" />
+                        <Label htmlFor="type-lab" className="text-body">
+                            Lab
+                        </Label>
+                    </div>
+                </RadioGroup>
+            </div>
 
-    const handleOpenISEMSEReport = (allotment: AllottedSubject) => {
-        setSelectedSubjectForISEMSEReport(allotment);
-        setIsISEMSEReportOpen(true);
-    };
+            {/* Incharge checkbox */}
+            <div className="flex items-center gap-2">
+                <Checkbox
+                    id="allot-incharge"
+                    checked={isIncharge}
+                    onCheckedChange={(c) => setIsIncharge(c as boolean)}
+                />
+                <Label htmlFor="allot-incharge" className="text-body">
+                    I am the Subject In-Charge
+                </Label>
+            </div>
 
-    const handleOpenLabReport = (allotment: AllottedSubject) => {
-        setSelectedSubjectForLabReport(allotment);
-        setIsLabReportOpen(true);
-    };
+            {/* Submit */}
+            <Button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="w-full"
+            >
+                {isLoading ? (
+                    <IconLoader2
+                        size={16}
+                        className="mr-2 animate-spin"
+                    />
+                ) : (
+                    <IconArrowRight size={16} className="mr-2" />
+                )}
+                {isLoading ? "Allotting..." : "Allot Subject"}
+            </Button>
+        </div>
+    );
+}
 
-    const handleAddTask = async (newTask: FormTask) => {
-        if (!selectedSubjectForTask) return;
+// ---------------------------------------------------------------------------
+// Subject Row (with 3-dots dropdown)
+// ---------------------------------------------------------------------------
 
-        setAddingTask(true);
-        const apiTask = {
-            allotment_id: selectedSubjectForTask.allotment_id,
-            title: newTask.title,
-            task_type: newTask.type as 'Lec' | 'Lab',
-            assessment_type: (newTask.assessmentType as 'ISE' | 'MSE') || null,
-            assessment_sub_type: (newTask.assessmentSubType as 'Subjective' | 'MCQ') || null,
-            sub_id: selectedSubjectForTask.sub_id,
-            exp_no: newTask.experimentNumber || null,
-            max_marks: newTask.maxMarks,
-            start_time: newTask.startTime || null,
-            end_time: newTask.endTime || null,
-            mcq_questions: newTask.mcqQuestions || null,
-            sub_questions: newTask.subQuestions || null,
-            mapped_cos: newTask.mappedCOs?.map((co: string) => parseInt(co.replace('CO', ''))) || []
-        };
+function SubjectRow({
+    allotment,
+    onRemove,
+}: {
+    allotment: AllottedSubject;
+    onRemove: (id: number) => Promise<void>;
+}) {
+    const [tasksModalOpen, setTasksModalOpen] = useState(false);
+    const [marksModalOpen, setMarksModalOpen] = useState(false);
+    const [iseMseModalOpen, setIseMseModalOpen] = useState(false);
+    const [labAttainmentOpen, setLabAttainmentOpen] = useState(false);
+    const [removingId, setRemovingId] = useState<number | null>(null);
 
-        toast.promise(
-            (async () => {
-                await createTask(apiTask);
-                await fetchTasks();
-            })(),
-            {
-                loading: `Creating task "${newTask.title}"...`,
-                success: `Task "${newTask.title}" created successfully!`,
-                error: (err) => err instanceof Error ? err.message : "Failed to create task",
-                finally: () => setAddingTask(false),
-            }
-        );
-    };
+    const { tasks, deleteTask } = useTasks(allotment.allotment_id);
 
-    const handleDeleteTask = async (taskId: number) => {
-        setDeletingTaskId(taskId);
-        toast.promise(
-            deleteTask(taskId),
-            {
-                loading: 'Deleting task...',
-                success: 'Task deleted',
-                error: (err) => err instanceof Error ? err.message : "Failed to delete task",
-                finally: () => setDeletingTaskId(null),
-            }
-        );
-    };
-
-    const handlePublishTask = (taskId: number) => {
-        toast.success("Task published");
-    };
-
-    // Get tasks for a specific allotment
-    const getTasksForAllotment = (allotmentId: number) => {
-        return allTasks.filter(t => t.allotment_id === allotmentId);
+    const handleRemove = async () => {
+        setRemovingId(allotment.allotment_id);
+        try {
+            await onRemove(allotment.allotment_id);
+        } finally {
+            setRemovingId(null);
+        }
     };
 
     return (
         <>
-            <div className="space-y-8">
-                {sortedGroupedSubjects.map(([groupTitle, groupSubjects]) => (
-                    <div key={groupTitle} className="space-y-4">
-
-                        {/* Group Header */}
-                        <div className="flex items-center gap-2">
-                            <div className="h-8 w-1 bg-primary rounded-full"></div>
-                            <h3 className="text-lg font-bold text-foreground tracking-tight">
-                                {groupTitle}
-                            </h3>
-                            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">
-                                {groupSubjects.length} Subjects
-                            </span>
-                        </div>
-
-                        {/* Grid of Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                            {groupSubjects.map((allotment, index) => {
-                                const parsed = parseSubject(allotment.subject);
-                                return (
-                                    <FadeIn key={allotment.id} delay={index * 0.1}>
-                                        <Card className="group relative overflow-hidden">
-
-                                            {/* Top Right Actions (Menu) */}
-                                            <div className="absolute top-2 right-2">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                    disabled={removingId === allotment.id}
-                                                    onClick={() => handleUnAllot(allotment.id)}
-                                                >
-                                                    <IconTrash size={16} />
-                                                </Button>
-                                            </div>
-
-                                            <CardHeader className="pb-2">
-                                                <div className="flex items-start justify-between">
-                                                    <div>
-                                                        {/* Subject Name */}
-                                                        <h4 className="font-bold text-lg leading-tight line-clamp-1" title={allotment.subjectName}>
-                                                            {allotment.subjectName}
-                                                        </h4>
-                                                        <p className="text-xs text-muted-foreground font-mono mt-1">
-                                                            {allotment.sub_id}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </CardHeader>
-
-                                            <CardContent className="pb-4">
-                                                {/* Badges Row */}
-                                                <div className="flex flex-wrap gap-2 mt-2">
-
-                                                    {/* Type Badge (Lec/Lab) */}
-                                                    <Badge
-                                                        variant={allotment.type === 'Lab' ? 'secondary' : 'default'}
-                                                        className="text-[10px] uppercase font-bold"
-                                                    >
-                                                        {allotment.type}
-                                                    </Badge>
-
-                                                    {/* Batch Badge */}
-                                                    <Badge variant="outline" className="text-[10px] font-medium">
-                                                        Batch: {allotment.batch}
-                                                    </Badge>
-
-                                                    {/* Incharge Badge */}
-                                                    {allotment.isIncharge && (
-                                                        <Badge
-                                                            variant="default"
-                                                            className="text-[10px] font-bold flex items-center gap-1"
-                                                        >
-                                                            <IconUsers size={12} /> Incharge
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </CardContent>
-
-                                            {/* Footer Actions - The "Control Panel" */}
-                                            <CardFooter className="pt-0 gap-2">
-                                                <Button
-                                                    className="flex-1"
-                                                    size="sm"
-                                                    disabled={addingTask}
-                                                    onClick={() => handleOpenTaskModal(allotment)}
-                                                >
-                                                    <IconPlus size={14} className="mr-1.5" />
-                                                    {addingTask ? 'Adding...' : 'Add Task'}
-                                                </Button>
-
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="outline" size="sm" className="px-2">
-                                                            <IconDotsVertical size={16} />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-48">
-                                                        <DropdownMenuItem onClick={() => handleOpenTasksList(allotment)}>
-                                                            <IconLayoutGrid size={16} className="mr-2" /> View All Tasks
-                                                        </DropdownMenuItem>
-                                                        {allotment.type === 'Lab' && (
-                                                            <DropdownMenuItem onClick={() => handleOpenMarksReport(allotment)}>
-                                                                <IconFileSpreadsheet className="mr-2 h-4 w-4" /> All Marks
-                                                            </DropdownMenuItem>
-                                                        )}
-
-                                                        {allotment.isIncharge && allotment.type === 'Lec' && (
-                                                            <DropdownMenuItem onClick={() => handleOpenISEMSEReport(allotment)}>
-                                                                <IconChartBar size={16} className="mr-2" /> ISE-MSE Attainment Report
-                                                            </DropdownMenuItem>
-                                                        )}
-
-                                                        {allotment.isIncharge && allotment.type === 'Lab' && (
-                                                            <DropdownMenuItem onClick={() => handleOpenLabReport(allotment)}>
-                                                                <IconChartBar size={16} className="mr-2" /> Lab Attainment Report
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </CardFooter>
-                                        </Card>
-                                    </FadeIn>
-                                );
-                            })}
-                        </div>
+            <div className="flex items-center justify-between p-4 border border-border/50 rounded-xl bg-background hover:bg-muted/20 transition-colors">
+                {/* Left — Subject Info */}
+                <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-body font-semibold">
+                            {allotment.subjectName || allotment.sub_id}
+                        </span>
+                        {allotment.type === "Lab" && (
+                            <IconFlask
+                                size={13}
+                                className="text-muted-foreground"
+                            />
+                        )}
+                        {allotment.isIncharge && (
+                            <Badge
+                                variant="default"
+                                className="bg-primary text-primary-foreground shadow-sm flex items-center gap-1"
+                            >
+                                <IconUsers size={12} />
+                                Incharge
+                            </Badge>
+                        )}
                     </div>
-                ))}
+                    <span className="text-caption text-muted-foreground">
+                        {allotment.batch === "All"
+                            ? "All Batches"
+                            : allotment.batch}
+                        {allotment.semester &&
+                            ` · Computer Engineering ${allotment.semester}`}
+                    </span>
+                </div>
+
+                {/* Right — Create Task + 3-dots Dropdown */}
+                <div className="flex items-center gap-2 shrink-0 ml-4">
+                    <Button size="sm" asChild>
+                        <Link
+                            href={`/teacher/assignments/create?allotmentId=${allotment.allotment_id}`}
+                        >
+                            Create Task
+                            <IconChevronRight size={16} className="ml-1" />
+                        </Link>
+                    </Button>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                            >
+                                <IconDotsVertical size={16} />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                onClick={() => setTasksModalOpen(true)}
+                            >
+                                <IconList size={14} className="mr-2" />
+                                View All Tasks
+                            </DropdownMenuItem>
+
+                            {allotment.type === "Lab" && (
+                                <DropdownMenuItem
+                                    onClick={() => setMarksModalOpen(true)}
+                                >
+                                    <IconFileSpreadsheet
+                                        size={14}
+                                        className="mr-2"
+                                    />
+                                    All Marks
+                                </DropdownMenuItem>
+                            )}
+
+                            {allotment.isIncharge &&
+                                allotment.type === "Lec" && (
+                                    <DropdownMenuItem
+                                        onClick={() =>
+                                            setIseMseModalOpen(true)
+                                        }
+                                    >
+                                        <IconChartBar
+                                            size={14}
+                                            className="mr-2"
+                                        />
+                                        ISE-MSE Attainment Report
+                                    </DropdownMenuItem>
+                                )}
+
+                            {allotment.isIncharge &&
+                                allotment.type === "Lab" && (
+                                    <DropdownMenuItem
+                                        onClick={() =>
+                                            setLabAttainmentOpen(true)
+                                        }
+                                    >
+                                        <IconChartBar
+                                            size={14}
+                                            className="mr-2"
+                                        />
+                                        Lab Attainment Report
+                                    </DropdownMenuItem>
+                                )}
+
+                            <DropdownMenuSeparator />
+
+                            <DropdownMenuItem
+                                className="text-destructive"
+                                disabled={
+                                    removingId === allotment.allotment_id
+                                }
+                                onClick={handleRemove}
+                            >
+                                <IconTrash size={14} className="mr-2" />
+                                {removingId === allotment.allotment_id
+                                    ? "Removing..."
+                                    : "Un-allot Subject"}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
 
-            {/* Delete Confirmation Dialog */}
-            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Un-allot this subject?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will remove the subject from your dashboard. You won't be able to add tasks to it anymore.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete} disabled={removingId !== null && removingId !== undefined} className="bg-destructive hover:bg-destructive/90">
-                            {removingId ? 'Removing...' : 'Un-Allot'}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            {/* Task Creation Modal */}
-            {selectedSubjectForTask && (
-                <TaskModal
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        setSelectedSubjectForTask(null);
-                    }}
-                    onAdd={handleAddTask}
-                    currentSubject={{
-                        code: selectedSubjectForTask.sub_id,
-                        fullName: selectedSubjectForTask.subjectName,
-                        type: selectedSubjectForTask.type
-                    }}
-                    currentClass={selectedSubjectForTask.class}
-                    currentBatch={selectedSubjectForTask.batch}
-                    experiments={experiments}
-                    experimentsLoading={experimentsLoading}
-                />
-            )}
-
-            {/* Tasks List Modal */}
-            {selectedSubjectForList && (
+            {/* Modals (rendered outside the row for proper portaling) */}
+            {tasksModalOpen && (
                 <TasksListModal
-                    isOpen={isTasksListOpen}
-                    onClose={() => {
-                        setIsTasksListOpen(false);
-                        setSelectedSubjectForList(null);
-                    }}
-                    tasks={getTasksForAllotment(selectedSubjectForList.allotment_id)}
-                    onDeleteTask={handleDeleteTask}
-                    deletingTaskId={deletingTaskId}
-                    onPublishTask={handlePublishTask}
-                    subjectName={selectedSubjectForList.subjectName}
+                    isOpen={tasksModalOpen}
+                    onClose={() => setTasksModalOpen(false)}
+                    tasks={tasks}
+                    onDeleteTask={deleteTask}
+                    onPublishTask={() => {}}
+                    subjectName={allotment.subjectName || allotment.sub_id}
                 />
             )}
 
-            {/* Batch Marks Report Modal */}
-            {selectedSubjectForMarks && (
-                <BatchMarksReportModal
-                    open={isMarksReportOpen}
-                    onOpenChange={(open) => {
-                        setIsMarksReportOpen(open);
-                        if (!open) setSelectedSubjectForMarks(null);
-                    }}
-                    allotmentId={selectedSubjectForMarks.allotment_id}
-                    subjectName={selectedSubjectForMarks.subjectName}
-                    className={selectedSubjectForMarks.class}
-                    batch={selectedSubjectForMarks.batch}
-                />
-            )}
+            <BatchMarksReportModal
+                open={marksModalOpen}
+                onOpenChange={setMarksModalOpen}
+                allotmentId={allotment.allotment_id}
+                subjectName={allotment.subjectName || allotment.sub_id}
+                className={allotment.class}
+                batch={allotment.batch}
+            />
 
-            {/* ISE-MSE Attainment Report Modal */}
-            {selectedSubjectForISEMSEReport && (
-                <ISEMSEReportModal
-                    open={isISEMSEReportOpen}
-                    onOpenChange={(open) => {
-                        setIsISEMSEReportOpen(open);
-                        if (!open) setSelectedSubjectForISEMSEReport(null);
-                    }}
-                    allotmentId={selectedSubjectForISEMSEReport.allotment_id}
-                    subjectCode={selectedSubjectForISEMSEReport.sub_id}
-                />
-            )}
+            <ISEMSEReportModal
+                open={iseMseModalOpen}
+                onOpenChange={setIseMseModalOpen}
+                allotmentId={allotment.allotment_id}
+                subjectCode={allotment.sub_id}
+            />
 
-            {/* Lab Attainment Report Modal */}
-            {selectedSubjectForLabReport && (
-                <LabAttainmentModal
-                    isOpen={isLabReportOpen}
-                    onClose={() => {
-                        setIsLabReportOpen(false);
-                        setSelectedSubjectForLabReport(null);
-                    }}
-                    allotmentId={selectedSubjectForLabReport.allotment_id}
+            <LabAttainmentModal
+                isOpen={labAttainmentOpen}
+                onClose={() => setLabAttainmentOpen(false)}
+                allotmentId={allotment.allotment_id}
+            />
+        </>
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Main Component
+// ---------------------------------------------------------------------------
+
+export function AllottedSubjectsList({
+    subjects,
+    onAllot,
+    onRemove,
+}: AllottedSubjectsListProps) {
+    const [allotDialogOpen, setAllotDialogOpen] = useState(false);
+
+    // Group subjects by Semester + Class
+    const groupedBySemAndClass = useMemo(() => {
+        const groups: Record<string, AllottedSubject[]> = {};
+        for (const s of subjects) {
+            const key = `${s.semester} • ${s.class}`;
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(s);
+        }
+        return Object.entries(groups).sort(([a], [b]) =>
+            a.localeCompare(b),
+        );
+    }, [subjects]);
+
+    // Shared dialog content
+    const allotDialog = (
+        <Dialog open={allotDialogOpen} onOpenChange={setAllotDialogOpen}>
+            <DialogTrigger asChild>
+                {/* Trigger is injected per-context below */}
+                <span />
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+                <DialogHeader>
+                    <DialogTitle className="text-section-title">
+                        Allot New Subject
+                    </DialogTitle>
+                </DialogHeader>
+                <AllotSubjectForm
+                    onAllot={onAllot}
+                    onClose={() => setAllotDialogOpen(false)}
                 />
-            )}
+            </DialogContent>
+        </Dialog>
+    );
+
+    // -----------------------------------------------------------------------
+    // Empty State
+    // -----------------------------------------------------------------------
+    if (subjects.length === 0) {
+        return (
+            <>
+                {allotDialog}
+                <div className="flex flex-col items-center justify-center py-24 gap-4">
+                    <IconBookOff
+                        size={48}
+                        className="text-muted-foreground"
+                    />
+                    <p className="text-body text-muted-foreground text-center">
+                        You haven&apos;t allotted any subjects to yourself yet.
+                    </p>
+                    <Button onClick={() => setAllotDialogOpen(true)}>
+                        <IconPlus size={16} className="mr-2" />
+                        Allot Subject
+                    </Button>
+                </div>
+            </>
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // Normal State — Header + Grouped Action Rows
+    // -----------------------------------------------------------------------
+    return (
+        <>
+            {allotDialog}
+
+            <div className="flex flex-col gap-8">
+                {/* Page Header */}
+                <div className="flex items-center justify-between">
+                    <h1 className="text-page-title">My Subjects</h1>
+                    <Button
+                        size="default"
+                        onClick={() => setAllotDialogOpen(true)}
+                    >
+                        <IconPlus size={16} className="mr-2" />
+                        Allot Subject
+                    </Button>
+                </div>
+
+                {/* Grouped Rows — by Semester + Class */}
+                {groupedBySemAndClass.map(([groupKey, groupSubjects]) => {
+                    // Sort: alphabetical by subject → Lec before Lab → batch ascending
+                    groupSubjects.sort((a, b) => {
+                        const nameA = (a.subjectName || a.sub_id).toLowerCase();
+                        const nameB = (b.subjectName || b.sub_id).toLowerCase();
+                        if (nameA < nameB) return -1;
+                        if (nameA > nameB) return 1;
+
+                        if (a.type === "Lec" && b.type === "Lab") return -1;
+                        if (a.type === "Lab" && b.type === "Lec") return 1;
+
+                        const getBatchNum = (batchStr: string | null | undefined) => {
+                            if (!batchStr || batchStr === "All") return 0;
+                            const num = parseInt(batchStr.toString().replace(/\D/g, ""));
+                            return isNaN(num) ? 0 : num;
+                        };
+                        return getBatchNum(a.batch) - getBatchNum(b.batch);
+                    });
+
+                    return (
+                    <div key={groupKey} className="flex flex-col">
+                        <h2 className="text-section-title">{groupKey}</h2>
+                        <Separator className="my-2" />
+
+                        <div className="flex flex-col gap-2">
+                            {groupSubjects.map((allotment) => (
+                                <SubjectRow
+                                    key={allotment.allotment_id}
+                                    allotment={allotment}
+                                    onRemove={onRemove}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    );
+                })}
+            </div>
         </>
     );
 }
