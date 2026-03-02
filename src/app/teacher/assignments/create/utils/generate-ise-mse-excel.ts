@@ -23,6 +23,7 @@
  */
 
 import ExcelJS from 'exceljs';
+import { SUBJECT_TARGETS } from '../constants';
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -658,8 +659,9 @@ async function _buildISEMSEExcel(reportData: ReportResponse, logoBase64?: string
     // 
     // Rules: No full-row spans, labels in Col C, data in D onwards, A/B empty.
 
-    const LAST_DATA_ROW = DATA_START_ROW + students.length - 1;
-    const TARGET_LOW = 50;
+    const LAST_DATA_ROW = DATA_START_ROW  + students.length - 1;
+    const subjectTarget = SUBJECT_TARGETS[allotment.sub_id as keyof typeof SUBJECT_TARGETS];
+    const TARGET_LOW = typeof subjectTarget === 'number' ? subjectTarget : 50;
     const N = students.length;
 
     // Helper to stamp individual cells only — no row-wide operations
@@ -798,7 +800,7 @@ async function _buildISEMSEExcel(reportData: ReportResponse, logoBase64?: string
     R += 3; // Skip 2 rows
 
     // Description text (no borders, no fill)
-    stamp(R, 3, 'This table consists of count of students who have scored above 50% in each CO', { italic: true, halign: 'left' });
+    stamp(R, 3, `This table consists of count of students who have scored above ${TARGET_LOW}% in each CO`, { italic: true, halign: 'left' });
     R++;
 
     // Headers
@@ -809,7 +811,7 @@ async function _buildISEMSEExcel(reportData: ReportResponse, logoBase64?: string
     R++;
 
     // Data Row
-    stamp(R, 3, 'Students Scoring Above 50%', { border: true, halign: 'left' });
+    stamp(R, 3, `Students Scoring Above ${TARGET_LOW}%`, { border: true, halign: 'left' });
     coList.forEach((co, idx) => {
         const entry = colMap.coSummary[co];
         const colL = getColLetter(entry.summPct);
@@ -821,10 +823,10 @@ async function _buildISEMSEExcel(reportData: ReportResponse, logoBase64?: string
             let obt = 0;
             ise.forEach(t => obt += s.coMarks[co]?.ise[t.task_id]?.obtained || 0);
             mse.forEach(q => obt += s.coMarks[co]?.mse[q.question_label]?.obtained || 0);
-            if (coMaxMarks[co] > 0 && (obt / coMaxMarks[co]) * 100 >= 50) cnt++;
+            if (coMaxMarks[co] > 0 && (obt / coMaxMarks[co]) * 100 >= TARGET_LOW) cnt++;
         });
 
-        stamp(R, 4 + idx, { formula: `COUNTIF(${range}, ">=50")`, result: cnt } as ExcelJS.CellFormulaValue, { border: true });
+        stamp(R, 4 + idx, { formula: `COUNTIF(${range}, ">=${TARGET_LOW}")`, result: cnt } as ExcelJS.CellFormulaValue, { border: true });
     });
     const COUNT_DATA_ROW = R;
 
@@ -832,7 +834,7 @@ async function _buildISEMSEExcel(reportData: ReportResponse, logoBase64?: string
     R += 3; // Skip 2 rows
 
     // Description text
-    stamp(R, 3, 'This table consists of percentage of students who have scored above 50% in each CO with respect to students who have attempted the questions', { italic: true, halign: 'left' });
+    stamp(R, 3, `This table consists of percentage of students who have scored above ${TARGET_LOW}% in each CO with respect to students who have attempted the questions`, { italic: true, halign: 'left' });
     R++;
 
     // Headers
@@ -843,7 +845,7 @@ async function _buildISEMSEExcel(reportData: ReportResponse, logoBase64?: string
     R++;
 
     // Data Row
-    stamp(R, 3, 'Students scoring above 55%', { border: true, halign: 'left' });
+    stamp(R, 3, `Students scoring above ${TARGET_LOW}%`, { border: true, halign: 'left' });
     coList.forEach((co, idx) => {
         const countCell = `${getColLetter(4 + idx)}${COUNT_DATA_ROW}`;
 
@@ -853,7 +855,7 @@ async function _buildISEMSEExcel(reportData: ReportResponse, logoBase64?: string
             let obt = 0;
             ise.forEach(t => obt += s.coMarks[co]?.ise[t.task_id]?.obtained || 0);
             mse.forEach(q => obt += s.coMarks[co]?.mse[q.question_label]?.obtained || 0);
-            if (coMaxMarks[co] > 0 && (obt / coMaxMarks[co]) * 100 >= 50) cnt++;
+            if (coMaxMarks[co] > 0 && (obt / coMaxMarks[co]) * 100 >= TARGET_LOW) cnt++;
         });
         const pct = N > 0 ? parseFloat(((cnt / N) * 100).toFixed(2)) : 0;
 
@@ -868,9 +870,9 @@ async function _buildISEMSEExcel(reportData: ReportResponse, logoBase64?: string
     ws.getColumn(4).width = 45;
     R++;
 
-    [[3, C.summLvl3Bg, '>= 60% of students scored >= 50%'],
-    [2, C.summLvl2Bg, '>= 50% to < 60% of students scored >= 50%'],
-    [1, C.summLvl1Bg, '< 50% of students scored >= 50%']].forEach(([lvl, bg, cond]) => {
+    [[3, C.summLvl3Bg, `>= 60% of students scored >= ${TARGET_LOW}%`],
+    [2, C.summLvl2Bg, `>= 50% to < 60% of students scored >= ${TARGET_LOW}%`],
+    [1, C.summLvl1Bg, `< 50% of students scored >= ${TARGET_LOW}%`]].forEach(([lvl, bg, cond]) => {
         stamp(R, 3, lvl as number, { bold: true, bg: bg as string, border: true });
         stamp(R, 4, cond as string, { bg: bg as string, border: true, halign: 'left' });
         R++;
@@ -889,7 +891,7 @@ async function _buildISEMSEExcel(reportData: ReportResponse, logoBase64?: string
             let obt = 0;
             ise.forEach(t => obt += s.coMarks[co]?.ise[t.task_id]?.obtained || 0);
             mse.forEach(q => obt += s.coMarks[co]?.mse[q.question_label]?.obtained || 0);
-            if (coMaxMarks[co] > 0 && (obt / coMaxMarks[co]) * 100 >= 50) cnt++;
+            if (coMaxMarks[co] > 0 && (obt / coMaxMarks[co]) * 100 >= TARGET_LOW) cnt++;
         });
         const pct = N > 0 ? (cnt / N) * 100 : 0;
         const res = pct >= 60 ? 3 : pct >= 50 ? 2 : pct > 0 ? 1 : 0;
