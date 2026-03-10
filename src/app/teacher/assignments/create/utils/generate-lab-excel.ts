@@ -23,6 +23,7 @@
  */
 
 import ExcelJS from 'exceljs';
+import { SUBJECT_TARGETS } from '../constants';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types  (mirrors lab-attainment-report.tsx)
@@ -656,7 +657,8 @@ async function _buildLabAttainmentExcel(reportData: LabReportResponse, logoBase6
     //   • Cols A is left blank in the summary section.
     // ═════════════════════════════════════════════════════════════════════════
 
-    const TARGET_MARK = 75;  // Easily change this for different subjects
+    const subjectTarget = SUBJECT_TARGETS[allotment.sub_id as keyof typeof SUBJECT_TARGETS];
+    const TARGET_MARK = typeof subjectTarget === 'number' ? subjectTarget : 75;
 
     // Helper: stamp a single cell with value + optional styling
     function stamp(

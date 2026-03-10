@@ -361,7 +361,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                     <div className="bg-background w-full max-w-3xl rounded-xl border shadow-xl">
                         <div className="flex items-center justify-between px-4 py-3 border-b">
                             <div>
-                                <h4 className="font-semibold">Students (Roll No ascending)</h4>
+                              
                                 <p className="text-xs text-muted-foreground">Task ID: {selectedTaskId}</p>
                             </div>
                             <Button variant="ghost" size="icon" onClick={() => {
