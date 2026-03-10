@@ -171,7 +171,7 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
             {/* Header */}
             <Card className="py-2">
                 <CardHeader className="py-2 px-4">
-                    <CardTitle className="text-sm">LAB ATTAINMENT ANALYSIS</CardTitle>
+                    <CardTitle className="text-sm">LAB ATTAINMENT ANALYSIS - PAGE 1</CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 py-2 flex items-center justify-between">
                     <div className="text-xs space-y-1 flex-1">
@@ -375,9 +375,9 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
             {/* LO Attainment Scale Table */}
             <Card className="py-2">
                 <CardHeader className="py-2 px-4">
-                    <CardTitle className="text-xs">LO Attainment</CardTitle>
+                    <CardTitle className="text-xs">LO Attainment Scale</CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 space-y-4">
+                <CardContent className="px-4">
                     <table className="w-full text-[10px] border-collapse border-2 border-black">
                         <thead>
                             <tr className="bg-primary/40">
@@ -400,8 +400,15 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
                             </tr>
                         </tbody>
                     </table>
+                </CardContent>
+            </Card>
 
-                    {/* Attainment Criteria Legend */}
+            {/* Attainment Criteria Legend */}
+            <Card className="py-2">
+                <CardHeader className="py-2 px-4">
+                    <CardTitle className="text-xs">LO Attainment Criteria</CardTitle>
+                </CardHeader>
+                <CardContent className="px-4">
                     <table className="w-full text-[10px] border-collapse border-2 border-black">
                         <thead>
                             <tr className="bg-primary/40">

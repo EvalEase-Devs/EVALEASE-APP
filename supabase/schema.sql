@@ -171,3 +171,64 @@ CREATE TABLE public.marks (
   CONSTRAINT marks_task_id_fkey FOREIGN KEY (task_id) REFERENCES public.task(task_id) ON DELETE CASCADE,
   CONSTRAINT marks_stud_pid_fkey FOREIGN KEY (stud_pid) REFERENCES public.student(pid) ON DELETE CASCADE
 );
+
+-- ==========================================
+-- 1) Upload metadata (one CSV upload event)
+-- ==========================================
+CREATE TABLE public.attainment_csv_upload (
+  upload_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  task_id bigint NOT NULL REFERENCES public.task(task_id) ON DELETE CASCADE,
+  allotment_id bigint NOT NULL REFERENCES public.allotment(allotment_id) ON DELETE CASCADE,
+
+  -- 'ESE' for Lec, 'EXTERNAL_VIVA' for Lab
+  assessment_kind text NOT NULL CHECK (assessment_kind IN ('ESE', 'EXTERNAL_VIVA')),
+
+  file_name text,
+  file_path text, -- optional: Supabase Storage path
+  uploaded_by bigint, -- optional: teacher_id
+  uploaded_at timestamptz NOT NULL DEFAULT now(),
+
+  subject_target numeric NOT NULL, -- snapshot at upload time
+  total_rows integer NOT NULL DEFAULT 0,
+  valid_rows integer NOT NULL DEFAULT 0,
+  invalid_rows integer NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_att_csv_upload_task ON public.attainment_csv_upload(task_id);
+CREATE INDEX idx_att_csv_upload_allotment ON public.attainment_csv_upload(allotment_id);
+
+
+-- ==========================================
+-- 2) Parsed row data from CSV
+-- ==========================================
+CREATE TABLE public.attainment_csv_marks (
+  row_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  upload_id bigint NOT NULL REFERENCES public.attainment_csv_upload(upload_id) ON DELETE CASCADE,
+  task_id bigint NOT NULL REFERENCES public.task(task_id) ON DELETE CASCADE,
+
+  roll_no integer,
+  stud_pid bigint, -- keep nullable so invalid/unmatched rows can still be stored
+  stud_name text NOT NULL,
+
+  obtained_marks numeric NOT NULL CHECK (obtained_marks >= 0),
+  out_of numeric NOT NULL CHECK (out_of > 0),
+  percent numeric GENERATED ALWAYS AS ((obtained_marks / out_of) * 100) STORED,
+
+  grade text,
+  gpa numeric,
+
+  status text NOT NULL DEFAULT 'Submitted' CHECK (status IN ('Submitted', 'Pending')),
+  submitted_at timestamptz NOT NULL DEFAULT now(),
+
+  is_valid boolean NOT NULL DEFAULT true,
+  error_message text
+);
+
+CREATE INDEX idx_att_csv_marks_upload ON public.attainment_csv_marks(upload_id);
+CREATE INDEX idx_att_csv_marks_task ON public.attainment_csv_marks(task_id);
+CREATE INDEX idx_att_csv_marks_pid ON public.attainment_csv_marks(stud_pid);
+
+-- One valid row per student per task
+CREATE UNIQUE INDEX uq_att_csv_marks_task_pid_valid
+ON public.attainment_csv_marks(task_id, stud_pid)
+WHERE is_valid = true AND stud_pid IS NOT NULL;
