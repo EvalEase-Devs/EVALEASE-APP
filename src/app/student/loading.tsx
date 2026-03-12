@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatsSkeleton, CardsGridSkeleton } from "@/components/skeletons";
+import { StatsSkeleton, CardsGridSkeleton } from "@/components/shared/skeletons";
 
 export default function StudentLoading() {
   return (
@@ -23,3 +23,4 @@ export default function StudentLoading() {
     </div>
   );
 }
+

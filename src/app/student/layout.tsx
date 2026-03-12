@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
-import { AppSidebarStudent } from "@/components/app-sidebar-student";
+import { AppSidebarStudent } from "@/components/student/app-sidebar-student";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function StudentLayout({
@@ -25,3 +25,4 @@ export default async function StudentLayout({
     </SidebarProvider>
   );
 }
+

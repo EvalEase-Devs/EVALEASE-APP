@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Lora, Roboto_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "@/components/providers/auth-provider";
-import { QueryProvider } from "@/components/providers/query-provider";
+import { ThemeProvider } from "@/components/shared/theme-provider";
+import { AuthProvider } from "@/components/shared/providers/auth-provider";
+import { QueryProvider } from "@/components/shared/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 const fontSans = Plus_Jakarta_Sans({
@@ -64,3 +64,4 @@ export default function RootLayout({
     </html>
   );
 }
+

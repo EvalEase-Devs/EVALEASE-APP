@@ -19,7 +19,7 @@ import {
 import { useStudentAssignments, useSubmitAssignmentMarks } from "@/hooks/use-api";
 import { IconLoader2, IconBook, IconCircleCheck, IconClock, IconFileText, IconEdit, IconAlertTriangle, IconArrowLeft, IconPlayerPlay } from "@tabler/icons-react";
 import { toast } from "sonner";
-import StudentTestModal from "@/components/student-test-modal";
+import StudentTestModal from "@/components/student/student-test-modal";
 import type { StudentAssignment } from "@/hooks/use-api";
 
 export default function StudentAssignmentsPage() {
@@ -566,3 +566,4 @@ function SubmittedAssignmentCard({ assignment }: { assignment: StudentAssignment
         </Card>
     );
 }
+

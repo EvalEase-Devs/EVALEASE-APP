@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { exportISEMSEViaWorker } from '../utils/excel-worker-client';
-import { SUBJECT_TARGETS, ATTAINMENT_CRITERIA } from '../constants';
+import { exportISEMSEViaWorker } from '@/app/teacher/assignments/create/utils/excel-worker-client';
+import { SUBJECT_TARGETS, ATTAINMENT_CRITERIA } from '@/app/teacher/assignments/create/constants';
 
 interface ISETask {
     task_id: number;

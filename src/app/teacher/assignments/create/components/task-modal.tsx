@@ -28,7 +28,7 @@ import {
     taskModalSchema,
     type TaskModalFormValues,
     validateMcqQuestion,
-} from '../schemas/task-schema';
+} from '@/app/teacher/assignments/create/schemas/task-schema';
 
 interface TaskModalProps {
     isOpen: boolean;

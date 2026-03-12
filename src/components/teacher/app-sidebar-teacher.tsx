@@ -3,8 +3,8 @@
 import * as React from "react"
 import Link from "next/link"
 import { IconLayoutDashboard, IconClipboardList, IconFileCheck, IconChartLine, IconBell, IconSettings } from "@tabler/icons-react"
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
+import { NavMain } from "@/components/shared/nav-main"
+import { NavUser } from "@/components/shared/nav-user"
 import {
   Sidebar,
   SidebarContent,
@@ -94,3 +94,4 @@ export function AppSidebarTeacher({
     </Sidebar>
   )
 }
+

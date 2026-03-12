@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
-import { StudentDashboardContent } from "./components/student-dashboard-content";
+import { StudentDashboardContent } from "@/components/student/student-dashboard-content";
 
 export default async function StudentDashboard() {
   const session = await auth();

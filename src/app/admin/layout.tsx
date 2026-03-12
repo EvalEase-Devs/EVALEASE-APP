@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
-import { AppSidebarAdmin } from "@/components/app-sidebar-admin";
+import { AppSidebarAdmin } from "@/components/admin/app-sidebar-admin";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function AdminLayout({
@@ -25,3 +25,4 @@ export default async function AdminLayout({
     </SidebarProvider>
   );
 }
+

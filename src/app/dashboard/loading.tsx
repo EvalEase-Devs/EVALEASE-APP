@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { ContentSkeleton } from "@/components/skeletons";
+import { ContentSkeleton } from "@/components/shared/skeletons";
 
 export default function DashboardLoading() {
   return (
@@ -17,3 +17,4 @@ export default function DashboardLoading() {
     </>
   );
 }
+

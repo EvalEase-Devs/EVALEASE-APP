@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { TableSkeleton } from "@/components/skeletons";
+import { TableSkeleton } from "@/components/shared/skeletons";
 
 export default function EvaluationsLoading() {
   return (
@@ -24,3 +24,4 @@ export default function EvaluationsLoading() {
     </>
   );
 }
+

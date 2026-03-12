@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { IconLoader2 } from "@tabler/icons-react";
-import { TaskWizard } from "./components/task-wizard";
+import { TaskWizard } from "@/app/teacher/assignments/create/components/task/task-wizard";
 
 export default function CreateTaskPage() {
     return (

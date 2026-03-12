@@ -4,8 +4,8 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { IconClock, IconCheck, IconChartBar, IconAlertCircle, IconArrowRight, IconAlertTriangle } from "@tabler/icons-react";
-import { StatsSkeleton, CardsGridSkeleton } from "@/components/skeletons";
-import StudentTestModal from "@/components/student-test-modal";
+import { StatsSkeleton, CardsGridSkeleton } from "@/components/shared/skeletons";
+import StudentTestModal from "@/components/student/student-test-modal";
 import { useStudentAssignments } from "@/hooks/use-api";
 import {
     WelcomeCard,
@@ -191,3 +191,4 @@ export function StudentDashboardContent({ firstName }: StudentDashboardContentPr
         </>
     );
 }
+

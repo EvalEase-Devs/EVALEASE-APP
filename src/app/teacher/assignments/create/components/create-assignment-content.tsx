@@ -2,7 +2,7 @@
 
 import { AllottedSubjectsList } from "./allotted-subjects-list";
 import { useAllotments } from "@/hooks/use-api";
-import { CardsGridSkeleton } from "@/components/skeletons";
+import { CardsGridSkeleton } from "@/components/shared/skeletons";
 import { toast } from "sonner";
 
 export type Semester = "SEM 5" | "SEM 6" | "SEM 7" | "SEM 8";
@@ -85,3 +85,4 @@ export function CreateAssignmentContent() {
         />
     );
 }
+

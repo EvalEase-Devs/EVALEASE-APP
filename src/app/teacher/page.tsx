@@ -6,7 +6,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/co
 export const metadata: Metadata = {
   title: "Dashboard",
 };
-import { TeacherDashboardContent } from "./components/teacher-dashboard-content";
+import { TeacherDashboardContent } from "@/components/teacher/teacher-dashboard-content";
 
 export default async function TeacherDashboard() {
   return (

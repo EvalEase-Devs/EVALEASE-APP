@@ -2,9 +2,9 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { IconLayoutDashboard, IconUsers, IconShieldCheck, IconChartBar, IconBell, IconSettings } from "@tabler/icons-react"
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
+import { IconLayoutDashboard, IconClipboardList, IconBell, IconSettings, IconBook } from "@tabler/icons-react"
+import { NavMain } from "@/components/shared/nav-main"
+import { NavUser } from "@/components/shared/nav-user"
 import {
   Sidebar,
   SidebarContent,
@@ -20,70 +20,28 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/admin",
+      url: "/student",
       icon: IconLayoutDashboard,
     },
     {
-      title: "User Management",
-      url: "/admin/users",
-      icon: IconUsers,
-      items: [
-        {
-          title: "All Users",
-          url: "/admin/users/all",
-        },
-        {
-          title: "Teachers",
-          url: "/admin/users/teachers",
-        },
-        {
-          title: "Students",
-          url: "/admin/users/students",
-        },
-        {
-          title: "Add User",
-          url: "/admin/users/add",
-        },
-      ],
-    },
-    {
-      title: "System",
-      url: "/admin/system",
-      icon: IconShieldCheck,
-      items: [
-        {
-          title: "Overview",
-          url: "/admin/system/overview",
-        },
-        {
-          title: "Audit Logs",
-          url: "/admin/system/logs",
-        },
-        {
-          title: "Backups",
-          url: "/admin/system/backups",
-        },
-      ],
-    },
-    {
-      title: "Analytics",
-      url: "/admin/analytics",
-      icon: IconChartBar,
+      title: "Assignments",
+      url: "/student/assignments",
+      icon: IconClipboardList,
     },
     {
       title: "Notifications",
-      url: "/admin/notifications",
+      url: "/student/notifications",
       icon: IconBell,
     },
     {
       title: "Settings",
-      url: "/admin/settings",
+      url: "/student/settings",
       icon: IconSettings,
     },
   ],
 }
 
-export function AppSidebarAdmin({
+export function AppSidebarStudent({
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
@@ -103,13 +61,13 @@ export function AppSidebarAdmin({
               asChild
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-hover:bg-sidebar-accent/50 transition-colors"
             >
-              <Link href="/admin">
+              <Link href="/student">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
-                  <IconShieldCheck className="size-4" />
+                  <IconBook className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
                   <span className="truncate font-bold text-base tracking-tight font-heading">EvalEase</span>
-                  <span className="inline-flex items-center w-fit px-2 py-0.5 rounded-full bg-muted/80 text-[9px] uppercase tracking-wider font-medium text-muted-foreground">Admin Portal</span>
+                  <span className="inline-flex items-center w-fit px-2 py-0.5 rounded-full bg-muted/80 text-[9px] uppercase tracking-wider font-medium text-muted-foreground">Student Portal</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -126,3 +84,4 @@ export function AppSidebarAdmin({
     </Sidebar>
   )
 }
+

@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { CardsGridSkeleton } from "@/components/skeletons";
+import { CardsGridSkeleton } from "@/components/shared/skeletons";
 
 export default function AssignmentsLoading() {
   return (
@@ -21,3 +21,4 @@ export default function AssignmentsLoading() {
     </>
   );
 }
+
