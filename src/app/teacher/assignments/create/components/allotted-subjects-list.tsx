@@ -86,7 +86,7 @@ function AllotSubjectForm({
     const [selectedSubject, setSelectedSubject] = useState("");
     const [selectedClass, setSelectedClass] = useState("");
     const [selectedBatch, setSelectedBatch] = useState("");
-    const [courseType, setCourseType] = useState<"Lec" | "Lab">("Lec");
+    const [courseType, setCourseType] = useState<"Lec" | "Lab" | "">("");
     const [isIncharge, setIsIncharge] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -100,13 +100,15 @@ function AllotSubjectForm({
             ? CLASS_BY_SEM[selectedSemester as keyof typeof CLASS_BY_SEM]
             : [];
 
-    // Derive subject code and name from selected subject string
+    // Derive subject code/name/type from selected subject string
     const getSubjectCode = (): string => selectedSubject.split(" ")[0];
     const getSubjectName = (): string => {
         const withoutType = selectedSubject.replace(/\s*\([^)]*\)$/, "");
         const parts = withoutType.split(" ");
         return parts.slice(1).join(" ");
     };
+    const getSubjectType = (): "Lec" | "Lab" =>
+        selectedSubject.includes("(Lab)") ? "Lab" : "Lec";
 
     const handleSubmit = async () => {
         if (
@@ -132,7 +134,7 @@ function AllotSubjectForm({
                         : `Batch ${selectedBatch}`,
                 isIncharge,
                 sub_id: getSubjectCode(),
-                type: courseType,
+                type: getSubjectType(),
             });
             onClose();
         } catch {
@@ -154,6 +156,7 @@ function AllotSubjectForm({
                             setSelectedSemester(v as Semester);
                             setSelectedSubject("");
                             setSelectedClass("");
+                            setCourseType("");
                         }}
                     >
                         <SelectTrigger>
@@ -172,7 +175,10 @@ function AllotSubjectForm({
                     <Label className="text-label">Subject</Label>
                     <Select
                         value={selectedSubject}
-                        onValueChange={setSelectedSubject}
+                        onValueChange={(value) => {
+                            setSelectedSubject(value);
+                            setCourseType(value.includes("(Lab)") ? "Lab" : "Lec");
+                        }}
                         disabled={!selectedSemester}
                     >
                         <SelectTrigger>
@@ -238,22 +244,24 @@ function AllotSubjectForm({
                 <Label className="text-label">Course Type</Label>
                 <RadioGroup
                     value={courseType}
-                    onValueChange={(v) => setCourseType(v as "Lec" | "Lab")}
                     className="flex items-center gap-6"
                 >
                     <div className="flex items-center gap-2">
-                        <RadioGroupItem value="Lec" id="type-lec" />
+                        <RadioGroupItem value="Lec" id="type-lec" disabled />
                         <Label htmlFor="type-lec" className="text-body">
                             Lecture
                         </Label>
                     </div>
                     <div className="flex items-center gap-2">
-                        <RadioGroupItem value="Lab" id="type-lab" />
+                        <RadioGroupItem value="Lab" id="type-lab" disabled />
                         <Label htmlFor="type-lab" className="text-body">
                             Lab
                         </Label>
                     </div>
                 </RadioGroup>
+                <p className="text-xs text-muted-foreground">
+                    Auto-selected from subject.
+                </p>
             </div>
 
             {/* Incharge checkbox */}
@@ -447,7 +455,7 @@ function SubjectRow({
                     onClose={() => setTasksModalOpen(false)}
                     tasks={tasks}
                     onDeleteTask={deleteTask}
-                    onPublishTask={() => {}}
+                    onPublishTask={() => { }}
                     subjectName={allotment.subjectName || allotment.sub_id}
                 />
             )}
@@ -587,20 +595,20 @@ export function AllottedSubjectsList({
                     });
 
                     return (
-                    <div key={groupKey} className="flex flex-col">
-                        <h2 className="text-section-title">{groupKey}</h2>
-                        <Separator className="my-2" />
+                        <div key={groupKey} className="flex flex-col">
+                            <h2 className="text-section-title">{groupKey}</h2>
+                            <Separator className="my-2" />
 
-                        <div className="flex flex-col gap-2">
-                            {groupSubjects.map((allotment) => (
-                                <SubjectRow
-                                    key={allotment.allotment_id}
-                                    allotment={allotment}
-                                    onRemove={onRemove}
-                                />
-                            ))}
+                            <div className="flex flex-col gap-2">
+                                {groupSubjects.map((allotment) => (
+                                    <SubjectRow
+                                        key={allotment.allotment_id}
+                                        allotment={allotment}
+                                        onRemove={onRemove}
+                                    />
+                                ))}
+                            </div>
                         </div>
-                    </div>
                     );
                 })}
             </div>

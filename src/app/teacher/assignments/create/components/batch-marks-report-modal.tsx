@@ -132,7 +132,6 @@ export function BatchMarksReportModal({
       data.experiments.forEach((exp) => {
         headerRow1.push(`EXP ${exp.exp_no}`);
       });
-      headerRow1.push("Total");
       excelData.push(headerRow1);
 
       // Header row 2: LOs
@@ -140,7 +139,6 @@ export function BatchMarksReportModal({
       data.experiments.forEach((exp) => {
         headerRow2.push(exp.los.join(", ") || "-");
       });
-      headerRow2.push("");
       excelData.push(headerRow2);
 
       // Data rows
@@ -151,21 +149,14 @@ export function BatchMarksReportModal({
           student.roll_no || "-",
         ];
 
-        let totalMarks = 0;
-        let totalMaxMarks = 0;
-
         data.experiments.forEach((exp) => {
           const mark = data.marksMatrix[student.pid]?.[exp.exp_no];
           if (mark) {
             row.push(`${mark.marks}/${mark.max_marks}`);
-            totalMarks += mark.marks;
-            totalMaxMarks += mark.max_marks;
           } else {
             row.push("-");
           }
         });
-
-        row.push(totalMaxMarks > 0 ? `${totalMarks}/${totalMaxMarks}` : "-");
         excelData.push(row);
       });
 
@@ -195,23 +186,6 @@ export function BatchMarksReportModal({
       console.error("Error downloading Excel:", err);
       toast.error("Failed to download Excel file");
     }
-  };
-
-  const calculateTotal = (pid: number) => {
-    if (!data) return { total: 0, max: 0 };
-
-    let total = 0;
-    let max = 0;
-
-    data.experiments.forEach((exp) => {
-      const mark = data.marksMatrix[pid]?.[exp.exp_no];
-      if (mark) {
-        total += mark.marks;
-        max += mark.max_marks;
-      }
-    });
-
-    return { total, max };
   };
 
   return (
@@ -332,14 +306,10 @@ export function BatchMarksReportModal({
                               </div>
                             </TableHead>
                           ))}
-                          <TableHead className="text-center font-semibold w-[100px]">
-                            Total
-                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {data.students.map((student) => {
-                          const totals = calculateTotal(student.pid);
                           return (
                             <TableRow key={student.pid}>
                               <TableCell className="sticky left-0 bg-background font-medium">
@@ -378,13 +348,6 @@ export function BatchMarksReportModal({
                                   </TableCell>
                                 );
                               })}
-                              <TableCell className="text-center font-semibold">
-                                {totals.max > 0 ? (
-                                  <span>{totals.total.toFixed(2)}/{totals.max.toFixed(2)}</span>
-                                ) : (
-                                  <span className="text-muted-foreground">-</span>
-                                )}
-                              </TableCell>
                             </TableRow>
                           );
                         })}

@@ -277,7 +277,7 @@ export default function PendingAssignmentsPage() {
                                         className="text-center text-2xl font-bold h-14"
                                     />
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-lg font-medium text-muted-foreground">
-                                        / {selectedAssignment?.task.max_marks || 10}
+                                        /   {selectedAssignment?.task.max_marks || 10}
                                     </div>
                                 </div>
                                 <p className="text-xs text-muted-foreground">Please enter the marks exactly as graded.</p>

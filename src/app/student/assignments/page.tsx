@@ -17,8 +17,9 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useStudentAssignments, useSubmitAssignmentMarks } from "@/hooks/use-api";
-import { IconLoader2, IconBook, IconCircleCheck, IconClock, IconFileText, IconEdit, IconAlertTriangle, IconArrowLeft } from "@tabler/icons-react";
+import { IconLoader2, IconBook, IconCircleCheck, IconClock, IconFileText, IconEdit, IconAlertTriangle, IconArrowLeft, IconPlayerPlay } from "@tabler/icons-react";
 import { toast } from "sonner";
+import StudentTestModal from "@/components/student-test-modal";
 import type { StudentAssignment } from "@/hooks/use-api";
 
 export default function StudentAssignmentsPage() {
@@ -27,14 +28,35 @@ export default function StudentAssignmentsPage() {
 
     const [selectedAssignment, setSelectedAssignment] = useState<StudentAssignment | null>(null);
     const [marksInput, setMarksInput] = useState<string>("");
+    const [questionMarks, setQuestionMarks] = useState<Record<string, string>>({});
     const [showSubmitDialog, setShowSubmitDialog] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [showTestModal, setShowTestModal] = useState(false);
+    const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
 
     // Separate assignments by status
     const pendingAssignments = allAssignments.filter(a => a.status === 'Pending');
     const submittedAssignments = allAssignments.filter(a => a.status === 'Submitted');
 
     const handleOpenSubmit = (assignment: StudentAssignment) => {
+        const task = assignment.task;
+
+        // For MCQ - open test modal instead
+        if (task.assessment_sub_type === 'MCQ') {
+            setSelectedTaskId(task.task_id);
+            setShowTestModal(true);
+            return;
+        }
+
+        // For MSE with sub_questions - reset question marks
+        if (task.assessment_type === 'MSE' && task.sub_questions) {
+            const initialMarks: Record<string, string> = {};
+            task.sub_questions.forEach((q: any) => {
+                initialMarks[q.label] = "";
+            });
+            setQuestionMarks(initialMarks);
+        }
+
         setSelectedAssignment(assignment);
         setMarksInput("");
         setShowSubmitDialog(true);
@@ -44,15 +66,57 @@ export default function StudentAssignmentsPage() {
     const handleProceedToVerify = () => {
         if (!selectedAssignment) return;
 
-        const marks = parseFloat(marksInput);
-        if (isNaN(marks) || marks < 0) {
-            toast.error("Please enter a valid marks value");
-            return;
-        }
+        const task = selectedAssignment.task;
 
-        if (marks > selectedAssignment.task.max_marks) {
-            toast.error(`Marks cannot exceed ${selectedAssignment.task.max_marks}`);
-            return;
+        // For MSE with sub_questions - validate question-wise marks
+        if (task.assessment_type === 'MSE' && task.sub_questions) {
+            const subQuestions = task.sub_questions as any[];
+            let totalMarks = 0;
+            let hasError = false;
+
+            for (const q of subQuestions) {
+                const markStr = questionMarks[q.label];
+                if (!markStr || markStr.trim() === "") {
+                    toast.error(`Please enter marks for ${q.label}`);
+                    hasError = true;
+                    break;
+                }
+
+                const mark = parseFloat(markStr);
+                if (isNaN(mark) || mark < 0) {
+                    toast.error(`Invalid marks for ${q.label}`);
+                    hasError = true;
+                    break;
+                }
+
+                if (mark > q.marks) {
+                    toast.error(`Marks for ${q.label} cannot exceed ${q.marks}`);
+                    hasError = true;
+                    break;
+                }
+
+                totalMarks += mark;
+            }
+
+            if (hasError) return;
+
+            if (totalMarks > task.max_marks) {
+                toast.error(`Total marks (${totalMarks}) cannot exceed ${task.max_marks}`);
+                return;
+            }
+
+            setMarksInput(totalMarks.toString());
+        } else {
+            const marks = parseFloat(marksInput);
+            if (isNaN(marks) || marks < 0) {
+                toast.error("Please enter a valid marks value");
+                return;
+            }
+
+            if (marks > task.max_marks) {
+                toast.error(`Marks cannot exceed ${task.max_marks}`);
+                return;
+            }
         }
 
         // Move to confirmation dialog
@@ -69,15 +133,28 @@ export default function StudentAssignmentsPage() {
         if (!selectedAssignment) return;
 
         const marks = parseFloat(marksInput);
+        const task = selectedAssignment.task;
+
+        // Prepare question_marks JSON for MSE
+        let questionMarksJson: Record<string, number> | null = null;
+        if (task.assessment_type === 'MSE' && task.sub_questions) {
+            questionMarksJson = {};
+            Object.keys(questionMarks).forEach(label => {
+                if (questionMarksJson) {
+                    questionMarksJson[label] = parseFloat(questionMarks[label]);
+                }
+            });
+        }
 
         toast.promise(
-            submitMarks(selectedAssignment.mark_id, marks),
+            submitMarks(selectedAssignment.mark_id, marks, questionMarksJson),
             {
                 loading: 'Submitting marks...',
                 success: () => {
                     setShowConfirmDialog(false);
                     setSelectedAssignment(null);
                     setMarksInput("");
+                    setQuestionMarks({});
                     refetch();
                     return 'Marks submitted successfully!';
                 },
@@ -179,33 +256,70 @@ export default function StudentAssignmentsPage() {
                     </AlertDialogHeader>
 
                     <div className="space-y-3 py-2">
-                        <div className="space-y-2">
-                            <Label htmlFor="marks" className="text-sm font-medium">Obtained Marks</Label>
-                            <div className="relative">
-                                <Input
-                                    id="marks"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    max={selectedAssignment?.task.max_marks || 100}
-                                    placeholder="Enter your marks"
-                                    value={marksInput}
-                                    onChange={(e) => setMarksInput(e.target.value)}
-                                    className="text-center text-2xl font-bold h-14"
-                                />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-lg font-medium text-muted-foreground">
-                                    / {selectedAssignment?.task.max_marks || 10}
+                        {selectedAssignment?.task.assessment_type === 'MSE' && selectedAssignment?.task.sub_questions ? (
+                            // MSE Question-wise marks input
+                            <div className="space-y-3">
+                                <Label className="text-sm font-medium">Question-wise Marks</Label>
+                                <div className="max-h-60 overflow-y-auto space-y-2 p-3 bg-muted/30 rounded-lg">
+                                    {selectedAssignment.task.sub_questions.map((q: any) => (
+                                        <div key={q.label} className="flex items-center gap-2 bg-background p-2 rounded">
+                                            <Label htmlFor={`q-${q.label}`} className="min-w-[60px] font-medium">
+                                                {q.label}
+                                            </Label>
+                                            <Input
+                                                id={`q-${q.label}`}
+                                                type="number"
+                                                min="0"
+                                                step="0.5"
+                                                max={q.marks}
+                                                placeholder="0"
+                                                value={questionMarks[q.label] || ""}
+                                                onChange={(e) => setQuestionMarks(prev => ({
+                                                    ...prev,
+                                                    [q.label]: e.target.value
+                                                }))}
+                                                className="flex-1 h-9"
+                                            />
+                                            <span className="text-sm text-muted-foreground min-w-[50px]">/ {q.marks}</span>
+                                        </div>
+                                    ))}
                                 </div>
+                                <p className="text-xs text-muted-foreground">Enter marks for each question. Total will be calculated automatically.</p>
                             </div>
-                            <p className="text-xs text-muted-foreground">Please enter the marks exactly as graded.</p>
-                        </div>
+                        ) : (
+                            // Regular total marks input (ISE Subjective, Lab)
+                            <div className="space-y-2">
+                                <Label htmlFor="marks" className="text-sm font-medium">Obtained Marks</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="marks"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        max={selectedAssignment?.task.max_marks || 100}
+                                        placeholder="Enter your marks"
+                                        value={marksInput}
+                                        onChange={(e) => setMarksInput(e.target.value)}
+                                        className="text-center text-2xl font-bold h-14"
+                                    />
+                                    <div className="absolute right-7 top-1/2 -translate-y-1/2 text-lg font-medium text-muted-foreground">
+                                    /   {selectedAssignment?.task.max_marks || 10}
+                                    </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground">Please enter the marks exactly as graded.</p>
+                            </div>
+                        )}
                     </div>
 
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <Button
                             onClick={handleProceedToVerify}
-                            disabled={!marksInput}
+                            disabled={
+                                selectedAssignment?.task.assessment_type === 'MSE' && selectedAssignment?.task.sub_questions
+                                    ? !Object.values(questionMarks).every(v => v !== "")
+                                    : !marksInput
+                            }
                             className="bg-primary"
                         >
                             Proceed to Verify
@@ -274,6 +388,19 @@ export default function StudentAssignmentsPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* MCQ Test Modal */}
+            {selectedTaskId && (
+                <StudentTestModal
+                    isOpen={showTestModal}
+                    onClose={() => {
+                        setShowTestModal(false);
+                        setSelectedTaskId(null);
+                        refetch();
+                    }}
+                    taskId={selectedTaskId}
+                />
+            )}
         </div>
     );
 }
@@ -342,15 +469,26 @@ function AssignmentCard({
                     Pending
                 </Badge>
 
-                {/* Submit Button */}
-                <Button
-                    className="w-full"
-                    size="sm"
-                    onClick={() => onSubmit(assignment)}
-                >
-                    <IconEdit size={16} className="mr-2" />
-                    Add Marks
-                </Button>
+                {/* Action Button */}
+                {assignment.task.assessment_sub_type === 'MCQ' ? (
+                    <Button
+                        className="w-full"
+                        size="sm"
+                        onClick={() => onSubmit(assignment)}
+                    >
+                        <IconPlayerPlay size={16} className="mr-2" />
+                        Give Test
+                    </Button>
+                ) : (
+                    <Button
+                        className="w-full"
+                        size="sm"
+                        onClick={() => onSubmit(assignment)}
+                    >
+                        <IconEdit size={16} className="mr-2" />
+                        Add Marks
+                    </Button>
+                )}
             </CardContent>
         </Card>
     );
@@ -374,10 +512,10 @@ function SubmittedAssignmentCard({ assignment }: { assignment: StudentAssignment
             <CardHeader className="pb-3">
                 <div className="space-y-2">
                     <h3 className="font-bold text-sm line-clamp-2" title={assignment.task.title.split("-").slice(-1)[0]}>
-                         {assignment.task.title.split("-").slice(-1)[0]}
+                        {assignment.task.title.split("-").slice(-1)[0]}
                     </h3>
                     <h3 className="font-bold text-sm line-clamp-2" title={assignment.task.allotment.sub_name}>
-                            {assignment.task.allotment.sub_name}
+                        {assignment.task.allotment.sub_name}
                     </h3>
 
                 </div>

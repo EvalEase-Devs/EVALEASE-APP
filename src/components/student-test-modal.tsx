@@ -225,6 +225,23 @@ function StudentTestModalInner({
     const answeredCount = Object.keys(answers).length;
     const progressPercent = (answeredCount / questions.length) * 100;
 
+    // Keep countdown in sync when modal opens or test duration changes.
+    useEffect(() => {
+        if (!isOpen) return;
+        setTimeRemaining(timeLimit * 60);
+    }, [isOpen, timeLimit]);
+
+    // Live countdown while test is active.
+    useEffect(() => {
+        if (!isOpen || submitted) return;
+
+        const timerInterval = setInterval(() => {
+            setTimeRemaining((prev) => (prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(timerInterval);
+    }, [isOpen, submitted]);
+
     // Handle violations (tab switch, screenshot, copy, text selection)
     useEffect(() => {
         if (!isOpen || submitted) return;
@@ -340,6 +357,13 @@ function StudentTestModalInner({
             alert(`Test submitted! Answered ${answeredCount} out of ${questions.length} questions.\nCheck console for details.`);
         }
     };
+
+    // Auto-submit when countdown reaches zero.
+    useEffect(() => {
+        if (!isOpen || submitted || timeRemaining > 0) return;
+        toast.warning('Time is up. Submitting your test automatically.');
+        handleSubmitTest();
+    }, [isOpen, submitted, timeRemaining]);
 
     const handleClose = () => {
         if (!submitted && answeredCount > 0) {

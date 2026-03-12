@@ -109,6 +109,17 @@ export function NavMain({
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
+          // Only exact match for the base dashboard routes (/student, /teacher)
+          // For other items, both exact AND nested routes match
+          const isExactMatch = pathname === item.url;
+          const isDashboard = item.url === '/student' || item.url === '/teacher';
+
+          // For dashboard: only exact match
+          // For others: exact match OR nested (starts with url + '/')
+          const isActive = isDashboard
+            ? isExactMatch
+            : (isExactMatch || pathname.startsWith(item.url + '/'));
+
           // If item has children, use the collapsible component
           return item.items && item.items.length > 0 ? (
             <NavCollapsible key={item.title} item={item} pathname={pathname} />
@@ -118,7 +129,7 @@ export function NavMain({
               <SidebarMenuButton
                 asChild
                 tooltip={item.title}
-                isActive={pathname === item.url || (item.url !== '/teacher' && pathname.startsWith(item.url))}
+                isActive={isActive}
               >
                 <Link href={item.url}>
                   {item.icon && <item.icon />}
