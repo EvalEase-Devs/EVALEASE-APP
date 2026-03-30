@@ -6,7 +6,7 @@ import { getUserRole, type UserRole } from "@/lib/types";
 export function useUser() {
   const { data: session, status } = useSession();
   const email = session?.user?.email;
-  const role = getUserRole(email);
+  const role = session?.user?.role ?? getUserRole(email);
 
   return {
     user: session?.user,

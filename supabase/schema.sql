@@ -23,7 +23,8 @@ CREATE TABLE public.student (
   roll_no integer, -- e.g. 101.
   course text, -- e.g. 'Computer Engineering' (Often redundant with branch, but kept for legacy support).
   email_id varchar, 
-  CONSTRAINT student_pkey PRIMARY KEY (pid)
+  CONSTRAINT student_pkey PRIMARY KEY (pid),
+  Academic_year varchar  -- e.g. '2023-2024'. Useful for filtering and historical data management.
 );
 
 -- ==========================================

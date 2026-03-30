@@ -1,21 +1,10 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-// Exception emails for testing/special access (must match auth.ts)
-const EXCEPTION_EMAILS = {
-  admin: ["kevilshaji@gmail.com"],
-  teacher: ["fevermusic321@gmail.com", "solankibhavik92@gmail.com","sohampatil1510@gmail.com","pournimarode10@gmail.com"],
-  student: [] as string[],
-};
-
-function getUserRole(email: string): "admin" | "teacher" | "student" | null {
-  if (EXCEPTION_EMAILS.admin.includes(email)) return "admin";
-  if (EXCEPTION_EMAILS.teacher.includes(email)) return "teacher";
-  if (EXCEPTION_EMAILS.student.includes(email)) return "student";
-
+function fallbackRoleFromEmail(email: string): "admin" | "teacher" | "student" | null {
+  if (email === "kevilshaji@gmail.com") return "admin";
   if (email.endsWith("@student.sfit.ac.in")) return "student";
-  if (email.endsWith("@sfit.ac.in")) return "teacher";
-
+  if (email.endsWith("@sfit.ac.in") && !email.endsWith("@student.sfit.ac.in")) return "teacher";
   return null;
 }
 
@@ -23,6 +12,7 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
   const email = req.auth?.user?.email;
+  const sessionRole = req.auth?.user?.role;
 
   // Public routes
   const isPublicRoute = pathname === "/login" || pathname.startsWith("/api/auth");
@@ -34,7 +24,7 @@ export default auth((req) => {
 
   // If logged in and trying to access login page
   if (isLoggedIn && pathname === "/login" && email) {
-    const role = getUserRole(email);
+    const role = sessionRole ?? fallbackRoleFromEmail(email);
     if (role === "admin") {
       return NextResponse.redirect(new URL("/admin", req.url));
     } else if (role === "student") {
@@ -46,7 +36,7 @@ export default auth((req) => {
 
   // Role-based route protection
   if (isLoggedIn && email) {
-    const role = getUserRole(email);
+    const role = sessionRole ?? fallbackRoleFromEmail(email);
 
     if (pathname.startsWith("/admin") && role !== "admin") {
       return NextResponse.redirect(new URL("/", req.url));

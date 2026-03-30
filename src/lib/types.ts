@@ -1,16 +1,17 @@
 // Type augmentation for NextAuth
 import { DefaultSession } from "next-auth";
 
+// User role types
+export type UserRole = "student" | "teacher" | "admin";
+
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
+      role?: UserRole;
     } & DefaultSession["user"];
   }
 }
-
-// User role types
-export type UserRole = "student" | "teacher" | "admin";
 
 // Helper function to determine user role from email
 export function getUserRole(email: string | null | undefined): UserRole | null {
