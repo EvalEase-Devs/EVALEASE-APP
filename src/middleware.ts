@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 function fallbackRoleFromEmail(email: string): "admin" | "teacher" | "student" | null {
-  if (email === "kevilshaji@gmail.com") return "admin";
+  if (email === "kevilshaji@gmail.com" || email === "pournimarode10@gmail.com" || email === "sohampatil1510@gmail.com") return "admin";
   if (email.endsWith("@student.sfit.ac.in")) return "student";
   if (email.endsWith("@sfit.ac.in") && !email.endsWith("@student.sfit.ac.in")) return "teacher";
   return null;
