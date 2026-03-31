@@ -17,7 +17,7 @@ declare module "next-auth" {
 export function getUserRole(email: string | null | undefined): UserRole | null {
   if (!email) return null;
 
-  if (email === "kevilshaji@gmail.com") {
+  if (email === "kevilshaji@gmail.com" || email === "pournimarode10@gmail.com" || email === "sohampatil1510@gmail.com") {
     return "admin";
   } else if (email.includes("student.sfit.ac.in")) {
     return "student";
