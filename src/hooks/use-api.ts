@@ -38,6 +38,14 @@ export const queryKeys = {
             : (["student-assignments"] as const),
     batchMarksReport: (allotmentId: number | null) =>
         ["batch-marks-report", allotmentId] as const,
+    adminTeachers: (search?: string) => ["admin-teachers", search] as const,
+    adminObeCOs: (subId?: string) => ["admin-obe-cos", subId] as const,
+    adminObeLOs: (subId?: string) => ["admin-obe-los", subId] as const,
+    adminObeExperiments: (subId?: string) => ["admin-obe-experiments", subId] as const,
+    adminObeTaskMappings: (subId?: string) => ["admin-obe-task-mappings", subId] as const,
+    adminObeExperimentMappings: (subId?: string) => ["admin-obe-experiment-mappings", subId] as const,
+    adminPerformanceOverview: (className?: string, semester?: string, subId?: string) =>
+        ["admin-performance-overview", className, semester, subId] as const,
 };
 
 // ============ TYPES (unchanged) ============
@@ -543,4 +551,733 @@ export function useBatchMarksReport(allotmentId: number | null) {
     const error = queryError ? queryError.message : null;
 
     return { data, loading, error, refetch };
+}
+
+// ---- Admin Students ----
+
+export interface AdminStudent {
+    pid: number;
+    stud_name: string;
+    class_name: string;
+    batch: number | null;
+    roll_no: number | null;
+    course: string | null;
+    email_id: string | null;
+    Academic_year: string | null;
+}
+
+export interface AdminBulkImportResult {
+    success: boolean;
+    totalRows: number;
+    validRows: number;
+    invalidRows: number;
+    inserted: number;
+    rowErrors: Array<{ rowNumber: number; error: string }>;
+}
+
+export function useAdminStudents(search?: string, classFilter?: string, batchFilter?: string) {
+    const queryClient = useQueryClient();
+
+    const { data: students = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: ["admin-students", search, classFilter, batchFilter] as const,
+        queryFn: () => {
+            let url = "/api/admin/students";
+            const params = new URLSearchParams();
+            if (search) params.append("search", search);
+            if (classFilter) params.append("class_name", classFilter);
+            if (batchFilter) params.append("batch", batchFilter);
+            if (params.toString()) url += `?${params.toString()}`;
+            return apiFetch<AdminStudent[]>(url);
+        },
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const createMutation = useMutation({
+        mutationFn: (student: Omit<AdminStudent, "pid"> & { pid: string }) =>
+            apiFetch<AdminStudent>("/api/admin/students", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(student),
+            }),
+        onSuccess: (newStudent) => {
+            queryClient.setQueryData<AdminStudent[]>(
+                ["admin-students", search, classFilter, batchFilter],
+                (old) => (old ? [newStudent, ...old] : [newStudent])
+            );
+        },
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: ({ pid, ...data }: AdminStudent) =>
+            apiFetch<AdminStudent>(`/api/admin/students?pid=${pid}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            }),
+        onSuccess: (updatedStudent) => {
+            queryClient.setQueryData<AdminStudent[]>(
+                ["admin-students", search, classFilter, batchFilter],
+                (old) =>
+                    old
+                        ? old.map((s) =>
+                            s.pid === updatedStudent.pid ? updatedStudent : s
+                        )
+                        : [updatedStudent],
+            );
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (pid: number) =>
+            apiFetch<void>(`/api/admin/students?pid=${pid}`, { method: "DELETE" }),
+        onSuccess: (_data, pid) => {
+            queryClient.setQueryData<AdminStudent[]>(
+                ["admin-students", search, classFilter, batchFilter],
+                (old) => (old ? old.filter((s) => s.pid !== pid) : [])
+            );
+        },
+    });
+
+    const bulkImportMutation = useMutation({
+        mutationFn: (csvContent: string) =>
+            apiFetch<AdminBulkImportResult>("/api/admin/students/bulk-import", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ csvContent }),
+            }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["admin-students"] });
+        },
+    });
+
+    const createStudent = async (student: Omit<AdminStudent, "pid"> & { pid: string }) =>
+        createMutation.mutateAsync(student);
+
+    const updateStudent = async (student: AdminStudent) =>
+        updateMutation.mutateAsync(student);
+
+    const deleteStudent = async (pid: number) =>
+        deleteMutation.mutateAsync(pid);
+
+    const bulkImport = async (csvContent: string) =>
+        bulkImportMutation.mutateAsync(csvContent);
+
+    const fetchStudents = async () => {
+        await refetch();
+    };
+
+    return {
+        students,
+        loading,
+        error,
+        fetchStudents,
+        createStudent,
+        updateStudent,
+        deleteStudent,
+        bulkImport,
+        isCreating: createMutation.isPending,
+        isUpdating: updateMutation.isPending,
+        isDeleting: deleteMutation.isPending,
+        isBulkImporting: bulkImportMutation.isPending,
+    };
+}
+
+// ---- Admin Teachers ----
+
+export interface AdminTeacher {
+    teacher_id: number;
+    teacher_name: string;
+    designation: string | null;
+    department: string | null;
+    email: string | null;
+}
+
+export interface AdminCO {
+    sub_id: string;
+    co_no: number;
+    co_description: string;
+}
+
+export interface AdminLO {
+    sub_id: string;
+    lo_no: number;
+    lo_description: string;
+}
+
+export interface AdminExperiment {
+    sub_id: string;
+    exp_no: number;
+    exp_name: string;
+}
+
+export interface AdminTaskMapping {
+    task_id: number;
+    title: string;
+    task_type: string;
+    assessment_type: string | null;
+    assessment_sub_type: string | null;
+    sub_id: string;
+    exp_no: number | null;
+    max_marks: number;
+    mapped_cos: number[];
+}
+
+export interface AdminTaskCOMappingsResponse {
+    cos: AdminCO[];
+    tasks: AdminTaskMapping[];
+}
+
+export interface AdminExperimentMapping {
+    sub_id: string;
+    exp_no: number;
+    exp_name: string;
+    mapped_los: number[];
+}
+
+export interface AdminExperimentLOMappingsResponse {
+    los: AdminLO[];
+    experiments: AdminExperimentMapping[];
+}
+
+export interface AdminObeUploadResult {
+    success: boolean;
+    totalRows: number;
+    validRows: number;
+    invalidRows: number;
+    inserted: number;
+    rowErrors: Array<{ rowNumber: number; error: string }>;
+}
+
+export interface AdminPerformanceOverviewResponse {
+    filters: {
+        classes: string[];
+        semesters: string[];
+        subjects: Array<{ sub_id: string; sub_name: string }>;
+    };
+    metrics: {
+        totalStudents: number;
+        activeTeachers: number;
+        totalTasks: number;
+        submittedCount: number;
+        pendingCount: number;
+        submissionRate: number;
+        averageScore: number;
+    };
+    classPerformance: Array<{
+        class_name: string;
+        average: number;
+        submissions: number;
+    }>;
+    semesterPerformance: Array<{
+        semester: string;
+        average: number;
+        submissions: number;
+    }>;
+    subjectPerformance: Array<{
+        sub_id: string;
+        sub_name: string;
+        average: number;
+        submissions: number;
+    }>;
+    trend: Array<{
+        month: string;
+        average: number;
+        submissions: number;
+    }>;
+    scoreDistribution: Array<{
+        label: string;
+        min: number;
+        max: number;
+        count: number;
+    }>;
+    topPerformers: Array<{
+        pid: number;
+        stud_name: string;
+        class_name: string;
+        roll_no: number | null;
+        average: number;
+        submissions: number;
+    }>;
+}
+
+export function useAdminTeachers(search?: string) {
+    const queryClient = useQueryClient();
+    const queryKey = queryKeys.adminTeachers(search);
+
+    const { data: teachers = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey,
+        queryFn: () => {
+            let url = "/api/admin/teachers";
+            const params = new URLSearchParams();
+            if (search) params.append("search", search);
+            if (params.toString()) url += `?${params.toString()}`;
+            return apiFetch<AdminTeacher[]>(url);
+        },
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const createMutation = useMutation({
+        mutationFn: (teacher: Omit<AdminTeacher, "teacher_id"> & { teacher_id: string }) =>
+            apiFetch<AdminTeacher>("/api/admin/teachers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(teacher),
+            }),
+        onSuccess: (newTeacher) => {
+            queryClient.setQueryData<AdminTeacher[]>(queryKey, (old) =>
+                old ? [newTeacher, ...old] : [newTeacher]
+            );
+        },
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: ({ teacher_id, ...data }: AdminTeacher) =>
+            apiFetch<AdminTeacher>(`/api/admin/teachers?teacher_id=${teacher_id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            }),
+        onSuccess: (updatedTeacher) => {
+            queryClient.setQueryData<AdminTeacher[]>(queryKey, (old) =>
+                old
+                    ? old.map((teacher) =>
+                        teacher.teacher_id === updatedTeacher.teacher_id ? updatedTeacher : teacher
+                    )
+                    : [updatedTeacher]
+            );
+        },
+    });
+
+        const deleteMutation = useMutation({
+            mutationFn: (teacher_id: number) =>
+                apiFetch<{ success: boolean }>(`/api/admin/teachers?teacher_id=${teacher_id}`, {
+                    method: "DELETE",
+                }),
+            onSuccess: (_data, teacher_id) => {
+                queryClient.setQueryData<AdminTeacher[]>(queryKey, (old) =>
+                    old ? old.filter((teacher) => teacher.teacher_id !== teacher_id) : []
+                );
+            },
+        });
+
+    const createTeacher = async (teacher: Omit<AdminTeacher, "teacher_id"> & { teacher_id: string }) =>
+        createMutation.mutateAsync(teacher);
+
+    const updateTeacher = async (teacher: AdminTeacher) =>
+        updateMutation.mutateAsync(teacher);
+
+    const deleteTeacher = async (teacher_id: number) =>
+        deleteMutation.mutateAsync(teacher_id);
+
+    const fetchTeachers = async () => {
+        await refetch();
+    };
+
+    return {
+        teachers,
+        loading,
+        error,
+        fetchTeachers,
+        createTeacher,
+        updateTeacher,
+        deleteTeacher,
+        isCreating: createMutation.isPending,
+        isUpdating: updateMutation.isPending,
+        isDeleting: deleteMutation.isPending,
+    };
+}
+
+// ---- Admin OBE Master Data & Mappings ----
+
+export function useAdminCOs(subId?: string) {
+    const queryClient = useQueryClient();
+    const queryKey = queryKeys.adminObeCOs(subId);
+
+    const { data: cos = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey,
+        queryFn: () => apiFetch<AdminCO[]>(`/api/admin/obe/co?sub_id=${encodeURIComponent(subId!)}`),
+        enabled: !!subId,
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const createMutation = useMutation({
+        mutationFn: (co: AdminCO) =>
+            apiFetch<AdminCO>("/api/admin/obe/co", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(co),
+            }),
+        onSuccess: (newCo) => {
+            queryClient.setQueryData<AdminCO[]>(queryKey, (old) =>
+                old ? [...old, newCo].sort((a, b) => a.co_no - b.co_no) : [newCo]
+            );
+        },
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: (co: AdminCO) =>
+            apiFetch<AdminCO>(`/api/admin/obe/co?sub_id=${encodeURIComponent(co.sub_id)}&co_no=${co.co_no}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ co_description: co.co_description }),
+            }),
+        onSuccess: (updatedCo) => {
+            queryClient.setQueryData<AdminCO[]>(queryKey, (old) =>
+                old
+                    ? old.map((co) =>
+                        co.sub_id === updatedCo.sub_id && co.co_no === updatedCo.co_no ? updatedCo : co
+                    )
+                    : [updatedCo]
+            );
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: ({ sub_id, co_no }: Pick<AdminCO, "sub_id" | "co_no">) =>
+            apiFetch<{ success: boolean }>(
+                `/api/admin/obe/co?sub_id=${encodeURIComponent(sub_id)}&co_no=${co_no}`,
+                { method: "DELETE" }
+            ),
+        onSuccess: (_data, variables) => {
+            queryClient.setQueryData<AdminCO[]>(queryKey, (old) =>
+                old ? old.filter((co) => !(co.sub_id === variables.sub_id && co.co_no === variables.co_no)) : []
+            );
+        },
+    });
+
+    const uploadMutation = useMutation({
+        mutationFn: (csvContent: string) =>
+            apiFetch<AdminObeUploadResult>("/api/admin/obe/co/upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ csvContent, sub_id: subId }),
+            }),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey });
+        },
+    });
+
+    return {
+        cos,
+        loading,
+        error,
+        refetchCos: async () => {
+            await refetch();
+        },
+        createCO: async (co: AdminCO) => createMutation.mutateAsync(co),
+        updateCO: async (co: AdminCO) => updateMutation.mutateAsync(co),
+        deleteCO: async (co: Pick<AdminCO, "sub_id" | "co_no">) => deleteMutation.mutateAsync(co),
+        uploadCOs: async (csvContent: string) => uploadMutation.mutateAsync(csvContent),
+        isCreating: createMutation.isPending,
+        isUpdating: updateMutation.isPending,
+        isDeleting: deleteMutation.isPending,
+        isUploading: uploadMutation.isPending,
+    };
+}
+
+export function useAdminLOs(subId?: string) {
+    const queryClient = useQueryClient();
+    const queryKey = queryKeys.adminObeLOs(subId);
+    const mappingQueryKey = queryKeys.adminObeExperimentMappings(subId);
+
+    const { data: los = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey,
+        queryFn: () => apiFetch<AdminLO[]>(`/api/admin/obe/lo?sub_id=${encodeURIComponent(subId!)}`),
+        enabled: !!subId,
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const createMutation = useMutation({
+        mutationFn: (lo: AdminLO) =>
+            apiFetch<AdminLO>("/api/admin/obe/lo", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(lo),
+            }),
+        onSuccess: async (newLo) => {
+            queryClient.setQueryData<AdminLO[]>(queryKey, (old) =>
+                old ? [...old, newLo].sort((a, b) => a.lo_no - b.lo_no) : [newLo]
+            );
+            await queryClient.invalidateQueries({ queryKey: mappingQueryKey });
+        },
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: (lo: AdminLO) =>
+            apiFetch<AdminLO>(`/api/admin/obe/lo?sub_id=${encodeURIComponent(lo.sub_id)}&lo_no=${lo.lo_no}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ lo_description: lo.lo_description }),
+            }),
+        onSuccess: async (updatedLo) => {
+            queryClient.setQueryData<AdminLO[]>(queryKey, (old) =>
+                old
+                    ? old.map((lo) =>
+                        lo.sub_id === updatedLo.sub_id && lo.lo_no === updatedLo.lo_no ? updatedLo : lo
+                    )
+                    : [updatedLo]
+            );
+            await queryClient.invalidateQueries({ queryKey: mappingQueryKey });
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: ({ sub_id, lo_no }: Pick<AdminLO, "sub_id" | "lo_no">) =>
+            apiFetch<{ success: boolean }>(
+                `/api/admin/obe/lo?sub_id=${encodeURIComponent(sub_id)}&lo_no=${lo_no}`,
+                { method: "DELETE" }
+            ),
+        onSuccess: async (_data, variables) => {
+            queryClient.setQueryData<AdminLO[]>(queryKey, (old) =>
+                old ? old.filter((lo) => !(lo.sub_id === variables.sub_id && lo.lo_no === variables.lo_no)) : []
+            );
+            await queryClient.invalidateQueries({ queryKey: mappingQueryKey });
+        },
+    });
+
+    const uploadMutation = useMutation({
+        mutationFn: (csvContent: string) =>
+            apiFetch<AdminObeUploadResult>("/api/admin/obe/lo/upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ csvContent, sub_id: subId }),
+            }),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey });
+            await queryClient.invalidateQueries({ queryKey: mappingQueryKey });
+        },
+    });
+
+    return {
+        los,
+        loading,
+        error,
+        refetchLOs: async () => {
+            await refetch();
+        },
+        createLO: async (lo: AdminLO) => createMutation.mutateAsync(lo),
+        updateLO: async (lo: AdminLO) => updateMutation.mutateAsync(lo),
+        deleteLO: async (lo: Pick<AdminLO, "sub_id" | "lo_no">) => deleteMutation.mutateAsync(lo),
+        uploadLOs: async (csvContent: string) => uploadMutation.mutateAsync(csvContent),
+        isCreating: createMutation.isPending,
+        isUpdating: updateMutation.isPending,
+        isDeleting: deleteMutation.isPending,
+        isUploading: uploadMutation.isPending,
+    };
+}
+
+export function useAdminExperiments(subId?: string) {
+    const queryClient = useQueryClient();
+    const queryKey = queryKeys.adminObeExperiments(subId);
+    const mappingQueryKey = queryKeys.adminObeExperimentMappings(subId);
+
+    const { data: experiments = [], isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey,
+        queryFn: () => apiFetch<AdminExperiment[]>(`/api/admin/obe/experiments?sub_id=${encodeURIComponent(subId!)}`),
+        enabled: !!subId,
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    const createMutation = useMutation({
+        mutationFn: (experiment: AdminExperiment) =>
+            apiFetch<AdminExperiment>("/api/admin/obe/experiments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(experiment),
+            }),
+        onSuccess: async (newExperiment) => {
+            queryClient.setQueryData<AdminExperiment[]>(queryKey, (old) =>
+                old ? [...old, newExperiment].sort((a, b) => a.exp_no - b.exp_no) : [newExperiment]
+            );
+            await queryClient.invalidateQueries({ queryKey: mappingQueryKey });
+        },
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: (experiment: AdminExperiment) =>
+            apiFetch<AdminExperiment>(
+                `/api/admin/obe/experiments?sub_id=${encodeURIComponent(experiment.sub_id)}&exp_no=${experiment.exp_no}`,
+                {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ exp_name: experiment.exp_name }),
+                }
+            ),
+        onSuccess: async (updatedExperiment) => {
+            queryClient.setQueryData<AdminExperiment[]>(queryKey, (old) =>
+                old
+                    ? old.map((experiment) =>
+                        experiment.sub_id === updatedExperiment.sub_id && experiment.exp_no === updatedExperiment.exp_no
+                            ? updatedExperiment
+                            : experiment
+                    )
+                    : [updatedExperiment]
+            );
+            await queryClient.invalidateQueries({ queryKey: mappingQueryKey });
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: ({ sub_id, exp_no }: Pick<AdminExperiment, "sub_id" | "exp_no">) =>
+            apiFetch<{ success: boolean }>(
+                `/api/admin/obe/experiments?sub_id=${encodeURIComponent(sub_id)}&exp_no=${exp_no}`,
+                { method: "DELETE" }
+            ),
+        onSuccess: async (_data, variables) => {
+            queryClient.setQueryData<AdminExperiment[]>(queryKey, (old) =>
+                old ? old.filter((experiment) => !(experiment.sub_id === variables.sub_id && experiment.exp_no === variables.exp_no)) : []
+            );
+            await queryClient.invalidateQueries({ queryKey: mappingQueryKey });
+        },
+    });
+
+    const uploadMutation = useMutation({
+        mutationFn: (csvContent: string) =>
+            apiFetch<AdminObeUploadResult>("/api/admin/obe/experiments/upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ csvContent, sub_id: subId }),
+            }),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey });
+            await queryClient.invalidateQueries({ queryKey: mappingQueryKey });
+        },
+    });
+
+    return {
+        experiments,
+        loading,
+        error,
+        refetchExperiments: async () => {
+            await refetch();
+        },
+        createExperiment: async (experiment: AdminExperiment) => createMutation.mutateAsync(experiment),
+        updateExperiment: async (experiment: AdminExperiment) => updateMutation.mutateAsync(experiment),
+        deleteExperiment: async (experiment: Pick<AdminExperiment, "sub_id" | "exp_no">) => deleteMutation.mutateAsync(experiment),
+        uploadExperiments: async (csvContent: string) => uploadMutation.mutateAsync(csvContent),
+        isCreating: createMutation.isPending,
+        isUpdating: updateMutation.isPending,
+        isDeleting: deleteMutation.isPending,
+        isUploading: uploadMutation.isPending,
+    };
+}
+
+export function useAdminTaskCOMappings(subId?: string) {
+    const queryClient = useQueryClient();
+    const queryKey = queryKeys.adminObeTaskMappings(subId);
+
+    const { data: response, isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey,
+        queryFn: () => apiFetch<AdminTaskCOMappingsResponse>(`/api/admin/obe/task-mappings?sub_id=${encodeURIComponent(subId!)}`),
+        enabled: !!subId,
+    });
+
+    const error = queryError ? queryError.message : null;
+    const cos = response?.cos ?? [];
+    const tasks = response?.tasks ?? [];
+
+    const saveMutation = useMutation({
+        mutationFn: ({ taskId, coNos, subId: subjectCode }: { taskId: number; coNos: number[]; subId: string }) =>
+            apiFetch<{ success: boolean }>("/api/admin/obe/task-mappings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ task_id: taskId, sub_id: subjectCode, co_nos: coNos }),
+            }),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey });
+        },
+    });
+
+    return {
+        cos,
+        tasks,
+        loading,
+        error,
+        refetchTaskMappings: async () => {
+            await refetch();
+        },
+        saveTaskMapping: async (taskId: number, coNos: number[], subIdValue: string) =>
+            saveMutation.mutateAsync({ taskId, coNos, subId: subIdValue }),
+        isSaving: saveMutation.isPending,
+    };
+}
+
+export function useAdminExperimentLOMappings(subId?: string) {
+    const queryClient = useQueryClient();
+    const queryKey = queryKeys.adminObeExperimentMappings(subId);
+
+    const { data: response, isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey,
+        queryFn: () => apiFetch<AdminExperimentLOMappingsResponse>(`/api/admin/obe/experiment-mappings?sub_id=${encodeURIComponent(subId!)}`),
+        enabled: !!subId,
+    });
+
+    const error = queryError ? queryError.message : null;
+    const los = response?.los ?? [];
+    const experiments = response?.experiments ?? [];
+
+    const saveMutation = useMutation({
+        mutationFn: ({ expNo, loNos, subId: subjectCode }: { expNo: number; loNos: number[]; subId: string }) =>
+            apiFetch<{ success: boolean }>("/api/admin/obe/experiment-mappings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ exp_no: expNo, sub_id: subjectCode, lo_nos: loNos }),
+            }),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey });
+        },
+    });
+
+    return {
+        los,
+        experiments,
+        loading,
+        error,
+        refetchExperimentMappings: async () => {
+            await refetch();
+        },
+        saveExperimentMapping: async (expNo: number, loNos: number[], subIdValue: string) =>
+            saveMutation.mutateAsync({ expNo, loNos, subId: subIdValue }),
+        isSaving: saveMutation.isPending,
+    };
+}
+
+// ---- Admin Performance Analytics ----
+
+export function useAdminPerformanceOverview(filters?: {
+    className?: string;
+    semester?: string;
+    subId?: string;
+}) {
+    const className = filters?.className || "all";
+    const semester = filters?.semester || "all";
+    const subId = filters?.subId || "all";
+
+    const { data = null, isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.adminPerformanceOverview(className, semester, subId),
+        queryFn: () => {
+            const params = new URLSearchParams({
+                class_name: className,
+                semester,
+                sub_id: subId,
+            });
+            return apiFetch<AdminPerformanceOverviewResponse>(`/api/admin/performance/overview?${params.toString()}`);
+        },
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    return {
+        data,
+        loading,
+        error,
+        refetchOverview: async () => {
+            await refetch();
+        },
+    };
 }

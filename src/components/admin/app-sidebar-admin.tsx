@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { IconLayoutDashboard, IconUsers, IconShieldCheck, IconChartBar, IconBell, IconSettings } from "@tabler/icons-react"
+import { IconLayoutDashboard, IconUsers, IconShieldCheck, IconChartBar, IconBell, IconSettings, IconDatabase } from "@tabler/icons-react"
 import { NavMain } from "@/components/shared/nav-main"
 import { NavUser } from "@/components/shared/nav-user"
 import {
@@ -69,6 +69,11 @@ const data = {
       title: "Analytics",
       url: "/admin/analytics",
       icon: IconChartBar,
+    },
+    {
+      title: "OBE Data",
+      url: "/admin/obe",
+      icon: IconDatabase,
     },
     {
       title: "Notifications",
