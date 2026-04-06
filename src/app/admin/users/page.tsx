@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { ComingSoon } from "@/components/ui/coming-soon";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "User Management",
@@ -29,7 +31,33 @@ export default function UserManagementPage() {
           </div>
         </header>
 
-        <ComingSoon variant="admin" title="User Management" description="View, add, and manage all teachers and students." />
+        <div className="flex-1 p-4 pt-0">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Teachers</CardTitle>
+                <CardDescription>Manage faculty records, contact information, and access-ready identity data.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild>
+                  <Link href="/admin/users/teachers">Open Teachers</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Students</CardTitle>
+                <CardDescription>Browse the student directory, add records, and import semester CSV files.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild variant="outline">
+                  <Link href="/admin/users/students">Open Students</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
     </>
   );
 }

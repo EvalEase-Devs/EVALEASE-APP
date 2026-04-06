@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { ComingSoon } from "@/components/ui/coming-soon";
+import { StudentsList } from "@/components/admin/students";
 
 export const metadata: Metadata = {
   title: "Students",
@@ -33,7 +33,9 @@ export default function StudentsPage() {
           </div>
         </header>
 
-        <ComingSoon variant="admin" title="Students" description="View and manage all registered students." />
+        <div className="flex-1 flex flex-col gap-4 p-4 pt-0">
+          <StudentsList />
+        </div>
     </>
   );
 }

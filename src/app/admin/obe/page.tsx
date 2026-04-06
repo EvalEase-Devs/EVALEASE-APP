@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { TeacherAnalyticsContent } from "@/components/teacher/analytics/teacher-analytics-content";
+import { ObeManagement } from "@/components/admin/obe";
 
 export const metadata: Metadata = {
-  title: "Analytics",
+  title: "OBE Data Management",
 };
 
-export default async function AnalyticsPage() {
+export default function ObePage() {
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -18,18 +18,18 @@ export default async function AnalyticsPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/teacher">Teacher</BreadcrumbLink>
+                <BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Analytics</BreadcrumbPage>
+                <BreadcrumbPage>OBE Data</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </div>
       </header>
 
-      <TeacherAnalyticsContent />
+      <ObeManagement />
     </>
   );
 }
