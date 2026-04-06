@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 // Exception emails for testing/special access (must match auth.ts)
 const EXCEPTION_EMAILS = {
   admin: ["kevilshaji@gmail.com", "sohampatil1510@gmail.com", "pournimarode10@gmail.com"],
-  teacher: ["fevermusic321@gmail.com", "solankibhavik92@gmail.com"],
+  teacher: ["fevermusic321@gmail.com", "solankibhavik92@gmail.com", "pournimar203@gmail.com"],
   student: [] as string[],
 };
 

@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { IconChartBar } from "@tabler/icons-react";
-import { ComingSoon } from "@/components/ui/coming-soon";
+import { TeacherAnalyticsContent } from "@/components/teacher/analytics/teacher-analytics-content";
 
 export const metadata: Metadata = {
   title: "Analytics",
@@ -30,7 +29,7 @@ export default async function AnalyticsPage() {
         </div>
       </header>
 
-      <ComingSoon variant="feature" icon={IconChartBar} title="Analytics Dashboard" description="Powerful batch-wide analytics and performance tracking is under development. This feature will be available in an upcoming release." />
+      <TeacherAnalyticsContent />
     </>
   );
 }

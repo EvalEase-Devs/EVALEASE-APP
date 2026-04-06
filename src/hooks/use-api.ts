@@ -5,6 +5,7 @@ import {
     useMutation,
     useQueryClient,
 } from "@tanstack/react-query";
+import type { TeacherAnalyticsFilters, TeacherAnalyticsResponse } from "@/lib/teacher-analytics";
 
 // ============ SHARED FETCHER ============
 
@@ -46,6 +47,8 @@ export const queryKeys = {
     adminObeExperimentMappings: (subId?: string) => ["admin-obe-experiment-mappings", subId] as const,
     adminPerformanceOverview: (className?: string, semester?: string, subId?: string) =>
         ["admin-performance-overview", className, semester, subId] as const,
+    teacherAnalytics: (subject?: string, academicYear?: string, semester?: string) =>
+        ["teacher-analytics", subject, academicYear, semester] as const,
 };
 
 // ============ TYPES (unchanged) ============
@@ -1278,6 +1281,41 @@ export function useAdminPerformanceOverview(filters?: {
         error,
         refetchOverview: async () => {
             await refetch();
+        },
+    };
+}
+
+export function useTeacherAnalytics(filters?: Partial<TeacherAnalyticsFilters>) {
+    const queryClient = useQueryClient();
+    const normalizedFilters = {
+        subject: filters?.subject || "all",
+        academicYear: filters?.academicYear || "all",
+        semester: filters?.semester || "all",
+    };
+
+    const { data = null, isLoading: loading, error: queryError, refetch } = useQuery({
+        queryKey: queryKeys.teacherAnalytics(normalizedFilters.subject, normalizedFilters.academicYear, normalizedFilters.semester),
+        queryFn: () => {
+            const params = new URLSearchParams({
+                subject: normalizedFilters.subject,
+                academicYear: normalizedFilters.academicYear,
+                semester: normalizedFilters.semester,
+            });
+            return apiFetch<TeacherAnalyticsResponse>(`/api/teacher/analytics?${params.toString()}`);
+        },
+    });
+
+    const error = queryError ? queryError.message : null;
+
+    return {
+        data,
+        loading,
+        error,
+        refetchAnalytics: async () => {
+            await refetch();
+            await queryClient.invalidateQueries({
+                queryKey: queryKeys.teacherAnalytics(normalizedFilters.subject, normalizedFilters.academicYear, normalizedFilters.semester),
+            });
         },
     };
 }

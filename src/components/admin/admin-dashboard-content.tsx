@@ -117,11 +117,11 @@ export function AdminDashboardContent() {
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <p className="text-sm text-muted-foreground">
-                                Open advanced analytics for filter-based insights by class, semester, and subject.
+                                Review system health, logs, and backups from the admin system overview.
                             </p>
                             <Button asChild className="w-full">
-                                <Link href="/admin/analytics">
-                                    Open Analytics
+                                <Link href="/admin/system/overview">
+                                    Open System Overview
                                     <IconArrowRight className="ml-2 h-4 w-4" />
                                 </Link>
                             </Button>

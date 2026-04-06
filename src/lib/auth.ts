@@ -6,7 +6,7 @@ import type { UserRole } from "@/lib/types";
 // Exception emails for testing/special access
 const EXCEPTION_EMAILS = {
   admin: ["kevilshaji@gmail.com", "solankibhavik92@gmail.com", "sohampatil1510@gmail.com", "pournimarode10@gmail.com"],
-  teacher: ["fevermusic321@gmail.com",],
+  teacher: ["fevermusic321@gmail.com", "pournimar203@gmail.com"],
   student: [] as string[],
 };
 
