@@ -23,7 +23,7 @@
  */
 
 import ExcelJS from 'exceljs';
-import { SUBJECT_TARGETS } from '../constants';
+import { SUBJECT_TARGETS } from '@/app/teacher/assignments/create/constants';
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1096,7 +1096,7 @@ async function _buildISEMSEExcel(
     // ═════════════════════════════════════════════════════════════════════════
 
     const wsSummary = workbook.addWorksheet('CO-PO-PSO Summary');
-    wsSummary.views = [{ showGridLines: false }];
+    wsSummary.views = [{ showGridLines: true }];
 
     wsSummary.getColumn(1).width = 5;
     wsSummary.getColumn(2).width = 20;
@@ -1208,6 +1208,11 @@ async function _buildISEMSEExcel(
         stampSummary(20, 2 + idx, label, { bold: true, border: true, bg: C.summHdrBg, wrap: true });
     });
 
+    // Link summary End Semester values to Page 2 "Percentage Above Target" cell.
+    // This keeps sheets connected so manual edits on Page 2 propagate to summary formulas.
+    const endSemesterPct = externalReport?.summary?.percentage_above_target ?? 0;
+    const endSemesterPctRef = `'External Assessment (Page 2)'!$B$${extSummaryStart + 2}`;
+
     const coLevelRefs: Record<number, string> = {};
     coRows.forEach((co, idx) => {
         const row = 21 + idx;
@@ -1223,10 +1228,15 @@ async function _buildISEMSEExcel(
 
         stampSummary(row, 2, `CO${co}`, { border: true, align: 'left' });
         stampSummary(row, 3, internalPct, { border: true, numFmt: '0.00' });
-        stampSummary(row, 4, 0, { border: true, numFmt: '0.00' });
+        stampSummary(
+            row,
+            4,
+            { formula: `=${endSemesterPctRef}`, result: endSemesterPct } as ExcelJS.CellFormulaValue,
+            { border: true, numFmt: '0.00' },
+        );
 
         const pctFormula = `=(0.4*C${row})+(0.6*D${row})`;
-        const pctResult = parseFloat((0.4 * internalPct).toFixed(2));
+    const pctResult = parseFloat(((0.4 * internalPct) + (0.6 * endSemesterPct)).toFixed(2));
         stampSummary(row, 5, { formula: pctFormula, result: pctResult } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
 
         const lvlFormula = `=IF(E${row}>=60,3,IF(E${row}>=50,2,IF(E${row}>0,1,0)))`;
@@ -1271,7 +1281,7 @@ async function _buildISEMSEExcel(
     for (let p = 1; p <= 12; p++) {
         const col = 3 + p;
         const colLetter = getColLetter(col);
-        const formula = `=AVERAGE(${colLetter}33,${colLetter}35,${colLetter}37,${colLetter}39,${colLetter}41,${colLetter}43)`;
+        const formula = `=IFERROR(AVERAGE(${colLetter}33,${colLetter}35,${colLetter}37,${colLetter}39,${colLetter}41,${colLetter}43),0)`;
         stampSummary(44, col, { formula } as ExcelJS.CellFormulaValue, { bold: true, border: true, bg: C.summAttBg, numFmt: '0.00' });
     }
     stampSummary(45, 2, 'PO attainment Formula: CO attainment × mapping /3', { align: 'left' });
@@ -1309,7 +1319,7 @@ async function _buildISEMSEExcel(
     for (let p = 1; p <= 3; p++) {
         const col = 3 + p;
         const colLetter = getColLetter(col);
-        const formula = `=AVERAGE(${colLetter}51,${colLetter}53,${colLetter}55,${colLetter}57,${colLetter}59,${colLetter}61)`;
+        const formula = `=IFERROR(AVERAGE(${colLetter}51,${colLetter}53,${colLetter}55,${colLetter}57,${colLetter}59,${colLetter}61),0)`;
         stampSummary(62, col, { formula } as ExcelJS.CellFormulaValue, { bold: true, border: true, bg: C.summAttBg, numFmt: '0.00' });
     }
 

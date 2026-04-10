@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from "@/components/ui/breadcrumb";
-import { EvaluationsContent } from "@/components/teacher/evaluations/evaluations-content";
+import { EvaluationsContent } from "@/app/teacher/evaluations/evaluations-content";
 
 export const metadata: Metadata = {
   title: "Evaluations",

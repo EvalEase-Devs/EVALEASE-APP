@@ -23,7 +23,7 @@
  */
 
 import ExcelJS from 'exceljs';
-import { SUBJECT_TARGETS } from '../constants';
+import { SUBJECT_TARGETS } from '@/app/teacher/assignments/create/constants';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types  (mirrors lab-attainment-report.tsx)

@@ -16,6 +16,28 @@ import type { ReportResponse } from './generate-ise-mse-excel';
 import type { LabReportResponse } from './generate-lab-excel';
 import type { WorkerRequest, WorkerResponse } from './excel-worker';
 
+interface ExternalAssessmentExportData {
+    assessment_kind: 'ESE' | 'EXTERNAL_VIVA';
+    subject_target: number;
+    rows: Array<{
+        roll_no: number | null;
+        stud_pid: number | null;
+        stud_name: string;
+        obtained_marks: number;
+        out_of: number;
+        percent: number;
+        grade: string | null;
+        gpa: number | null;
+        status: string;
+    }>;
+    summary: {
+        total_students: number;
+        count_above_target: number;
+        percentage_above_target: number;
+        attainment: number;
+    };
+}
+
 // ── Logo cache ───────────────────────────────────────────────────────────────
 let _logoCachePromise: Promise<string | undefined> | null = null;
 
@@ -85,11 +107,15 @@ function triggerDownload(buffer: ArrayBuffer, filename: string): void {
  * Generate & download an ISE/MSE report in a Web Worker.
  * Falls back to main-thread generation if Workers are unavailable.
  */
-export async function exportISEMSEViaWorker(reportData: ReportResponse): Promise<void> {
+export async function exportISEMSEViaWorker(
+    reportData: ReportResponse,
+    mappings?: Record<string, Record<string, number>>,
+    externalReport?: ExternalAssessmentExportData,
+): Promise<void> {
     if (typeof Worker === 'undefined') {
         // SSR / old browser fallback — import the original main-thread function
         const { generateISEMSEExcel } = await import('./generate-ise-mse-excel');
-        return generateISEMSEExcel(reportData);
+        return generateISEMSEExcel(reportData, mappings, externalReport);
     }
 
     const logoBase64 = await fetchLogoBase64();
@@ -97,6 +123,8 @@ export async function exportISEMSEViaWorker(reportData: ReportResponse): Promise
     const buffer = await runInWorker({
         type: 'ise-mse',
         reportData,
+        mappings,
+        externalReport,
         logoBase64,
     });
 

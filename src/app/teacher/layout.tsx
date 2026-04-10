@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { AppSidebarTeacher } from "@/components/teacher/app-sidebar-teacher";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -21,7 +22,9 @@ export default async function TeacherLayout({
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebarTeacher user={user} />
-      <SidebarInset>{children}</SidebarInset>
+      <Suspense fallback={null}>
+        <SidebarInset>{children}</SidebarInset>
+      </Suspense>
     </SidebarProvider>
   );
 }
