@@ -39,7 +39,33 @@ export type WorkerRequest =
         };
         logoBase64?: string;
     }
-    | { type: 'lab'; reportData: LabReportResponse; logoBase64?: string };
+    | {
+        type: 'lab';
+        reportData: LabReportResponse;
+        mappings?: Record<string, Record<string, number>>;
+        externalReport?: {
+            assessment_kind: 'ESE' | 'EXTERNAL_VIVA';
+            subject_target: number;
+            rows: Array<{
+                roll_no: number | null;
+                stud_pid: number | null;
+                stud_name: string;
+                obtained_marks: number;
+                out_of: number;
+                percent: number;
+                grade: string | null;
+                gpa: number | null;
+                status: string;
+            }>;
+            summary: {
+                total_students: number;
+                count_above_target: number;
+                percentage_above_target: number;
+                attainment: number;
+            };
+        };
+        logoBase64?: string;
+    };
 
 export type WorkerResponse =
     | { ok: true; buffer: ArrayBuffer }
@@ -53,7 +79,7 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
         if (msg.type === 'ise-mse') {
             buffer = await generateISEMSEExcelBuffer(msg.reportData, msg.logoBase64, msg.mappings, msg.externalReport);
         } else {
-            buffer = await generateLabAttainmentExcelBuffer(msg.reportData, msg.logoBase64);
+            buffer = await generateLabAttainmentExcelBuffer(msg.reportData, msg.logoBase64, msg.mappings, msg.externalReport);
         }
 
         // Transfer ownership of the buffer (zero-copy)

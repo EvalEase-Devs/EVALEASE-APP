@@ -10,9 +10,11 @@ interface COPOMappingGridProps {
     subjectCode: string;
     onSave: (mappings: MappingData) => void;
     initialMappings?: MappingData;
+    outcomeLabel?: 'CO' | 'LO';
+    outcomeNumbers?: number[];
 }
 
-const CO_ROWS = ['CO1', 'CO2', 'CO3', 'CO4', 'CO5', 'CO6'] as const;
+const DEFAULT_OUTCOME_NUMBERS = [1, 2, 3, 4, 5, 6] as const;
 const PO_COLUMNS = [
     'PO1',
     'PO2',
@@ -29,27 +31,68 @@ const PO_COLUMNS = [
 ] as const;
 const PSO_COLUMNS = ['PSO1', 'PSO2', 'PSO3'] as const;
 
-function createEmptyMappings(): MappingData {
+function createEmptyMappings(outcomeLabel: 'CO' | 'LO', outcomeNumbers: number[]): MappingData {
     const cols = [...PO_COLUMNS, ...PSO_COLUMNS];
     const next: MappingData = {};
 
-    for (const co of CO_ROWS) {
-        next[co] = {};
+    for (const num of outcomeNumbers) {
+        const outcomeKey = `${outcomeLabel}${num}`;
+        next[outcomeKey] = {};
         for (const col of cols) {
-            next[co][col] = 0;
+            next[outcomeKey][col] = 0;
         }
     }
 
     return next;
 }
 
+function normalizeMappings(
+    source: MappingData | undefined,
+    outcomeLabel: 'CO' | 'LO',
+    outcomeNumbers: number[],
+): MappingData {
+    const base = createEmptyMappings(outcomeLabel, outcomeNumbers);
+    if (!source) return base;
+
+    const allColumns = [...PO_COLUMNS, ...PSO_COLUMNS];
+    const validRows = new Set(outcomeNumbers.map((num) => `${outcomeLabel}${num}`));
+
+    for (const row of Object.keys(source)) {
+        if (!validRows.has(row)) continue;
+
+        for (const col of allColumns) {
+            const raw = source[row]?.[col];
+            if (typeof raw === 'number' && Number.isFinite(raw)) {
+                base[row][col] = raw;
+            }
+        }
+    }
+
+    return base;
+}
+
 export function COPOMappingGrid({
     subjectCode,
     onSave,
     initialMappings,
+    outcomeLabel = 'CO',
+    outcomeNumbers,
 }: COPOMappingGridProps) {
-    const [mappings, setMappings] = useState<MappingData>(createEmptyMappings);
-    const storageKey = useMemo(() => `evalease_mappings_${subjectCode}`, [subjectCode]);
+    const rowNumbers = useMemo(() => {
+        const source = Array.isArray(outcomeNumbers) && outcomeNumbers.length > 0
+            ? outcomeNumbers
+            : outcomeLabel === 'CO'
+                ? [...DEFAULT_OUTCOME_NUMBERS]
+                : [];
+
+        return Array.from(new Set(source.filter((n) => Number.isFinite(n) && n > 0))).sort((a, b) => a - b);
+    }, [outcomeLabel, outcomeNumbers]);
+
+    const [mappings, setMappings] = useState<MappingData>(() => createEmptyMappings(outcomeLabel, rowNumbers));
+    const storageKey = useMemo(
+        () => `evalease_mappings_${outcomeLabel}_${subjectCode}`,
+        [outcomeLabel, subjectCode],
+    );
 
     useEffect(() => {
         const stored = localStorage.getItem(storageKey);
@@ -57,7 +100,7 @@ export function COPOMappingGrid({
         if (stored) {
             try {
                 const parsed = JSON.parse(stored) as MappingData;
-                setMappings((prev) => ({ ...prev, ...parsed }));
+                setMappings(normalizeMappings(parsed, outcomeLabel, rowNumbers));
                 return;
             } catch {
                 // Ignore malformed local storage and fall back to initial/empty values.
@@ -65,11 +108,11 @@ export function COPOMappingGrid({
         }
 
         if (initialMappings) {
-            setMappings((prev) => ({ ...prev, ...initialMappings }));
+            setMappings(normalizeMappings(initialMappings, outcomeLabel, rowNumbers));
         } else {
-            setMappings(createEmptyMappings());
+            setMappings(createEmptyMappings(outcomeLabel, rowNumbers));
         }
-    }, [initialMappings, storageKey]);
+    }, [initialMappings, outcomeLabel, rowNumbers, storageKey]);
 
     const handleCellChange = (co: string, column: string, value: string) => {
         const numeric = value === '' ? 0 : Number(value);
@@ -84,16 +127,17 @@ export function COPOMappingGrid({
     };
 
     const handleSave = () => {
-        localStorage.setItem(storageKey, JSON.stringify(mappings));
-        onSave(mappings);
+        const sanitized = normalizeMappings(mappings, outcomeLabel, rowNumbers);
+        localStorage.setItem(storageKey, JSON.stringify(sanitized));
+        onSave(sanitized);
     };
 
     return (
         <div className="space-y-4">
             <div>
-                <h3 className="text-base font-semibold">CO-PO/PSO Mapping</h3>
+                <h3 className="text-base font-semibold">{outcomeLabel}-PO/PSO Mapping</h3>
                 <p className="text-sm text-muted-foreground">
-                    Map each course outcome to PO/PSO with levels 1, 2, or 3.
+                    Map each {outcomeLabel === 'CO' ? 'course outcome' : 'lab outcome'} to PO/PSO with levels 1, 2, or 3.
                 </p>
             </div>
 
@@ -108,7 +152,7 @@ export function COPOMappingGrid({
                         <table className="w-full min-w-max border-collapse text-sm">
                             <thead>
                                 <tr>
-                                    <th className="border bg-muted/50 p-2 text-left font-medium">CO</th>
+                                    <th className="border bg-muted/50 p-2 text-left font-medium">{outcomeLabel}</th>
                                     {PO_COLUMNS.map((po) => (
                                         <th key={po} className="border bg-muted/50 p-2 text-center font-medium">
                                             {po}
@@ -117,15 +161,17 @@ export function COPOMappingGrid({
                                 </tr>
                             </thead>
                             <tbody>
-                                {CO_ROWS.map((co) => (
-                                    <tr key={co}>
-                                        <td className="border p-2 font-medium">{co}</td>
+                                {rowNumbers.map((num) => {
+                                    const outcomeKey = `${outcomeLabel}${num}`;
+                                    return (
+                                    <tr key={outcomeKey}>
+                                        <td className="border p-2 font-medium">{outcomeKey}</td>
                                         {PO_COLUMNS.map((column) => (
-                                            <td key={`${co}-${column}`} className="border p-1 text-center">
+                                            <td key={`${outcomeKey}-${column}`} className="border p-1 text-center">
                                                 <select
                                                     className="h-8 w-16 rounded-md border bg-background px-2 text-sm"
-                                                    value={mappings[co]?.[column] ? String(mappings[co][column]) : ''}
-                                                    onChange={(e) => handleCellChange(co, column, e.target.value)}
+                                                    value={mappings[outcomeKey]?.[column] ? String(mappings[outcomeKey][column]) : ''}
+                                                    onChange={(e) => handleCellChange(outcomeKey, column, e.target.value)}
                                                 >
                                                     <option value="">-</option>
                                                     <option value="1">1</option>
@@ -135,7 +181,7 @@ export function COPOMappingGrid({
                                             </td>
                                         ))}
                                     </tr>
-                                ))}
+                                );})}
                             </tbody>
                         </table>
                     </div>
@@ -146,7 +192,7 @@ export function COPOMappingGrid({
                         <table className="w-full min-w-max border-collapse text-sm">
                             <thead>
                                 <tr>
-                                    <th className="border bg-muted/50 p-2 text-left font-medium">CO</th>
+                                    <th className="border bg-muted/50 p-2 text-left font-medium">{outcomeLabel}</th>
                                     {PSO_COLUMNS.map((pso) => (
                                         <th key={pso} className="border bg-muted/50 p-2 text-center font-medium">
                                             {pso}
@@ -155,15 +201,17 @@ export function COPOMappingGrid({
                                 </tr>
                             </thead>
                             <tbody>
-                                {CO_ROWS.map((co) => (
-                                    <tr key={co}>
-                                        <td className="border p-2 font-medium">{co}</td>
+                                {rowNumbers.map((num) => {
+                                    const outcomeKey = `${outcomeLabel}${num}`;
+                                    return (
+                                    <tr key={outcomeKey}>
+                                        <td className="border p-2 font-medium">{outcomeKey}</td>
                                         {PSO_COLUMNS.map((column) => (
-                                            <td key={`${co}-${column}`} className="border p-1 text-center">
+                                            <td key={`${outcomeKey}-${column}`} className="border p-1 text-center">
                                                 <select
                                                     className="h-8 w-16 rounded-md border bg-background px-2 text-sm"
-                                                    value={mappings[co]?.[column] ? String(mappings[co][column]) : ''}
-                                                    onChange={(e) => handleCellChange(co, column, e.target.value)}
+                                                    value={mappings[outcomeKey]?.[column] ? String(mappings[outcomeKey][column]) : ''}
+                                                    onChange={(e) => handleCellChange(outcomeKey, column, e.target.value)}
                                                 >
                                                     <option value="">-</option>
                                                     <option value="1">1</option>
@@ -173,7 +221,7 @@ export function COPOMappingGrid({
                                             </td>
                                         ))}
                                     </tr>
-                                ))}
+                                );})}
                             </tbody>
                         </table>
                     </div>

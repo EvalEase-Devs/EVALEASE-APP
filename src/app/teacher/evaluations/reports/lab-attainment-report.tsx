@@ -51,9 +51,18 @@ interface ReportResponse {
 interface LabAttainmentReportProps {
     allotmentId: number;
     onClose?: () => void;
+    mappings?: Record<string, Record<string, number>>;
+    view?: 'full' | 'summary';
+    showDownloadButton?: boolean;
 }
 
-export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotmentId, onClose }) => {
+export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({
+    allotmentId,
+    onClose,
+    mappings,
+    view = 'full',
+    showDownloadButton = true,
+}) => {
     const [loading, setLoading] = useState(true);
     const [reportData, setReportData] = useState<ReportResponse | null>(null);
     const [exporting, setExporting] = useState(false);
@@ -83,7 +92,7 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
         if (!reportData) return;
         setExporting(true);
         toast.promise(
-            exportLabViaWorker(reportData),
+            exportLabViaWorker(reportData, mappings),
             {
                 loading: 'Generating Lab Attainment report...',
                 success: 'Report exported successfully',
@@ -92,6 +101,7 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
             }
         );
     };
+
 
     if (loading) {
         return (
@@ -166,12 +176,72 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
         };
     };
 
+    const summaryTable = (
+        <Card className="py-2">
+            <CardHeader className="py-2 px-4">
+                <CardTitle className="text-xs">Students Scoring Above {subjectTarget}%</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4">
+                <table className="w-full text-[10px] border-collapse border-2 border-black">
+                    <thead>
+                        <tr className="bg-primary/40">
+                            <th className="border-2 border-black px-2 py-1 font-bold text-center">Criteria</th>
+                            {loList.map((lo) => (
+                                <th key={`summary-lo-${lo}`} className="border-2 border-black px-2 py-1 font-bold text-center">
+                                    LO{lo}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr className="bg-muted/50">
+                            <td className="border-2 border-black px-2 py-1 font-bold">Count</td>
+                            {loList.map((lo) => (
+                                <td key={`count-${lo}`} className="border-2 border-black px-2 py-1 text-center font-bold">
+                                    {calculateLoSummary(lo).count}
+                                </td>
+                            ))}
+                        </tr>
+                        <tr>
+                            <td className="border-2 border-black px-2 py-1 font-bold">Percentage</td>
+                            {loList.map((lo) => (
+                                <td key={`pct-${lo}`} className="border-2 border-black px-2 py-1 text-center font-bold">
+                                    {calculateLoSummary(lo).percentage.toFixed(2)}%
+                                </td>
+                            ))}
+                        </tr>
+                        <tr className="bg-muted/50">
+                            <td className="border-2 border-black px-2 py-1 font-bold">Attainment</td>
+                            {loList.map((lo) => (
+                                <td key={`att-${lo}`} className="border-2 border-black px-2 py-1 text-center font-bold">
+                                    {calculateLoSummary(lo).attainment}
+                                </td>
+                            ))}
+                        </tr>
+                    </tbody>
+                </table>
+            </CardContent>
+        </Card>
+    );
+
+    const pageTitle = view === 'summary' ? 'LAB ATTAINMENT SUMMARY - PAGE 3' : 'LAB ATTAINMENT ANALYSIS - PAGE 1';
+
     return (
         <div className="space-y-2 w-full">
+            {showDownloadButton ? (
+                <div className="flex justify-end px-2">
+                    <Button onClick={exportToExcel} disabled={exporting} size="sm" className="text-xs h-8">
+                        {exporting ? 'Exporting...' : 'Download Excel Report'}
+                    </Button>
+                </div>
+            ) : null}
+
             {/* Header */}
             <Card className="py-2">
                 <CardHeader className="py-2 px-4">
-                    <CardTitle className="text-sm">LAB ATTAINMENT ANALYSIS - PAGE 1</CardTitle>
+                    <div className="flex items-start justify-between gap-3">
+                        <CardTitle className="text-sm">{pageTitle}</CardTitle>
+                    </div>
                 </CardHeader>
                 <CardContent className="px-4 py-2 flex items-center justify-between">
                     <div className="text-xs space-y-1 flex-1">
@@ -188,259 +258,245 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({ allotm
                 </CardContent>
             </Card>
 
-            {/* Download Button */}
-            <div className="flex gap-2 justify-end px-2">
-                <Button onClick={exportToExcel} disabled={exporting} size="sm" className="text-xs h-8">
-                    {exporting ? 'Exporting...' : 'Download Excel Report'}
-                </Button>
-            </div>
+            {view === 'summary' ? (
+                <>
+                    {summaryTable}
+                </>
+            ) : null}
 
-            {/* Data Table */}
-            <Card className="py-2">
-                <CardContent className="pt-2 px-2 overflow-auto" style={{ maxHeight: 'calc(95vh - 280px)' }}>
-                    <table className="w-full text-[10px] border-collapse border-4 border-black">
-                        <thead>
-                            {/* Level 1: LO Headers */}
-                            <tr className="bg-gradient-to-r from-primary/40 to-primary/30 text-foreground">
-                                <th className="border-2 border-black px-2 py-1 h-10 font-bold text-center text-[9px]" rowSpan={3}>
-                                    Roll No
-                                </th>
-                                <th className="border-2 border-black px-2 py-1 h-10 font-bold text-center text-[9px]" rowSpan={3}>
-                                    PID
-                                </th>
-                                <th className="border-2 border-black px-2 py-1 h-10 font-bold text-center text-[9px]" rowSpan={3}>
-                                    Name
-                                </th>
-                                {loList.map((lo) => (
-                                    <th
-                                        key={`lo-${lo}`}
-                                        className="border-2 border-black px-1 py-1 font-bold text-center text-[9px]"
-                                        colSpan={loStructure[lo].length + 3}
-                                    >
-                                        LO{lo}
-                                    </th>
-                                ))}
-                            </tr>
-
-                            {/* Level 2: Experiment Headers and Summary */}
-                            <tr className="bg-primary/30 text-foreground">
-                                {loList.map((lo) => (
-                                    <React.Fragment key={`exp-header-${lo}`}>
-                                        {loStructure[lo].map((exp) => (
+            {view === 'full' ? (
+                <>
+                    <Card className="py-2">
+                        <CardContent className="pt-2 px-2 overflow-auto" style={{ maxHeight: 'calc(95vh - 280px)' }}>
+                            <table className="w-full text-[10px] border-collapse border-4 border-black">
+                                <thead>
+                                    <tr className="bg-gradient-to-r from-primary/40 to-primary/30 text-foreground">
+                                        <th className="border-2 border-black px-2 py-1 h-10 font-bold text-center text-[9px]" rowSpan={3}>
+                                            Roll No
+                                        </th>
+                                        <th className="border-2 border-black px-2 py-1 h-10 font-bold text-center text-[9px]" rowSpan={3}>
+                                            PID
+                                        </th>
+                                        <th className="border-2 border-black px-2 py-1 h-10 font-bold text-center text-[9px]" rowSpan={3}>
+                                            Name
+                                        </th>
+                                        {loList.map((lo) => (
                                             <th
-                                                key={`exp-${exp.exp_no}`}
-                                                className="border-2 border-black px-1 py-1 font-semibold text-center text-[9px]"
+                                                key={`lo-${lo}`}
+                                                className="border-2 border-black px-1 py-1 font-bold text-center text-[9px]"
+                                                colSpan={loStructure[lo].length + 3}
                                             >
-                                                Exp{exp.exp_no}
+                                                LO{lo}
                                             </th>
                                         ))}
-                                        <th
-                                            className="border-2 border-black px-1 py-1 font-semibold text-center bg-warning text-foreground text-[9px]"
-                                            colSpan={3}
-                                        >
-                                            Summary
-                                        </th>
-                                    </React.Fragment>
-                                ))}
-                            </tr>
-
-                            {/* Level 3: Max Marks and Summary Headers */}
-                            <tr className="bg-muted text-foreground">
-                                {loList.map((lo) => (
-                                    <React.Fragment key={`marks-header-${lo}`}>
-                                        {loStructure[lo].map((exp) => (
-                                            <th
-                                                key={`max-${exp.exp_no}`}
-                                                className="border-2 border-black px-1 py-1 text-center font-semibold text-[8px]"
-                                            >
-                                                ({exp.max_marks})
-                                            </th>
-                                        ))}
-                                        <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-warning/70 text-foreground text-[8px]">
-                                            Obtained
-                                        </th>
-                                        <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-warning/70 text-foreground text-[8px]">
-                                            Attempted
-                                        </th>
-                                        <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-warning/70 text-foreground text-[8px]">
-                                            Percentage
-                                        </th>
-                                    </React.Fragment>
-                                ))}
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {students.map((student) => (
-                                <tr key={student.pid} className="hover:bg-muted/50 border-b-2 border-black">
-                                    <td className="border-2 border-black px-1 py-1 text-center font-bold bg-muted/50 text-[9px]">
-                                        {student.roll_no}
-                                    </td>
-                                    <td className="border-2 border-black px-1 py-1 text-center bg-muted/50 text-[9px]">{student.pid}</td>
-                                    <td className="border-2 border-black px-1 py-1 font-bold min-w-32 bg-muted/50 text-[9px]">
-                                        {student.stud_name}
-                                    </td>
-
-                                    {loList.map((lo) => (
-                                        <React.Fragment key={`data-${student.pid}-${lo}`}>
-                                            {loStructure[lo].map((exp) => {
-                                                const mark = student.loMarks[lo]?.[exp.exp_no];
-                                                return (
-                                                    <td
-                                                        key={`exp-data-${student.pid}-${exp.exp_no}`}
-                                                        className="border-2 border-black px-1 py-1 text-center font-semibold text-[9px]"
+                                    </tr>
+                                    <tr className="bg-primary/30 text-foreground">
+                                        {loList.map((lo) => (
+                                            <React.Fragment key={`exp-header-${lo}`}>
+                                                {loStructure[lo].map((exp) => (
+                                                    <th
+                                                        key={`exp-${exp.exp_no}`}
+                                                        className="border-2 border-black px-1 py-1 font-semibold text-center text-[9px]"
                                                     >
-                                                        {mark ? `${mark.obtained.toFixed(1)}` : '0'}
-                                                    </td>
-                                                );
-                                            })}
+                                                        Exp{exp.exp_no}
+                                                    </th>
+                                                ))}
+                                                <th
+                                                    className="border-2 border-black px-1 py-1 font-semibold text-center bg-warning text-foreground text-[9px]"
+                                                    colSpan={3}
+                                                >
+                                                    Summary
+                                                </th>
+                                            </React.Fragment>
+                                        ))}
+                                    </tr>
+                                    <tr className="bg-muted text-foreground">
+                                        {loList.map((lo) => (
+                                            <React.Fragment key={`marks-header-${lo}`}>
+                                                {loStructure[lo].map((exp) => (
+                                                    <th
+                                                        key={`max-${exp.exp_no}`}
+                                                        className="border-2 border-black px-1 py-1 text-center font-semibold text-[8px]"
+                                                    >
+                                                        ({exp.max_marks})
+                                                    </th>
+                                                ))}
+                                                <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-warning/70 text-foreground text-[8px]">
+                                                    Obtained
+                                                </th>
+                                                <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-warning/70 text-foreground text-[8px]">
+                                                    Attempted
+                                                </th>
+                                                <th className="border-2 border-black px-1 py-1 text-center font-semibold bg-warning/70 text-foreground text-[8px]">
+                                                    Percentage
+                                                </th>
+                                            </React.Fragment>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {students.map((student) => (
+                                        <tr key={student.pid} className="hover:bg-muted/50 border-b-2 border-black">
+                                            <td className="border-2 border-black px-1 py-1 text-center font-bold bg-muted/50 text-[9px]">{student.roll_no}</td>
+                                            <td className="border-2 border-black px-1 py-1 text-center bg-muted/50 text-[9px]">{student.pid}</td>
+                                            <td className="border-2 border-black px-1 py-1 font-bold min-w-32 bg-muted/50 text-[9px]">{student.stud_name}</td>
+                                            {loList.map((lo) => (
+                                                <React.Fragment key={`data-${student.pid}-${lo}`}>
+                                                    {loStructure[lo].map((exp) => {
+                                                        const mark = student.loMarks[lo]?.[exp.exp_no];
+                                                        return (
+                                                            <td
+                                                                key={`exp-data-${student.pid}-${exp.exp_no}`}
+                                                                className="border-2 border-black px-1 py-1 text-center font-semibold text-[9px]"
+                                                            >
+                                                                {mark ? `${mark.obtained.toFixed(1)}` : '0'}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                    {(() => {
+                                                        let totalObtained = 0;
+                                                        let totalAttempted = 0;
 
-                                            {/* Summary for LO */}
-                                            {(() => {
-                                                let totalObtained = 0;
-                                                let totalAttempted = 0;
+                                                        loStructure[lo].forEach((exp) => {
+                                                            const mark = student.loMarks[lo]?.[exp.exp_no];
+                                                            if (mark) {
+                                                                totalObtained += mark.obtained;
+                                                                totalAttempted += mark.max;
+                                                            }
+                                                        });
 
-                                                loStructure[lo].forEach((exp) => {
-                                                    const mark = student.loMarks[lo]?.[exp.exp_no];
-                                                    if (mark) {
-                                                        totalObtained += mark.obtained;
-                                                        totalAttempted += mark.max;
-                                                    }
-                                                });
+                                                        const percentage = totalAttempted > 0 ? (totalObtained * 100) / totalAttempted : 0;
 
-                                                const percentage = totalAttempted > 0 ? (totalObtained * 100) / totalAttempted : 0;
-
-                                                return (
-                                                    <>
-                                                        <td className="border-2 border-black px-1 py-1 text-center font-bold bg-warning-subtle text-[9px]">
-                                                            {totalObtained.toFixed(1)}
-                                                        </td>
-                                                        <td className="border-2 border-black px-1 py-1 text-center font-bold bg-warning-subtle text-[9px]">
-                                                            {totalAttempted}
-                                                        </td>
-                                                        <td className="border-2 border-black px-1 py-1 text-center font-bold bg-warning-subtle text-[9px]">
-                                                            {percentage.toFixed(2)}%
-                                                        </td>
-                                                    </>
-                                                );
-                                            })()}
-                                        </React.Fragment>
+                                                        return (
+                                                            <>
+                                                                <td className="border-2 border-black px-1 py-1 text-center font-bold bg-warning-subtle text-[9px]">
+                                                                    {totalObtained.toFixed(1)}
+                                                                </td>
+                                                                <td className="border-2 border-black px-1 py-1 text-center font-bold bg-warning-subtle text-[9px]">
+                                                                    {totalAttempted}
+                                                                </td>
+                                                                <td className="border-2 border-black px-1 py-1 text-center font-bold bg-warning-subtle text-[9px]">
+                                                                    {percentage.toFixed(2)}%
+                                                                </td>
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </React.Fragment>
+                                            ))}
+                                        </tr>
                                     ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </CardContent>
-            </Card>
+                                </tbody>
+                            </table>
+                        </CardContent>
+                    </Card>
 
-            {/* LO Attainment Summary Table */}
-            <Card className="py-2">
-                <CardHeader className="py-2 px-4">
-                    <CardTitle className="text-xs">Students Scoring Above {subjectTarget}%</CardTitle>
-                </CardHeader>
-                <CardContent className="px-4">
-                    <table className="w-full text-[10px] border-collapse border-2 border-black">
-                        <thead>
-                            <tr className="bg-primary/40">
-                                <th className="border-2 border-black px-2 py-1 font-bold text-center">Criteria</th>
-                                {loList.map((lo) => (
-                                    <th key={`summary-lo-${lo}`} className="border-2 border-black px-2 py-1 font-bold text-center">
-                                        LO{lo}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="bg-muted/50">
-                                <td className="border-2 border-black px-2 py-1 font-bold">Count</td>
-                                {loList.map((lo) => (
-                                    <td key={`count-${lo}`} className="border-2 border-black px-2 py-1 text-center font-bold">
-                                        {calculateLoSummary(lo).count}
-                                    </td>
-                                ))}
-                            </tr>
-                            <tr className="bg-warning-subtle">
-                                <td className="border-2 border-black px-2 py-1 font-bold">Percentage</td>
-                                {loList.map((lo) => (
-                                    <td key={`percentage-${lo}`} className="border-2 border-black px-2 py-1 text-center font-bold">
-                                        {calculateLoSummary(lo).percentage.toFixed(2)}%
-                                    </td>
-                                ))}
-                            </tr>
-                        </tbody>
-                    </table>
-                </CardContent>
-            </Card>
+                    <Card className="py-2">
+                        <CardHeader className="py-2 px-4">
+                            <CardTitle className="text-xs">Students Scoring Above {subjectTarget}%</CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-4">
+                            <table className="w-full text-[10px] border-collapse border-2 border-black">
+                                <thead>
+                                    <tr className="bg-primary/40">
+                                        <th className="border-2 border-black px-2 py-1 font-bold text-center">Criteria</th>
+                                        {loList.map((lo) => (
+                                            <th key={`summary-lo-${lo}`} className="border-2 border-black px-2 py-1 font-bold text-center">
+                                                LO{lo}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="bg-muted/50">
+                                        <td className="border-2 border-black px-2 py-1 font-bold">Count</td>
+                                        {loList.map((lo) => (
+                                            <td key={`count-${lo}`} className="border-2 border-black px-2 py-1 text-center font-bold">
+                                                {calculateLoSummary(lo).count}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                    <tr className="bg-warning-subtle">
+                                        <td className="border-2 border-black px-2 py-1 font-bold">Percentage</td>
+                                        {loList.map((lo) => (
+                                            <td key={`percentage-${lo}`} className="border-2 border-black px-2 py-1 text-center font-bold">
+                                                {calculateLoSummary(lo).percentage.toFixed(2)}%
+                                            </td>
+                                        ))}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </CardContent>
+                    </Card>
 
-            {/* LO Attainment Scale Table */}
-            <Card className="py-2">
-                <CardHeader className="py-2 px-4">
-                    <CardTitle className="text-xs">LO Attainment Scale</CardTitle>
-                </CardHeader>
-                <CardContent className="px-4">
-                    <table className="w-full text-[10px] border-collapse border-2 border-black">
-                        <thead>
-                            <tr className="bg-primary/40">
-                                <th className="border-2 border-black px-2 py-1 font-bold text-center">Attainment</th>
-                                {loList.map((lo) => (
-                                    <th key={`attain-lo-${lo}`} className="border-2 border-black px-2 py-1 font-bold text-center">
-                                        LO{lo}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="bg-info-subtle">
-                                <td className="border-2 border-black px-2 py-1 font-bold text-center">Scale (1-3)</td>
-                                {loList.map((lo) => (
-                                    <td key={`attain-val-${lo}`} className="border-2 border-black px-2 py-1 text-center font-bold text-lg">
-                                        {calculateLoSummary(lo).attainment}
-                                    </td>
-                                ))}
-                            </tr>
-                        </tbody>
-                    </table>
-                </CardContent>
-            </Card>
+                    <Card className="py-2">
+                        <CardHeader className="py-2 px-4">
+                            <CardTitle className="text-xs">LO Attainment Scale</CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-4">
+                            <table className="w-full text-[10px] border-collapse border-2 border-black">
+                                <thead>
+                                    <tr className="bg-primary/40">
+                                        <th className="border-2 border-black px-2 py-1 font-bold text-center">Attainment</th>
+                                        {loList.map((lo) => (
+                                            <th key={`attain-lo-${lo}`} className="border-2 border-black px-2 py-1 font-bold text-center">
+                                                LO{lo}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="bg-info-subtle">
+                                        <td className="border-2 border-black px-2 py-1 font-bold text-center">Scale (1-3)</td>
+                                        {loList.map((lo) => (
+                                            <td key={`attain-val-${lo}`} className="border-2 border-black px-2 py-1 text-center font-bold text-lg">
+                                                {calculateLoSummary(lo).attainment}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </CardContent>
+                    </Card>
 
-            {/* Attainment Criteria Legend */}
-            <Card className="py-2">
-                <CardHeader className="py-2 px-4">
-                    <CardTitle className="text-xs">LO Attainment Criteria</CardTitle>
-                </CardHeader>
-                <CardContent className="px-4">
-                    <table className="w-full text-[10px] border-collapse border-2 border-black">
-                        <thead>
-                            <tr className="bg-primary/40">
-                                <th className="border-2 border-black px-2 py-1 font-bold text-center">Attainment</th>
-                                <th className="border-2 border-black px-2 py-1 font-bold text-left">
-                                    Condition (Students scoring above {subjectTarget}%)
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="bg-success-subtle">
-                                <td className="border-2 border-black px-2 py-1 text-center font-bold text-lg">3</td>
-                                <td className="border-2 border-black px-2 py-1 text-xs">
-                                    If 60% and above students have scored above {subjectTarget}%
-                                </td>
-                            </tr>
-                            <tr className="bg-warning-subtle">
-                                <td className="border-2 border-black px-2 py-1 text-center font-bold text-lg">2</td>
-                                <td className="border-2 border-black px-2 py-1 text-xs">
-                                    If 50% to 60% of students have scored above {subjectTarget}%
-                                </td>
-                            </tr>
-                            <tr className="bg-danger-subtle">
-                                <td className="border-2 border-black px-2 py-1 text-center font-bold text-lg">1</td>
-                                <td className="border-2 border-black px-2 py-1 text-xs">
-                                    If less than 50% students have scored above {subjectTarget}%
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </CardContent>
-            </Card>
+                    <Card className="py-2">
+                        <CardHeader className="py-2 px-4">
+                            <CardTitle className="text-xs">LO Attainment Criteria</CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-4">
+                            <table className="w-full text-[10px] border-collapse border-2 border-black">
+                                <thead>
+                                    <tr className="bg-primary/40">
+                                        <th className="border-2 border-black px-2 py-1 font-bold text-center">Attainment</th>
+                                        <th className="border-2 border-black px-2 py-1 font-bold text-left">
+                                            Condition (Students scoring above {subjectTarget}%)
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="bg-success-subtle">
+                                        <td className="border-2 border-black px-2 py-1 text-center font-bold text-lg">3</td>
+                                        <td className="border-2 border-black px-2 py-1 text-xs">
+                                            If 60% and above students have scored above {subjectTarget}%
+                                        </td>
+                                    </tr>
+                                    <tr className="bg-warning-subtle">
+                                        <td className="border-2 border-black px-2 py-1 text-center font-bold text-lg">2</td>
+                                        <td className="border-2 border-black px-2 py-1 text-xs">
+                                            If 50% to 60% of students have scored above {subjectTarget}%
+                                        </td>
+                                    </tr>
+                                    <tr className="bg-danger-subtle">
+                                        <td className="border-2 border-black px-2 py-1 text-center font-bold text-lg">1</td>
+                                        <td className="border-2 border-black px-2 py-1 text-xs">
+                                            If less than 50% students have scored above {subjectTarget}%
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </CardContent>
+                    </Card>
+                </>
+            ) : null}
         </div>
     );
 };

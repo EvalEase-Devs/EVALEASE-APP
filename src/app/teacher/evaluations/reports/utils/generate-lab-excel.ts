@@ -69,6 +69,30 @@ export interface LabReportResponse {
     loList: number[];
 }
 
+export interface ExternalReportRow {
+    roll_no: number | null;
+    stud_pid: number | null;
+    stud_name: string;
+    obtained_marks: number;
+    out_of: number;
+    percent: number;
+    grade: string | null;
+    gpa: number | null;
+    status: string;
+}
+
+export interface ExternalReportData {
+    assessment_kind: 'ESE' | 'EXTERNAL_VIVA';
+    subject_target: number;
+    rows: ExternalReportRow[];
+    summary: {
+        total_students: number;
+        count_above_target: number;
+        percentage_above_target: number;
+        attainment: number;
+    };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Print-friendly pastel colour palette (ARGB – all fully opaque, prefix FF)
 // ALL TEXT IS DARK (#111827). No white text anywhere.
@@ -262,12 +286,21 @@ async function embedLogo(workbook: ExcelJS.Workbook, ws: ExcelJS.Worksheet, logo
 // ─────────────────────────────────────────────────────────────────────────────
 // Main export
 // ─────────────────────────────────────────────────────────────────────────────
-export async function generateLabAttainmentExcelBuffer(reportData: LabReportResponse, logoBase64?: string): Promise<ArrayBuffer> {
-    return _buildLabAttainmentExcel(reportData, logoBase64);
+export async function generateLabAttainmentExcelBuffer(
+    reportData: LabReportResponse,
+    logoBase64?: string,
+    mappings?: Record<string, Record<string, number>>,
+    externalReport?: ExternalReportData,
+): Promise<ArrayBuffer> {
+    return _buildLabAttainmentExcel(reportData, logoBase64, mappings, externalReport);
 }
 
-export async function generateLabAttainmentExcel(reportData: LabReportResponse): Promise<void> {
-    const buffer = await _buildLabAttainmentExcel(reportData);
+export async function generateLabAttainmentExcel(
+    reportData: LabReportResponse,
+    mappings?: Record<string, Record<string, number>>,
+    externalReport?: ExternalReportData,
+): Promise<void> {
+    const buffer = await _buildLabAttainmentExcel(reportData, undefined, mappings, externalReport);
     const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
@@ -282,7 +315,12 @@ export async function generateLabAttainmentExcel(reportData: LabReportResponse):
     URL.revokeObjectURL(url);
 }
 
-async function _buildLabAttainmentExcel(reportData: LabReportResponse, logoBase64?: string): Promise<ArrayBuffer> {
+async function _buildLabAttainmentExcel(
+    reportData: LabReportResponse,
+    logoBase64?: string,
+    mappings?: Record<string, Record<string, number>>,
+    externalReport?: ExternalReportData,
+): Promise<ArrayBuffer> {
     const { allotment, teacher, students, loStructure, loList } = reportData;
 
     // ── Workbook ─────────────────────────────────────────────────────────────
@@ -904,6 +942,439 @@ async function _buildLabAttainmentExcel(reportData: LabReportResponse, logoBase6
             bold: true, bg: C.summAttBg, border: true, size: 12,
         });
     });
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // SECTION G — Page 2: External Viva / ESE worksheet
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const extLabel = externalReport?.assessment_kind === 'ESE' ? 'ESE Attainment' : 'External Viva Attainment';
+    const wsExt = workbook.addWorksheet(extLabel);
+    wsExt.views = [{ state: 'normal' }];
+
+    // Column widths
+    wsExt.getColumn(1).width = 10;  // Roll No
+    wsExt.getColumn(2).width = 15;  // PID
+    wsExt.getColumn(3).width = 35;  // Name
+    wsExt.getColumn(4).width = 14;  // Obtained
+    wsExt.getColumn(5).width = 14;  // Out Of
+    wsExt.getColumn(6).width = 14;  // %
+    wsExt.getColumn(7).width = 12;  // Grade
+    wsExt.getColumn(8).width = 12;  // GPA
+
+    const stampExt = (
+        row: number, col: number, value: ExcelJS.CellValue,
+        opts: { bold?: boolean; bg?: string; border?: boolean; halign?: 'left' | 'center' | 'right'; numFmt?: string } = {},
+    ) => {
+        const c = wsExt.getCell(row, col);
+        c.value = value;
+        c.font = { name: 'Calibri', size: 10, bold: opts.bold ?? false, color: { argb: C.summText } };
+        if (opts.bg) c.fill = fill(opts.bg);
+        if (opts.border) c.border = box(B.thin);
+        c.alignment = { horizontal: opts.halign ?? 'center', vertical: 'middle' };
+        if (opts.numFmt) c.numFmt = opts.numFmt;
+    };
+
+    // Header rows
+    wsExt.mergeCells(1, 1, 1, 8);
+    const extR1 = wsExt.getCell(1, 1);
+    extR1.value = 'St. Francis Institute of Technology';
+    extR1.font = { name: 'Calibri', bold: true, size: 13, color: { argb: C.headerText } };
+    extR1.alignment = { horizontal: 'center', vertical: 'middle' };
+    wsExt.getRow(1).height = 22;
+
+    wsExt.mergeCells(2, 1, 2, 8);
+    stampExt(2, 1, `Subject: ${allotment.sub_id}${allotment.sub_name ? ` (${allotment.sub_name})` : ''} | Class: ${allotment.class_name} | Sem: ${allotment.current_sem}`, { halign: 'center' });
+
+    wsExt.mergeCells(3, 1, 3, 8);
+    stampExt(3, 1, `${extLabel} - PAGE 2`, { bold: true, bg: C.titleBg, border: true, halign: 'center' });
+    wsExt.getRow(3).height = 20;
+
+    wsExt.getRow(4).height = 8;
+
+    if (!externalReport || externalReport.rows.length === 0) {
+        wsExt.mergeCells(5, 1, 5, 8);
+        stampExt(5, 1, 'No external assessment data uploaded yet.', { halign: 'center' });
+    } else {
+        // Data table header
+        const extHeaders = ['Roll No', 'PID', 'Student Name', 'Obtained Marks', 'Out Of', 'Percentage', 'Grade', 'GPA'];
+        extHeaders.forEach((h, i) => {
+            const c = wsExt.getCell(5, i + 1);
+            c.value = h;
+            c.font = { name: 'Calibri', bold: true, size: 10, color: { argb: C.fixedColText } };
+            c.fill = fill(C.fixedColBg);
+            c.alignment = { horizontal: 'center', vertical: 'middle' };
+            c.border = box(B.thin);
+        });
+        wsExt.getRow(5).height = 18;
+
+        // Data rows
+        externalReport.rows.forEach((row, idx) => {
+            const r = 6 + idx;
+            const isOdd = idx % 2 !== 0;
+            const rowBg = fill(isOdd ? C.dataRowOdd : C.dataRowEven);
+            const fixedBg = fill(C.dataFixed);
+
+            const vals: (string | number | null)[] = [
+                row.roll_no, row.stud_pid, row.stud_name,
+                row.obtained_marks, row.out_of, row.percent,
+                row.grade, row.gpa,
+            ];
+            vals.forEach((v, ci) => {
+                const c = wsExt.getCell(r, ci + 1);
+                c.value = v as ExcelJS.CellValue;
+                c.font = { name: 'Calibri', size: 10, color: { argb: C.summText }, bold: ci === 2 };
+                c.fill = ci < 3 ? fixedBg : (ci === 5 ? fill(C.dataSummPct) : rowBg);
+                c.alignment = { horizontal: ci === 2 ? 'left' : 'center', vertical: 'middle' };
+                c.border = box(B.thin);
+                if (ci === 5 && typeof v === 'number') c.numFmt = '0.00';
+            });
+            wsExt.getRow(r).height = 15;
+        });
+
+        const EXT_DATA_END = 5 + externalReport.rows.length;
+
+        // Summary table
+        const SR = EXT_DATA_END + 2;
+        wsExt.mergeCells(SR, 1, SR, 3);
+        stampExt(SR, 1, `Students Scoring Above ${externalReport.subject_target}%`, { bold: true, bg: C.summHdrBg, border: true, halign: 'left' });
+        stampExt(SR, 4, 'Count', { bold: true, bg: C.summHdrBg, border: true });
+        stampExt(SR, 5, 'Percentage', { bold: true, bg: C.summHdrBg, border: true });
+        stampExt(SR, 6, 'Attainment', { bold: true, bg: C.summHdrBg, border: true });
+        wsExt.getRow(SR).height = 18;
+
+        const SV = SR + 1;
+        wsExt.mergeCells(SV, 1, SV, 3);
+        stampExt(SV, 1, `${extLabel}`, { bg: C.metaValueBg, border: true, halign: 'left' });
+        stampExt(SV, 4, externalReport.summary.count_above_target, { bold: true, bg: C.metaValueBg, border: true });
+        stampExt(SV, 5, externalReport.summary.percentage_above_target, { bold: true, bg: C.dataSummPct, border: true, numFmt: '0.00' });
+        stampExt(SV, 6, externalReport.summary.attainment, { bold: true, bg: C.summAttBg, border: true, numFmt: '0.00' });
+        wsExt.getRow(SV).height = 16;
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // SECTION H — LO-PO-PSO Summary worksheet
+    // ═════════════════════════════════════════════════════════════════════════
+
+    const wsSummary = workbook.addWorksheet('LO-PO-PSO Summary');
+    wsSummary.views = [{ showGridLines: true }];
+
+    wsSummary.getColumn(1).width = 5;
+    wsSummary.getColumn(2).width = 20;
+    for (let col = 3; col <= 15; col++) {
+        wsSummary.getColumn(col).width = 10;
+    }
+
+    const summarySubjectTarget = SUBJECT_TARGETS[allotment.sub_id as keyof typeof SUBJECT_TARGETS] || 65;
+    const summarySheetName = `'${ws.name.replace(/'/g, "''")}'`;
+    const mappingRoot = (mappings ?? {}) as Record<string, Record<string, number>>;
+
+    const stampSummary = (
+        row: number,
+        col: number,
+        value: string | number | ExcelJS.CellFormulaValue,
+        opts: {
+            bold?: boolean;
+            italic?: boolean;
+            align?: 'left' | 'center' | 'right';
+            bg?: string;
+            border?: boolean;
+            numFmt?: string;
+            wrap?: boolean;
+            size?: number;
+        } = {},
+    ) => {
+        const cell = wsSummary.getCell(row, col);
+        cell.value = value as ExcelJS.CellValue;
+        cell.font = {
+            name: 'Calibri',
+            size: opts.size ?? 10,
+            bold: opts.bold ?? false,
+            italic: opts.italic ?? false,
+            color: { argb: C.summText },
+        };
+        if (opts.bg) cell.fill = fill(opts.bg);
+        if (opts.border) cell.border = box(B.thin);
+        cell.alignment = {
+            horizontal: opts.align ?? 'center',
+            vertical: 'middle',
+            wrapText: opts.wrap ?? false,
+        };
+        if (opts.numFmt) cell.numFmt = opts.numFmt;
+    };
+
+    const getMappingValue = (rowKey: string, column: string): number => {
+        const value = mappingRoot[rowKey]?.[column];
+        return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+    };
+
+    const loInternalPercent = (lo: number): number => {
+        const exps = loStructure[lo] ?? [];
+        let totalObtained = 0;
+        let totalAttempted = 0;
+
+        students.forEach((student) => {
+            exps.forEach((exp) => {
+                const mark = student.loMarks[lo]?.[exp.exp_no];
+                if (mark) {
+                    totalObtained += mark.obtained;
+                    totalAttempted += mark.max;
+                }
+            });
+        });
+
+        return totalAttempted > 0 ? parseFloat(((totalObtained / totalAttempted) * 100).toFixed(2)) : 0;
+    };
+
+    // Header section (1-9)
+    wsSummary.mergeCells(1, 1, 1, 12);
+    stampSummary(1, 1, 'St. Francis Institute of Technology', { bold: true, align: 'center' });
+
+    wsSummary.mergeCells(2, 1, 2, 12);
+    stampSummary(2, 1, '(Engineering College)', { align: 'center' });
+
+    wsSummary.mergeCells(3, 1, 3, 12);
+    stampSummary(3, 1, 'An Autonomous Institute, Affiliated to University of Mumbai', { align: 'center' });
+
+    wsSummary.mergeCells(4, 1, 4, 12);
+    stampSummary(4, 1, 'NAAC A+ Accredited | CMPN, EXTC, INFT NBA Accredited | ISO 9001:2015 Certified', { align: 'center' });
+
+    wsSummary.mergeCells(6, 1, 6, 12);
+    stampSummary(6, 1, 'Department of Computer Engineering', { bold: true, align: 'center' });
+
+    wsSummary.mergeCells(7, 1, 7, 12);
+    stampSummary(7, 1, 'LO - PO - PSO Attainment Calculation & Summary', { bold: true, align: 'center' });
+
+    wsSummary.mergeCells(8, 1, 8, 5);
+    wsSummary.mergeCells(8, 8, 8, 12);
+    stampSummary(8, 1, `Academic Session : ${allotment.current_sem}`, { align: 'left' });
+    stampSummary(8, 8, `Class : ${allotment.class_name}`, { align: 'left' });
+
+    wsSummary.mergeCells(9, 1, 9, 5);
+    wsSummary.mergeCells(9, 8, 9, 12);
+    stampSummary(9, 1, `Subject Name: ${allotment.sub_name || allotment.sub_id}`, { align: 'left' });
+    stampSummary(9, 8, `Name of Faculty: ${teacher.teacher_name}`, { align: 'left' });
+
+    // Scale section (11-15)
+    stampSummary(11, 2, 'Attainment Level Scale:', { bold: true, align: 'left' });
+    stampSummary(12, 2, 'Degree of attainment', { bold: true, border: true, bg: C.summHdrBg });
+    wsSummary.mergeCells(12, 4, 12, 8);
+    stampSummary(12, 4, 'Condition', { bold: true, align: 'left', border: true, bg: C.summHdrBg });
+
+    stampSummary(13, 2, 3, { border: true, bg: C.summLvl3Bg });
+    wsSummary.mergeCells(13, 4, 13, 8);
+    stampSummary(13, 4, `If 60% and above students have scored above ${summarySubjectTarget}%`, {
+        align: 'left', border: true, bg: C.summLvl3Bg,
+    });
+
+    stampSummary(14, 2, 2, { border: true, bg: C.summLvl2Bg });
+    wsSummary.mergeCells(14, 4, 14, 8);
+    stampSummary(14, 4, `If 50% to 60% of students have scored above ${summarySubjectTarget}%`, {
+        align: 'left', border: true, bg: C.summLvl2Bg,
+    });
+
+    stampSummary(15, 2, 1, { border: true, bg: C.summLvl1Bg });
+    wsSummary.mergeCells(15, 4, 15, 8);
+    stampSummary(15, 4, `If less than 50% of students have scored above ${summarySubjectTarget}%`, {
+        align: 'left', border: true, bg: C.summLvl1Bg,
+    });
+
+    // Section 1: LO attainment (17-27)
+    stampSummary(17, 1, 1, { bold: true, border: true, bg: C.summHdrBg });
+    stampSummary(17, 2, 'LO-PO-PSO Attainmment Calculation', { bold: true, align: 'left' });
+
+    stampSummary(19, 2, 'LO Attainment:-', { bold: true, align: 'left' });
+    stampSummary(20, 2, 'Learning Outcome', { bold: true, border: true, bg: C.summHdrBg });
+    stampSummary(20, 3, 'Internal Evaluation', { bold: true, border: true, bg: C.summHdrBg });
+    stampSummary(20, 4, 'External Evaluation', { bold: true, border: true, bg: C.summHdrBg });
+    stampSummary(20, 5, '% Attainment', { bold: true, border: true, bg: C.summHdrBg });
+    stampSummary(20, 6, 'Attainment Level', { bold: true, border: true, bg: C.summHdrBg });
+
+    for (let loNo = 1; loNo <= 6; loNo++) {
+        const row = 20 + loNo;
+        const outcomeKey = `LO${loNo}`;
+        const summaryEntry = colMap.loSummary[loNo];
+        const internalPercent = loInternalPercent(loNo);
+        // External evaluation: use the overall percentage_above_target from externalReport
+        // (external viva is per-subject, not per-LO — same value applied to all LOs)
+        const externalPercent = externalReport?.summary?.percentage_above_target ?? 0;
+        const attainedPercent = parseFloat((0.2 * internalPercent + 0.8 * externalPercent).toFixed(2));
+        const attainedLevel = attainedPercent >= 60 ? 3 : attainedPercent >= 50 ? 2 : attainedPercent > 0 ? 1 : 0;
+
+        stampSummary(row, 2, outcomeKey, { border: true, align: 'left' });
+
+        if (summaryEntry) {
+            const obtainedLetter = getColLetter(summaryEntry.summObt);
+            const attemptedLetter = getColLetter(summaryEntry.summAtmp);
+            const internalFormula = `=IFERROR(SUM(${summarySheetName}!${obtainedLetter}${DATA_START_ROW}:${obtainedLetter}${LAST_DATA_ROW})/SUM(${summarySheetName}!${attemptedLetter}${DATA_START_ROW}:${attemptedLetter}${LAST_DATA_ROW})*100,0)`;
+            stampSummary(row, 3, { formula: internalFormula, result: internalPercent } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
+        } else {
+            stampSummary(row, 3, internalPercent, { border: true, numFmt: '0.00' });
+        }
+
+        // External eval: static value (no cross-sheet formula possible for aggregate summary row)
+        stampSummary(row, 4, externalPercent, { border: true, numFmt: '0.00', bg: externalPercent > 0 ? C.dataSummPct : undefined });
+
+        const percentFormula = `=(0.2*C${row})+(0.8*D${row})`;
+        const levelFormula = `=IF(E${row}>=60,3,IF(E${row}>=50,2,IF(E${row}>0,1,0)))`;
+
+        stampSummary(row, 5, { formula: percentFormula, result: attainedPercent } as ExcelJS.CellFormulaValue, {
+            border: true,
+            numFmt: '0.00',
+        });
+        stampSummary(row, 6, { formula: levelFormula, result: attainedLevel } as ExcelJS.CellFormulaValue, {
+            border: true,
+            bg: C.summAttBg,
+        });
+    }
+
+    stampSummary(27, 2, 'Note: % Attainment is calculated by taking 20% Internal Evaluation and 80% External Evaluation', {
+        align: 'left',
+    });
+
+    // Section 1: PO attainment (29-45)
+    stampSummary(29, 2, 'PO Attainment:-', { bold: true, align: 'left' });
+    stampSummary(30, 2, 'Learning Outcomes', { bold: true, border: true, bg: C.summHdrBg });
+    wsSummary.mergeCells(30, 3, 30, 14);
+    stampSummary(30, 3, 'Program Outcomes', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    for (let po = 1; po <= 12; po++) {
+        stampSummary(31, 2 + po, `PO${po}`, { bold: true, border: true, bg: C.summHdrBg });
+    }
+
+    for (let loNo = 1; loNo <= 6; loNo++) {
+        const mapRow = 30 + loNo * 2;
+        const attRow = mapRow + 1;
+        const levelRef = `F${20 + loNo}`;
+        const attainedPercent = loInternalPercent(loNo) * 0.2;
+        const attainedLevel = attainedPercent >= 60 ? 3 : attainedPercent >= 50 ? 2 : attainedPercent > 0 ? 1 : 0;
+
+        wsSummary.mergeCells(mapRow, 2, attRow, 2);
+        stampSummary(mapRow, 2, `LO${loNo}`, { bold: true, border: true });
+        stampSummary(mapRow, 3, 'Mapping', { bold: true, border: true, bg: C.metaValueBg });
+        stampSummary(attRow, 3, 'Attainment', { bold: true, border: true, bg: C.dataSummPct });
+
+        for (let po = 1; po <= 12; po++) {
+            const col = 3 + po;
+            const colLetter = getColLetter(col);
+            const mapVal = getMappingValue(`LO${loNo}`, `PO${po}`);
+            const formula = `=IF(${colLetter}${mapRow}="","",(${levelRef}*${colLetter}${mapRow})/3)`;
+            const fallback = mapVal > 0 ? parseFloat(((attainedLevel * mapVal) / 3).toFixed(2)) : 0;
+
+            stampSummary(mapRow, col, mapVal, { border: true });
+            stampSummary(attRow, col, { formula, result: fallback } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
+        }
+    }
+
+    stampSummary(44, 3, 'Average', { bold: true, border: true, bg: C.summAttBg });
+    for (let po = 1; po <= 12; po++) {
+        const col = 3 + po;
+        const colLetter = getColLetter(col);
+        const formula = `=IFERROR(AVERAGE(${colLetter}33,${colLetter}35,${colLetter}37,${colLetter}39,${colLetter}41,${colLetter}43),0)`;
+        stampSummary(44, col, { formula } as ExcelJS.CellFormulaValue, {
+            bold: true,
+            border: true,
+            bg: C.summAttBg,
+            numFmt: '0.00',
+        });
+    }
+    stampSummary(45, 2, 'PO attainment Formula: LO attainment × mapping /3', { align: 'left' });
+
+    // Section 1: PSO attainment (47-62)
+    stampSummary(47, 2, 'PSO Attainment:-', { bold: true, align: 'left' });
+    stampSummary(48, 2, 'Learning Outcomes', { bold: true, border: true, bg: C.summHdrBg });
+    wsSummary.mergeCells(48, 3, 48, 5);
+    stampSummary(48, 3, 'Program Specific Outcomes', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    for (let pso = 1; pso <= 3; pso++) {
+        stampSummary(49, 2 + pso, `PSO${pso}`, { bold: true, border: true, bg: C.summHdrBg });
+    }
+
+    for (let loNo = 1; loNo <= 6; loNo++) {
+        const mapRow = 48 + loNo * 2;
+        const attRow = mapRow + 1;
+        const levelRef = `F${20 + loNo}`;
+        const attainedLevel = loInternalPercent(loNo) * 0.2 >= 60
+            ? 3
+            : loInternalPercent(loNo) * 0.2 >= 50
+                ? 2
+                : loInternalPercent(loNo) * 0.2 > 0
+                    ? 1
+                    : 0;
+
+        wsSummary.mergeCells(mapRow, 2, attRow, 2);
+        stampSummary(mapRow, 2, `LO${loNo}`, { bold: true, border: true });
+        stampSummary(mapRow, 3, 'Mapping', { bold: true, border: true, bg: C.metaValueBg });
+        stampSummary(attRow, 3, 'Attainment', { bold: true, border: true, bg: C.dataSummPct });
+
+        for (let pso = 1; pso <= 3; pso++) {
+            const col = 3 + pso;
+            const colLetter = getColLetter(col);
+            const mapVal = getMappingValue(`LO${loNo}`, `PSO${pso}`);
+            const formula = `=IF(${colLetter}${mapRow}="","",(${levelRef}*${colLetter}${mapRow})/3)`;
+            const fallback = mapVal > 0 ? parseFloat(((attainedLevel * mapVal) / 3).toFixed(2)) : 0;
+
+            stampSummary(mapRow, col, mapVal, { border: true });
+            stampSummary(attRow, col, { formula, result: fallback } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
+        }
+    }
+
+    stampSummary(62, 3, 'Average', { bold: true, border: true, bg: C.summAttBg });
+    for (let pso = 1; pso <= 3; pso++) {
+        const col = 3 + pso;
+        const colLetter = getColLetter(col);
+        const formula = `=IFERROR(AVERAGE(${colLetter}51,${colLetter}53,${colLetter}55,${colLetter}57,${colLetter}59,${colLetter}61),0)`;
+        stampSummary(62, col, { formula } as ExcelJS.CellFormulaValue, {
+            bold: true,
+            border: true,
+            bg: C.summAttBg,
+            numFmt: '0.00',
+        });
+    }
+    stampSummary(63, 2, 'PSO attainment Formula: LO attainment × mapping /3', { align: 'left' });
+
+    // Section 2: Summary (64-75)
+    stampSummary(64, 1, 2, { bold: true, border: true, bg: C.summHdrBg });
+    stampSummary(64, 2, 'LO-PO-PSO Attainmment Summary', { bold: true, align: 'left' });
+
+    stampSummary(66, 2, 'Subject code', { bold: true, border: true, bg: C.summHdrBg });
+    for (let loNo = 1; loNo <= 6; loNo++) {
+        stampSummary(66, 2 + loNo, `LO${loNo}`, { bold: true, border: true, bg: C.summHdrBg });
+    }
+    stampSummary(67, 2, allotment.sub_id, { bold: true, border: true });
+    for (let loNo = 1; loNo <= 6; loNo++) {
+        stampSummary(67, 2 + loNo, { formula: `=F${20 + loNo}` } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
+    }
+
+    stampSummary(70, 2, 'Subject code', { bold: true, border: true, bg: C.summHdrBg });
+    wsSummary.mergeCells(70, 3, 70, 14);
+    stampSummary(70, 3, 'PO Average Summary', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    for (let po = 1; po <= 12; po++) {
+        stampSummary(71, 2 + po, `PO${po}`, { bold: true, border: true, bg: C.summHdrBg });
+    }
+    stampSummary(72, 2, allotment.sub_id, { bold: true, border: true });
+    for (let po = 1; po <= 12; po++) {
+        const colLetter = getColLetter(3 + po);
+        stampSummary(72, 2 + po, { formula: `=${colLetter}44` } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
+    }
+
+    stampSummary(74, 2, 'Subject code', { bold: true, border: true, bg: C.summHdrBg });
+    for (let pso = 1; pso <= 3; pso++) {
+        stampSummary(74, 2 + pso, `PSO${pso}`, { bold: true, border: true, bg: C.summHdrBg });
+    }
+    stampSummary(75, 2, allotment.sub_id, { bold: true, border: true });
+    for (let pso = 1; pso <= 3; pso++) {
+        const colLetter = getColLetter(3 + pso);
+        stampSummary(75, 2 + pso, { formula: `=${colLetter}62` } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
+    }
+
+    // Section 3: Comment (77-80)
+    stampSummary(77, 1, 3, { bold: true, border: true, bg: C.summHdrBg });
+    stampSummary(77, 2, 'Final Comment by Faculty', { bold: true, align: 'left' });
+    wsSummary.mergeCells(78, 2, 80, 10);
+    stampSummary(78, 2, '', { border: true });
+    wsSummary.getRow(78).height = 22;
+    wsSummary.getRow(79).height = 22;
+    wsSummary.getRow(80).height = 22;
 
     // ═════════════════════════════════════════════════════════════════════════
     // SECTION H — Serialise & return buffer

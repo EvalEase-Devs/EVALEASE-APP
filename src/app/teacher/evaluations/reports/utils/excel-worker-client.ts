@@ -135,10 +135,14 @@ export async function exportISEMSEViaWorker(
  * Generate & download a Lab Attainment report in a Web Worker.
  * Falls back to main-thread generation if Workers are unavailable.
  */
-export async function exportLabViaWorker(reportData: LabReportResponse): Promise<void> {
+export async function exportLabViaWorker(
+    reportData: LabReportResponse,
+    mappings?: Record<string, Record<string, number>>,
+    externalReport?: ExternalAssessmentExportData,
+): Promise<void> {
     if (typeof Worker === 'undefined') {
         const { generateLabAttainmentExcel } = await import('./generate-lab-excel');
-        return generateLabAttainmentExcel(reportData);
+        return generateLabAttainmentExcel(reportData, mappings, externalReport);
     }
 
     const logoBase64 = await fetchLogoBase64();
@@ -146,6 +150,8 @@ export async function exportLabViaWorker(reportData: LabReportResponse): Promise
     const buffer = await runInWorker({
         type: 'lab',
         reportData,
+        mappings,
+        externalReport,
         logoBase64,
     });
 

@@ -156,7 +156,7 @@ export const ISEMSEReportModal: React.FC<ISEMSEReportModalProps> = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto overflow-x-auto p-2">
+            <DialogContent className="max-w-[95vw] max-h-[95vh] flex flex-col overflow-hidden p-2">
                 <DialogHeader>
                     <DialogTitle className="text-lg">Lecture Attainment Reports - {subjectCode}</DialogTitle>
                 </DialogHeader>
@@ -202,7 +202,7 @@ export const ISEMSEReportModal: React.FC<ISEMSEReportModalProps> = ({
                         {exporting ? 'Exporting...' : 'Download Excel Report'}
                     </Button>
                 </div>
-                <div className="mt-2">
+                <div className="mt-2 overflow-auto flex-1">
                     {activePage === 'mappings' ? (
                         <COPOMappingGrid
                             subjectCode={subjectCode}
