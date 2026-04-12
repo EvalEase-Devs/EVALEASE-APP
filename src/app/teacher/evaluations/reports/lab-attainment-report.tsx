@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SUBJECT_TARGETS } from '@/app/teacher/assignments/create/constants';
+import { COPOPSOSummary } from './co-po-pso-summary';
 import { exportLabViaWorker } from '@/app/teacher/evaluations/reports/utils/excel-worker-client';
 
 interface ExperimentData {
@@ -260,7 +261,12 @@ export const LabAttainmentReport: React.FC<LabAttainmentReportProps> = ({
 
             {view === 'summary' ? (
                 <>
-                    {summaryTable}
+                    <COPOPSOSummary
+                        mappings={mappings ?? {}}
+                        outcomeLabel="LO"
+                        outcomeNumbers={loList}
+                        showExternalSnapshot={false}
+                    />
                 </>
             ) : null}
 
