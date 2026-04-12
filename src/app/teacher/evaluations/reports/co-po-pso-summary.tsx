@@ -30,7 +30,6 @@ const PO_COLUMNS = [
     'PO9',
     'PO10',
     'PO11',
-    'PO12',
 ] as const;
 const PSO_COLUMNS = ['PSO1', 'PSO2', 'PSO3'] as const;
 

@@ -1253,7 +1253,7 @@ async function _buildISEMSEExcel(
     wsSummary.mergeCells(30, 3, 30, 14);
     stampSummary(30, 3, 'Program Outcomes', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
 
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 11; i++) {
         stampSummary(31, 3 + i, `PO${i + 1}`, { bold: true, border: true, bg: C.summHdrBg });
     }
 
@@ -1265,7 +1265,7 @@ async function _buildISEMSEExcel(
         stampSummary(mapRow, 3, 'Mapping', { bold: true, border: true, bg: C.metaValueBg });
         stampSummary(attRow, 3, 'Attainment', { bold: true, border: true, bg: C.dataSummPct });
 
-        for (let p = 1; p <= 12; p++) {
+        for (let p = 1; p <= 11; p++) {
             const col = 3 + p;
             const colLetter = getColLetter(col);
             const mapVal = getTemplateMapping('po', co, `PO${p}`);
@@ -1278,7 +1278,7 @@ async function _buildISEMSEExcel(
     }
 
     stampSummary(44, 3, 'Average', { bold: true, border: true, bg: C.summAttBg });
-    for (let p = 1; p <= 12; p++) {
+    for (let p = 1; p <= 11; p++) {
         const col = 3 + p;
         const colLetter = getColLetter(col);
         const formula = `=IFERROR(AVERAGE(${colLetter}33,${colLetter}35,${colLetter}37,${colLetter}39,${colLetter}41,${colLetter}43),0)`;
@@ -1337,9 +1337,9 @@ async function _buildISEMSEExcel(
     stampSummary(70, 2, 'Subject code', { bold: true, border: true, bg: C.summHdrBg });
     wsSummary.mergeCells(70, 3, 70, 14);
     stampSummary(70, 3, 'PO Average Summary', { bold: true, border: true, bg: C.summHdrBg });
-    for (let po = 1; po <= 12; po++) stampSummary(71, 2 + po, `PO${po}`, { bold: true, border: true, bg: C.summHdrBg });
+    for (let po = 1; po <= 11; po++) stampSummary(71, 2 + po, `PO${po}`, { bold: true, border: true, bg: C.summHdrBg });
     stampSummary(72, 2, allotment.sub_id, { bold: true, border: true });
-    for (let po = 1; po <= 12; po++) {
+    for (let po = 1; po <= 11; po++) {
         const colLetter = getColLetter(3 + po);
         stampSummary(72, 2 + po, { formula: `=${colLetter}44` } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
     }

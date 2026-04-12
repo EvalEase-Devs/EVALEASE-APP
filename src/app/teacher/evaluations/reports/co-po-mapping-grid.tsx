@@ -27,7 +27,6 @@ const PO_COLUMNS = [
     'PO9',
     'PO10',
     'PO11',
-    'PO12',
 ] as const;
 const PSO_COLUMNS = ['PSO1', 'PSO2', 'PSO3'] as const;
 
@@ -143,7 +142,7 @@ export function COPOMappingGrid({
 
             <Tabs defaultValue="po" className="w-full">
                 <TabsList className="mb-4 grid w-full max-w-[400px] grid-cols-2">
-                    <TabsTrigger value="po">PO Mapping (PO1 - PO12)</TabsTrigger>
+                    <TabsTrigger value="po">PO Mapping (PO1 - PO11)</TabsTrigger>
                     <TabsTrigger value="pso">PSO Mapping (PSO1 - PSO3)</TabsTrigger>
                 </TabsList>
 
