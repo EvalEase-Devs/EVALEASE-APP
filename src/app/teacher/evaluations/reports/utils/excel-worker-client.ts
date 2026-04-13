@@ -111,11 +111,12 @@ export async function exportISEMSEViaWorker(
     reportData: ReportResponse,
     mappings?: Record<string, Record<string, number>>,
     externalReport?: ExternalAssessmentExportData,
+    indirectData?: { totalStudents: number; coData: Record<number, { mark3: number; mark2: number; mark1: number }> },
 ): Promise<void> {
     if (typeof Worker === 'undefined') {
         // SSR / old browser fallback — import the original main-thread function
         const { generateISEMSEExcel } = await import('./generate-ise-mse-excel');
-        return generateISEMSEExcel(reportData, mappings, externalReport);
+        return generateISEMSEExcel(reportData, mappings, externalReport, indirectData);
     }
 
     const logoBase64 = await fetchLogoBase64();
@@ -125,6 +126,7 @@ export async function exportISEMSEViaWorker(
         reportData,
         mappings,
         externalReport,
+        indirectData,
         logoBase64,
     });
 

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { ISEMSEReport } from './ise-mse-report';
 import { ExternalAssessmentReport } from './external-assessment-report';
-import { COPOMappingGrid } from './co-po-mapping-grid';
+import { COPOMappingGrid, type IndirectCOData } from './co-po-mapping-grid';
 import { COPOPSOSummary } from './co-po-pso-summary';
 import { exportISEMSEViaWorker } from '@/app/teacher/evaluations/reports/utils/excel-worker-client';
 
@@ -103,6 +103,7 @@ export const ISEMSEReportModal: React.FC<ISEMSEReportModalProps> = ({
     const [mappings, setMappings] = useState<Record<string, Record<string, number>>>({});
     const [exporting, setExporting] = useState(false);
     const [externalReport, setExternalReport] = useState<ExternalReportResponse | null>(null);
+    const [indirectData, setIndirectData] = useState<IndirectCOData | null>(null);
 
     useEffect(() => {
         if (open) {
@@ -111,6 +112,7 @@ export const ISEMSEReportModal: React.FC<ISEMSEReportModalProps> = ({
             setMappings({});
             setExporting(false);
             setExternalReport(null);
+            setIndirectData(null);
         }
     }, [open]);
 
@@ -143,7 +145,7 @@ export const ISEMSEReportModal: React.FC<ISEMSEReportModalProps> = ({
                     throw new Error('Failed to fetch report data');
                 }
                 const data: ReportResponse = await response.json();
-                await exportISEMSEViaWorker(data, mappings, externalReport ?? undefined);
+                await exportISEMSEViaWorker(data, mappings, externalReport ?? undefined, indirectData ?? undefined);
             })(),
             {
                 loading: 'Generating ISE-MSE report...',
@@ -212,6 +214,7 @@ export const ISEMSEReportModal: React.FC<ISEMSEReportModalProps> = ({
                                 setIsMappingComplete(true);
                                 setActivePage(1);
                             }}
+                            onSaveIndirect={(data) => setIndirectData(data)}
                         />
                     ) : activePage === 1 ? (
                         <ISEMSEReport

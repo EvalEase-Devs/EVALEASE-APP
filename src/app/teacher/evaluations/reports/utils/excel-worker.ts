@@ -37,6 +37,10 @@ export type WorkerRequest =
                 attainment: number;
             };
         };
+        indirectData?: {
+            totalStudents: number;
+            coData: Record<number, { mark3: number; mark2: number; mark1: number }>;
+        };
         logoBase64?: string;
     }
     | {
@@ -77,7 +81,7 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
         let buffer: ArrayBuffer;
 
         if (msg.type === 'ise-mse') {
-            buffer = await generateISEMSEExcelBuffer(msg.reportData, msg.logoBase64, msg.mappings, msg.externalReport);
+            buffer = await generateISEMSEExcelBuffer(msg.reportData, msg.logoBase64, msg.mappings, msg.externalReport, msg.indirectData);
         } else {
             buffer = await generateLabAttainmentExcelBuffer(msg.reportData, msg.logoBase64, msg.mappings, msg.externalReport);
         }

@@ -103,6 +103,11 @@ export interface ExternalAssessmentExportData {
     };
 }
 
+export interface IndirectCOData {
+    totalStudents: number;
+    coData: Record<number, { mark3: number; mark2: number; mark1: number }>;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Print-friendly pastel colour palette (ARGB — all fully opaque, prefix FF)
 // ALL TEXT IS BLACK / DARK GRAY (#111827).  No white text anywhere.
@@ -303,16 +308,18 @@ export async function generateISEMSEExcelBuffer(
     logoBase64?: string,
     mappings?: Record<string, Record<string, number>>,
     externalReport?: ExternalAssessmentExportData,
+    indirectData?: IndirectCOData,
 ): Promise<ArrayBuffer> {
-    return _buildISEMSEExcel(reportData, logoBase64, mappings, externalReport);
+    return _buildISEMSEExcel(reportData, logoBase64, mappings, externalReport, indirectData);
 }
 
 export async function generateISEMSEExcel(
     reportData: ReportResponse,
     mappings?: Record<string, Record<string, number>>,
     externalReport?: ExternalAssessmentExportData,
+    indirectData?: IndirectCOData,
 ): Promise<void> {
-    const buffer = await _buildISEMSEExcel(reportData, undefined, mappings, externalReport);
+    const buffer = await _buildISEMSEExcel(reportData, undefined, mappings, externalReport, indirectData);
     const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
@@ -331,6 +338,7 @@ async function _buildISEMSEExcel(
     logoBase64?: string,
     mappings?: Record<string, Record<string, number>>,
     externalReport?: ExternalAssessmentExportData,
+    indirectData?: IndirectCOData,
 ): Promise<ArrayBuffer> {
     const { allotment, teacher, students, columnStructure, coList } = reportData;
 
@@ -1100,7 +1108,7 @@ async function _buildISEMSEExcel(
 
     wsSummary.getColumn(1).width = 5;
     wsSummary.getColumn(2).width = 20;
-    for (let col = 3; col <= 15; col++) wsSummary.getColumn(col).width = 10;
+    for (let col = 3; col <= 17; col++) wsSummary.getColumn(col).width = 10;
 
     const subjectName = (allotment as { sub_name?: string }).sub_name || allotment.sub_id;
     const coRows = [1, 2, 3, 4, 5, 6] as const;
@@ -1214,6 +1222,7 @@ async function _buildISEMSEExcel(
     const endSemesterPctRef = `'External Assessment (Page 2)'!$B$${extSummaryStart + 2}`;
 
     const coLevelRefs: Record<number, string> = {};
+    const coLevelValues: Record<number, number> = {};  // stores raw JS number for PO/PSO fallback
     coRows.forEach((co, idx) => {
         const row = 21 + idx;
         const internalObtained = students.reduce((sum, s) => {
@@ -1243,6 +1252,7 @@ async function _buildISEMSEExcel(
         const lvlResult = pctResult >= 60 ? 3 : pctResult >= 50 ? 2 : pctResult > 0 ? 1 : 0;
         stampSummary(row, 6, { formula: lvlFormula, result: lvlResult } as ExcelJS.CellFormulaValue, { border: true, bg: C.summAttBg });
         coLevelRefs[co] = `F${row}`;
+        coLevelValues[co] = lvlResult;  // store for use in PO/PSO fallback
     });
 
     stampSummary(27, 2, 'Note: % Attainment is calculated by taking 40% Internal Evaluation and 60% End Semester Evaluation', { align: 'left' });
@@ -1272,7 +1282,7 @@ async function _buildISEMSEExcel(
             stampSummary(mapRow, col, mapVal, { border: true });
 
             const formula = `=IF(${colLetter}${mapRow}="","",(${coLevelRefs[co]}*${colLetter}${mapRow})/3)`;
-            const fallback = typeof mapVal === 'number' ? parseFloat((((Number(wsSummary.getCell(21 + (co - 1), 6).value) || 0) * mapVal) / 3).toFixed(2)) : undefined;
+            const fallback = typeof mapVal === 'number' ? parseFloat(((coLevelValues[co] ?? 0) * mapVal / 3).toFixed(2)) : undefined;
             stampSummary(attRow, col, { formula, result: fallback } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
         }
     }
@@ -1323,42 +1333,233 @@ async function _buildISEMSEExcel(
         stampSummary(62, col, { formula } as ExcelJS.CellFormulaValue, { bold: true, border: true, bg: C.summAttBg, numFmt: '0.00' });
     }
 
-    // Section 2 - Summary (64-75)
+    // Section 2 - CO attainment via Indirect Tool (64-74)
     stampSummary(64, 1, 2, { bold: true, border: true, bg: C.summHdrBg });
-    stampSummary(64, 2, 'CO-PO-PSO Attainmment Summary', { bold: true, align: 'left' });
+    stampSummary(64, 2, 'CO-PO mapping for CO feedback:-(indirect tool)', { bold: true, align: 'left' });
 
-    stampSummary(66, 2, 'Subject code', { bold: true, border: true, bg: C.summHdrBg });
-    wsSummary.mergeCells(66, 3, 66, 8);
-    stampSummary(66, 3, 'CO Attainment', { bold: true, border: true, bg: C.summHdrBg });
-    for (let co = 1; co <= 6; co++) stampSummary(67, 2 + co, `CO${co}`, { bold: true, border: true, bg: C.summHdrBg });
-    stampSummary(68, 2, allotment.sub_id, { bold: true, border: true });
-    for (let co = 1; co <= 6; co++) stampSummary(68, 2 + co, { formula: `=F${20 + co}` } as ExcelJS.CellFormulaValue, { border: true });
+    // Table headers
+    stampSummary(66, 2, 'CO', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    wsSummary.mergeCells(66, 3, 66, 7);
+    stampSummary(66, 3, 'Formula', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    stampSummary(66, 8, 'Attainment', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
 
-    stampSummary(70, 2, 'Subject code', { bold: true, border: true, bg: C.summHdrBg });
-    wsSummary.mergeCells(70, 3, 70, 14);
-    stampSummary(70, 3, 'PO Average Summary', { bold: true, border: true, bg: C.summHdrBg });
-    for (let po = 1; po <= 11; po++) stampSummary(71, 2 + po, `PO${po}`, { bold: true, border: true, bg: C.summHdrBg });
-    stampSummary(72, 2, allotment.sub_id, { bold: true, border: true });
-    for (let po = 1; po <= 11; po++) {
-        const colLetter = getColLetter(3 + po);
-        stampSummary(72, 2 + po, { formula: `=${colLetter}44` } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
+    const indirectCoValues: number[] = [];
+    [1, 2, 3, 4, 5, 6].forEach((co, idx) => {
+        const row = 67 + idx;
+        const m3 = indirectData?.coData[co]?.mark3 ?? 0;
+        const m2 = indirectData?.coData[co]?.mark2 ?? 0;
+        const m1 = indirectData?.coData[co]?.mark1 ?? 0;
+        const total = indirectData?.totalStudents ?? 0;
+        const value = total > 0 ? parseFloat(((m3 * 3 + m2 * 2 + m1 * 1) / total).toFixed(2)) : 0;
+        indirectCoValues.push(value);
+        const formulaStr = `((${m3}*3)+(${m2}*2)+(${m1}*1))/${total}`;
+        stampSummary(row, 2, `CO ${co} =`, { border: true });
+        wsSummary.mergeCells(row, 3, row, 7);
+        stampSummary(row, 3, formulaStr, { border: true, align: 'left' });
+        stampSummary(row, 8, value, { border: true, numFmt: '0.00' });
+    });
+
+    const avgIndirect = indirectCoValues.length > 0
+        ? parseFloat((indirectCoValues.reduce((s, v) => s + v, 0) / indirectCoValues.length).toFixed(2))
+        : 0;
+    wsSummary.mergeCells(73, 2, 73, 7);
+    stampSummary(73, 2, 'Avg CO attainment using Indirect tool is', { bold: true, border: true, align: 'left', bg: C.summAttBg });
+    stampSummary(73, 8, avgIndirect, { bold: true, border: true, numFmt: '0.00', bg: C.summAttBg });
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Table 1 — COPO Attainment of Indirect feedback (Exit survey) (75-83)
+    // Formula: (CO_indirect_attainment × mapping) / 3   — same as direct PO formula
+    // ─────────────────────────────────────────────────────────────────────────
+    wsSummary.mergeCells(75, 2, 75, 17);
+    stampSummary(75, 2, 'COPO Attainment of Indirect feedback(Exit survey)', { bold: true, align: 'left', bg: C.summTitleBg });
+
+    // Header row (76)
+    stampSummary(76, 2, 'AVG', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    for (let p = 1; p <= 11; p++) {
+        stampSummary(76, 2 + p, `PO${p}`, { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    }
+    // col 14 = blank separator
+    stampSummary(76, 15, 'PSO1', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    stampSummary(76, 16, 'PSO2', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    stampSummary(76, 17, 'PSO3', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    // Data rows CO1-CO6  (77-82)
+    for (let co = 1; co <= 6; co++) {
+        const dataRow   = 76 + co;             // 77 … 82
+        const poMapRow  = 32 + (co - 1) * 2;  // 32, 34, 36, 38, 40, 42
+        const psoMapRow = 50 + (co - 1) * 2;  // 50, 52, 54, 56, 58, 60
+        const indRef    = `H${66 + co}`;       // H67 … H72  (indirect CO attainment)
+        const coVal     = indirectCoValues[co - 1] ?? 0;
+
+        // AVG col (col 2) — formula references H column from Section 2
+        stampSummary(dataRow, 2,
+            { formula: `=${indRef}`, result: coVal } as ExcelJS.CellFormulaValue,
+            { border: true, numFmt: '0.00' });
+
+        // PO columns (cols 3-13 = PO1-PO11)
+        for (let p = 1; p <= 11; p++) {
+            const col     = 2 + p;
+            const mapColL = getColLetter(3 + p); // D=PO1, E=PO2, …, N=PO11
+            const mapVal  = getTemplateMapping('po', co, `PO${p}`);
+            const result  = typeof mapVal === 'number' && mapVal > 0
+                ? parseFloat(((coVal * mapVal) / 3).toFixed(2)) : 0;
+            stampSummary(dataRow, col,
+                { formula: `=IF(${mapColL}${poMapRow}=0,0,(${indRef}*${mapColL}${poMapRow})/3)`, result } as ExcelJS.CellFormulaValue,
+                { border: true, numFmt: '0.00' });
+        }
+
+        // PSO columns (cols 15-17 = PSO1-PSO3)
+        for (let p = 1; p <= 3; p++) {
+            const col     = 14 + p;
+            const mapColL = getColLetter(3 + p); // D=PSO1, E=PSO2, F=PSO3
+            const mapVal  = getTemplateMapping('pso', co, `PSO${p}`);
+            const result  = typeof mapVal === 'number' && mapVal > 0
+                ? parseFloat(((coVal * mapVal) / 3).toFixed(2)) : 0;
+            stampSummary(dataRow, col,
+                { formula: `=IF(${mapColL}${psoMapRow}=0,0,(${indRef}*${mapColL}${psoMapRow})/3)`, result } as ExcelJS.CellFormulaValue,
+                { border: true, numFmt: '0.00' });
+        }
     }
 
-    stampSummary(74, 2, 'Subject code', { bold: true, border: true, bg: C.summHdrBg });
-    stampSummary(74, 3, 'PSO1', { bold: true, border: true, bg: C.summHdrBg });
-    stampSummary(74, 4, 'PSO2', { bold: true, border: true, bg: C.summHdrBg });
-    stampSummary(74, 5, 'PSO3', { bold: true, border: true, bg: C.summHdrBg });
-    stampSummary(75, 2, allotment.sub_id, { bold: true, border: true });
-    stampSummary(75, 3, { formula: '=D62' } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
-    stampSummary(75, 4, { formula: '=E62' } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
-    stampSummary(75, 5, { formula: '=F62' } as ExcelJS.CellFormulaValue, { border: true, numFmt: '0.00' });
+    // AVG row (83)
+    stampSummary(83, 2,
+        { formula: '=H73', result: avgIndirect } as ExcelJS.CellFormulaValue,
+        { bold: true, border: true, numFmt: '0.00', bg: C.summAttBg });
+    for (let p = 1; p <= 11; p++) {
+        const col = 2 + p;
+        const cl  = getColLetter(col);
+        stampSummary(83, col,
+            { formula: `=IFERROR(AVERAGE(${cl}77,${cl}78,${cl}79,${cl}80,${cl}81,${cl}82),0)` } as ExcelJS.CellFormulaValue,
+            { bold: true, border: true, numFmt: '0.00', bg: C.summAttBg });
+    }
+    for (let p = 1; p <= 3; p++) {
+        const col = 14 + p;
+        const cl  = getColLetter(col);
+        stampSummary(83, col,
+            { formula: `=IFERROR(AVERAGE(${cl}77,${cl}78,${cl}79,${cl}80,${cl}81,${cl}82),0)` } as ExcelJS.CellFormulaValue,
+            { bold: true, border: true, numFmt: '0.00', bg: C.summAttBg });
+    }
 
-    // Section 3 - Final comment (77-80)
-    stampSummary(77, 1, 3, { bold: true, border: true, bg: C.summHdrBg });
-    stampSummary(77, 2, 'Final Comment by Faculty', { bold: true, align: 'left' });
+    // ─────────────────────────────────────────────────────────────────────────
+    // Summary Table (85-91)
+    // ─────────────────────────────────────────────────────────────────────────
+    stampSummary(85, 1, 3, { bold: true, border: true, bg: C.summHdrBg });
+    stampSummary(85, 2, 'Summary:-', { bold: true, align: 'left' });
 
-    wsSummary.mergeCells(78, 2, 80, 10);
-    const commentCell = wsSummary.getCell(78, 2);
+    // Row 87: Subject code | Attainment (cols 3-6)
+    stampSummary(87, 2, 'Subject code', { bold: true, border: true, bg: C.summHdrBg });
+    wsSummary.mergeCells(87, 3, 87, 6);
+    stampSummary(87, 3, 'Attainment', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    // Row 88: Direct Tools (cols 3-4) | Indirect Tools (cols 5-6)
+    wsSummary.mergeCells(88, 3, 88, 4);
+    stampSummary(88, 3, 'Direct Tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    wsSummary.mergeCells(88, 5, 88, 6);
+    stampSummary(88, 5, 'Indirect Tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    // Row 89: Avg (col 3) | CO feedback (col 6)
+    stampSummary(89, 3, 'Avg', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    stampSummary(89, 6, 'CO feedback', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    // Row 90: subject code | direct avg formula | indirect avg ref
+    stampSummary(90, 2, allotment.sub_id, { bold: true, border: true });
+    stampSummary(90, 3,
+        { formula: '=IFERROR(AVERAGE(F21,F22,F23,F24,F25,F26),0)' } as ExcelJS.CellFormulaValue,
+        { border: true, numFmt: '0.00' });
+    stampSummary(90, 6,
+        { formula: '=H73', result: avgIndirect } as ExcelJS.CellFormulaValue,
+        { border: true, numFmt: '0.00' });
+
+    // Row 91: Total Avg
+    wsSummary.mergeCells(91, 3, 91, 5);
+    stampSummary(91, 3, 'Total Avg =', { bold: true, border: true, align: 'right', bg: C.summAttBg });
+    stampSummary(91, 6,
+        { formula: '=IFERROR(AVERAGE(C90,F90),0)' } as ExcelJS.CellFormulaValue,
+        { bold: true, border: true, numFmt: '0.00', bg: C.summAttBg });
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PO Attainment Table (93-106)
+    //   Direct  avg → row 44, cols D-N   (PO1=D44 … PO11=N44)
+    //   Indirect avg → row 83, cols C-M  (PO1=C83 … PO11=M83)
+    // ─────────────────────────────────────────────────────────────────────────
+    // Row 93: title
+    stampSummary(93, 2, `Subject code : ${allotment.sub_id}`, { bold: true, border: true });
+    wsSummary.mergeCells(93, 3, 93, 4);
+    stampSummary(93, 3, 'PO Attainment', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    stampSummary(93, 5, 'Average of direct + indirect tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    // Row 94: Direct / Indirect sub-headers
+    stampSummary(94, 3, 'Direct Tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    stampSummary(94, 4, 'Indirect Tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    // Row 95: column labels
+    stampSummary(95, 2, 'POs', { bold: true, border: true, bg: C.summHdrBg });
+    stampSummary(95, 3, 'Avg', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    stampSummary(95, 4, 'Average', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    // Data rows PO1-PO11 (96-106)
+    for (let p = 1; p <= 11; p++) {
+        const dataRow    = 95 + p;                // 96 … 106
+        const directCol  = getColLetter(3 + p);   // D(PO1) … N(PO11)   → row 44
+        const indirectCol = getColLetter(2 + p);  // C(PO1) … M(PO11)   → row 83
+
+        stampSummary(dataRow, 2, `PO${p}`, { border: true });
+        stampSummary(dataRow, 3,
+            { formula: `=${directCol}44` } as ExcelJS.CellFormulaValue,
+            { border: true, numFmt: '0.00' });
+        stampSummary(dataRow, 4,
+            { formula: `=${indirectCol}83` } as ExcelJS.CellFormulaValue,
+            { border: true, numFmt: '0.00' });
+        stampSummary(dataRow, 5,
+            { formula: `=IFERROR(AVERAGE(C${dataRow},D${dataRow}),0)` } as ExcelJS.CellFormulaValue,
+            { border: true, numFmt: '0.00' });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PSO Attainment Table (108-113)
+    //   Direct  avg → row 62, cols D-F   (PSO1=D62 … PSO3=F62)
+    //   Indirect avg → row 83, cols O-Q  (PSO1=O83 … PSO3=Q83)
+    // ─────────────────────────────────────────────────────────────────────────
+    // Row 108: title
+    stampSummary(108, 2, `Subject code : ${allotment.sub_id}`, { bold: true, border: true });
+    wsSummary.mergeCells(108, 3, 108, 4);
+    stampSummary(108, 3, 'PSO Attainment', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    stampSummary(108, 5, 'Average of direct + indirect tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    // Row 109: Direct / Indirect sub-headers
+    stampSummary(109, 3, 'Direct Tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    stampSummary(109, 4, 'Indirect Tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    // Row 110: column labels
+    stampSummary(110, 2, 'PSOs', { bold: true, border: true, bg: C.summHdrBg });
+    stampSummary(110, 3, 'Avg', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    stampSummary(110, 4, 'Average', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+
+    // Data rows PSO1-PSO3 (111-113)
+    for (let p = 1; p <= 3; p++) {
+        const dataRow     = 110 + p;               // 111, 112, 113
+        const directCol   = getColLetter(3 + p);   // D(PSO1), E(PSO2), F(PSO3) → row 62
+        const indirectCol = getColLetter(14 + p);  // O(PSO1), P(PSO2), Q(PSO3) → row 83
+
+        stampSummary(dataRow, 2, `PSO${p}`, { border: true });
+        stampSummary(dataRow, 3,
+            { formula: `=${directCol}62` } as ExcelJS.CellFormulaValue,
+            { border: true, numFmt: '0.00' });
+        stampSummary(dataRow, 4,
+            { formula: `=${indirectCol}83` } as ExcelJS.CellFormulaValue,
+            { border: true, numFmt: '0.00' });
+        stampSummary(dataRow, 5,
+            { formula: `=IFERROR(AVERAGE(C${dataRow},D${dataRow}),0)` } as ExcelJS.CellFormulaValue,
+            { border: true, numFmt: '0.00' });
+    }
+
+    // Section 5 - Final comment (115-118)  [pushed down from 93]
+    stampSummary(115, 1, 5, { bold: true, border: true, bg: C.summHdrBg });
+    stampSummary(115, 2, 'Final Comment by Faculty', { bold: true, align: 'left' });
+
+    wsSummary.mergeCells(116, 2, 118, 10);
+    const commentCell = wsSummary.getCell(116, 2);
     commentCell.value = '';
     commentCell.alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
     commentCell.border = box(B.thin);
@@ -1371,4 +1572,4 @@ async function _buildISEMSEExcel(
     const raw = await workbook.xlsx.writeBuffer();
     const u8 = new Uint8Array(raw);
     return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
-}
+}
