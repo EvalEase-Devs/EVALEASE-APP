@@ -28,14 +28,24 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
     const [savingMarks, setSavingMarks] = useState<boolean>(false);
     const [loMap, setLoMap] = useState<Record<string, number[]>>({});
 
-    const selectedTask = tasks.find(t => t.task_id === selectedTaskId) || null;
+    // Protect rendering from transient duplicated records in client cache.
+    const uniqueTasks = useMemo(() => {
+        const seen = new Set<number>();
+        return tasks.filter((task) => {
+            if (seen.has(task.task_id)) return false;
+            seen.add(task.task_id);
+            return true;
+        });
+    }, [tasks]);
+
+    const selectedTask = uniqueTasks.find(t => t.task_id === selectedTaskId) || null;
 
     // Memoize lab tasks and subject filtering to prevent unnecessary re-renders
     const labTasksData = useMemo(() => {
-        const labTasks = tasks.filter(t => t.task_type === 'Lab' && t.exp_no && t.sub_id);
+        const labTasks = uniqueTasks.filter(t => t.task_type === 'Lab' && t.exp_no && t.sub_id);
         const uniqueSubjects = Array.from(new Set(labTasks.map(t => t.sub_id)));
         return { labTasks, uniqueSubjects };
-    }, [tasks]);
+    }, [uniqueTasks]);
 
     const fetchStudents = async (taskId: number) => {
         try {
@@ -187,7 +197,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
     };
 
     // Group tasks by assessment type (MCQ, Subjective, MSE, Experiments)
-    const groupedTasks = tasks.reduce((acc, task) => {
+    const groupedTasks = uniqueTasks.reduce((acc, task) => {
         let category = 'Other';
 
         if (task.assessment_sub_type === 'MCQ') {
@@ -226,14 +236,14 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
 
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto p-6 bg-muted/10 space-y-8">
-                        {tasks.length === 0 && (
+                        {uniqueTasks.length === 0 && (
                             <div className="col-span-full flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-muted rounded-lg">
                                 <p>No tasks found for this subject.</p>
                                 <Button className="mt-4" onClick={onClose}>Close & Add Task</Button>
                             </div>
                         )}
 
-                        {tasks.length > 0 && orderedCategories.map((category) => {
+                        {uniqueTasks.length > 0 && orderedCategories.map((category) => {
                             const categoryTasks = groupedTasks[category];
                             const categoryColors: Record<string, string> = {
                                 'MCQ': 'bg-info-subtle dark:bg-blue-900',
@@ -361,7 +371,7 @@ const TasksListModal: React.FC<TasksListModalProps> = ({ isOpen, onClose, tasks,
                     <div className="bg-background w-full max-w-3xl rounded-xl border shadow-xl">
                         <div className="flex items-center justify-between px-4 py-3 border-b">
                             <div>
-                              
+
                                 <p className="text-xs text-muted-foreground">Task ID: {selectedTaskId}</p>
                             </div>
                             <Button variant="ghost" size="icon" onClick={() => {

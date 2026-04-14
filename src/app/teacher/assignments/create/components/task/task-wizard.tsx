@@ -90,8 +90,8 @@ export function TaskWizard() {
     const totalSteps = isLab
         ? 2
         : assessmentType === "ISE" && assessmentSubType === "Subjective"
-          ? 2
-          : 3;
+            ? 2
+            : 3;
 
     const isFinalStep = currentStep === totalSteps;
 
@@ -106,7 +106,12 @@ export function TaskWizard() {
             : "Scheduling"
         : STEP_NAMES[currentStep - 1];
 
-    const mcqTotal = questions.reduce((sum, q) => sum + q.marks, 0);
+    const mcqTotal = questions.reduce(
+        (sum, q) => sum + (Number.isFinite(q.marks) ? q.marks : 0),
+        0,
+    );
+    const safeMaxMarks = Number.isFinite(maxMarks) ? maxMarks : 0;
+    const displayTotalMarks = isMCQ ? mcqTotal : safeMaxMarks;
 
     // ── Experiment LOs ─────────────────────────────────────────────────────
     const { los: experimentLOs, loading: loLoading } = useExperimentLOs(
@@ -266,13 +271,12 @@ export function TaskWizard() {
                                 className="flex items-center gap-2"
                             >
                                 <div
-                                    className={`flex items-center justify-center h-7 w-7 rounded-full text-xs font-semibold transition-colors ${
-                                        step === currentStep
+                                    className={`flex items-center justify-center h-7 w-7 rounded-full text-xs font-semibold transition-colors ${step === currentStep
                                             ? "bg-primary text-primary-foreground"
                                             : step < currentStep
-                                              ? "bg-primary/20 text-primary"
-                                              : "bg-muted text-muted-foreground"
-                                    }`}
+                                                ? "bg-primary/20 text-primary"
+                                                : "bg-muted text-muted-foreground"
+                                        }`}
                                 >
                                     {step < currentStep ? (
                                         <IconCircleCheck size={14} />
@@ -281,11 +285,10 @@ export function TaskWizard() {
                                     )}
                                 </div>
                                 <span
-                                    className={`text-xs ${
-                                        step === currentStep
+                                    className={`text-xs ${step === currentStep
                                             ? "font-semibold text-foreground"
                                             : "text-muted-foreground"
-                                    }`}
+                                        }`}
                                 >
                                     {isLab
                                         ? step === 1
@@ -358,7 +361,7 @@ export function TaskWizard() {
                 <div className="text-sm text-muted-foreground">
                     Total Marks:{" "}
                     <span className="font-semibold text-foreground">
-                        {isMCQ ? mcqTotal : maxMarks}
+                        {displayTotalMarks}
                     </span>
                 </div>
                 <div className="flex items-center gap-2">

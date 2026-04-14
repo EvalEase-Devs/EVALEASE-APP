@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -50,6 +50,7 @@ export function useTaskForm(
     const isLab = allotment?.type === "Lab";
     const { createTask } = useTasks(allotment?.allotment_id);
     const [submitting, setSubmitting] = useState(false);
+    const submitLockRef = useRef(false);
 
     // ── Form setup ─────────────────────────────────────────────────────────
     const form = useForm<TaskModalFormValues>({
@@ -177,167 +178,176 @@ export function useTaskForm(
      *   failing step when a validation error is detected post-navigation.
      */
     const handleSubmit = async (setCurrentStep: (step: number) => void) => {
-        if (!allotment) return;
-
-        const values = getValues();
-
-        if (!values.startTime) {
-            form.setError("startTime", { message: "Start time is required" });
-            setCurrentStep(2);
+        if (submitLockRef.current) {
             return;
         }
+        submitLockRef.current = true;
 
-        if (isLab) {
-            if (!values.selectedExp) {
-                form.setError("selectedExp", {
-                    message: "Select an experiment",
-                });
-                setCurrentStep(1);
-                return;
-            }
-        } else if (values.assessmentType === "MSE") {
-            const total = values.mseQuestions.reduce(
-                (s, q) => s + q.marks,
-                0,
-            );
-            if (total <= 0) {
-                form.setError("mseQuestions", {
-                    message: "Total marks must be greater than 0",
-                });
-                return;
-            }
-        } else {
-            if (!values.title.trim()) {
-                form.setError("title", { message: "Title is required" });
+        try {
+            if (!allotment) return;
+
+            const values = getValues();
+
+            if (!values.startTime) {
+                form.setError("startTime", { message: "Start time is required" });
                 setCurrentStep(2);
                 return;
             }
-            if (values.selectedCOs.length === 0) {
-                form.setError("selectedCOs", {
-                    message: "Select at least one CO",
-                });
-                setCurrentStep(2);
-                return;
-            }
-            if (
-                values.assessmentSubType === "Subjective" &&
-                values.maxMarks < 1
-            ) {
-                form.setError("maxMarks", {
-                    message: "Marks must be at least 1",
-                });
-                setCurrentStep(2);
-                return;
-            }
-            if (values.assessmentSubType === "MCQ") {
-                if (!values.endTime) {
-                    form.setError("endTime", {
-                        message: "End time is required for MCQ",
+
+            if (isLab) {
+                if (!values.selectedExp) {
+                    form.setError("selectedExp", {
+                        message: "Select an experiment",
+                    });
+                    setCurrentStep(1);
+                    return;
+                }
+            } else if (values.assessmentType === "MSE") {
+                const total = values.mseQuestions.reduce(
+                    (s, q) => s + q.marks,
+                    0,
+                );
+                if (total <= 0) {
+                    form.setError("mseQuestions", {
+                        message: "Total marks must be greater than 0",
+                    });
+                    return;
+                }
+            } else {
+                if (!values.title.trim()) {
+                    form.setError("title", { message: "Title is required" });
+                    setCurrentStep(2);
+                    return;
+                }
+                if (values.selectedCOs.length === 0) {
+                    form.setError("selectedCOs", {
+                        message: "Select at least one CO",
                     });
                     setCurrentStep(2);
                     return;
                 }
                 if (
-                    new Date(values.endTime) <= new Date(values.startTime)
+                    values.assessmentSubType === "Subjective" &&
+                    values.maxMarks < 1
                 ) {
-                    form.setError("endTime", {
-                        message: "End time must be after start time",
+                    form.setError("maxMarks", {
+                        message: "Marks must be at least 1",
                     });
                     setCurrentStep(2);
                     return;
                 }
-                if (values.questions.length === 0) {
-                    form.setError("questions", {
-                        message: "Add at least one question",
-                    });
-                    return;
+                if (values.assessmentSubType === "MCQ") {
+                    if (!values.endTime) {
+                        form.setError("endTime", {
+                            message: "End time is required for MCQ",
+                        });
+                        setCurrentStep(2);
+                        return;
+                    }
+                    if (
+                        new Date(values.endTime) <= new Date(values.startTime)
+                    ) {
+                        form.setError("endTime", {
+                            message: "End time must be after start time",
+                        });
+                        setCurrentStep(2);
+                        return;
+                    }
+                    if (values.questions.length === 0) {
+                        form.setError("questions", {
+                            message: "Add at least one question",
+                        });
+                        return;
+                    }
                 }
             }
-        }
 
-        // ── Build final title ──────────────────────────────────────────────
-        const selectedExperiment = experiments.find(
-            (exp) => exp.exp_no === parseInt(values.selectedExp),
-        );
+            // ── Build final title ──────────────────────────────────────────────
+            const selectedExperiment = experiments.find(
+                (exp) => exp.exp_no === parseInt(values.selectedExp),
+            );
 
-        let finalTitle: string;
-        if (isLab) {
-            finalTitle = `${allotment.sub_id} - Exp ${values.selectedExp}: ${selectedExperiment?.exp_name || "Experiment"}`;
-        } else if (values.assessmentType === "MSE") {
-            finalTitle = `${allotment.sub_id} - MSE`;
-        } else {
-            finalTitle = `${allotment.sub_id} - ${values.assessmentType} ${values.assessmentSubType === "MCQ" ? "(MCQ)" : ""} - ${values.title}`;
-        }
+            let finalTitle: string;
+            if (isLab) {
+                finalTitle = `${allotment.sub_id} - Exp ${values.selectedExp}: ${selectedExperiment?.exp_name || "Experiment"}`;
+            } else if (values.assessmentType === "MSE") {
+                finalTitle = `${allotment.sub_id} - MSE`;
+            } else {
+                finalTitle = `${allotment.sub_id} - ${values.assessmentType} ${values.assessmentSubType === "MCQ" ? "(MCQ)" : ""} - ${values.title}`;
+            }
 
-        const calculatedMaxMarks = isMCQ
-            ? values.questions.reduce((sum, q) => sum + q.marks, 0)
-            : values.maxMarks;
+            const calculatedMaxMarks = isMCQ
+                ? values.questions.reduce((sum, q) => sum + q.marks, 0)
+                : values.maxMarks;
 
-        // ── Build Task object ──────────────────────────────────────────────
-        const newTask: Task = {
-            id: Math.random().toString(36).substr(2, 9),
-            title: finalTitle,
-            startTime: convertToIST(values.startTime),
-            endTime: values.endTime
-                ? convertToIST(values.endTime)
-                : undefined,
-            type: allotment.type,
-            experimentNumber: isLab
-                ? parseInt(values.selectedExp)
-                : undefined,
-            assessmentType: !isLab ? values.assessmentType : undefined,
-            assessmentSubType:
-                !isLab && values.assessmentType === "ISE"
-                    ? values.assessmentSubType
+            // ── Build Task object ──────────────────────────────────────────────
+            const newTask: Task = {
+                id: Math.random().toString(36).substr(2, 9),
+                title: finalTitle,
+                startTime: convertToIST(values.startTime),
+                endTime: values.endTime
+                    ? convertToIST(values.endTime)
                     : undefined,
-            mcqQuestions: isMCQ ? values.questions : undefined,
-            subQuestions:
-                !isLab && values.assessmentType === "MSE"
-                    ? values.mseQuestions
+                type: allotment.type,
+                experimentNumber: isLab
+                    ? parseInt(values.selectedExp)
                     : undefined,
-            maxMarks: calculatedMaxMarks,
-            mappedCOs: values.selectedCOs,
-            subjectCode: allotment.sub_id,
-            classStr: allotment.class_name,
-            batch: allotment.batch_no
-                ? `Batch ${allotment.batch_no}`
-                : "All",
-        };
+                assessmentType: !isLab ? values.assessmentType : undefined,
+                assessmentSubType:
+                    !isLab && values.assessmentType === "ISE"
+                        ? values.assessmentSubType
+                        : undefined,
+                mcqQuestions: isMCQ ? values.questions : undefined,
+                subQuestions:
+                    !isLab && values.assessmentType === "MSE"
+                        ? values.mseQuestions
+                        : undefined,
+                maxMarks: calculatedMaxMarks,
+                mappedCOs: values.selectedCOs,
+                subjectCode: allotment.sub_id,
+                classStr: allotment.class_name,
+                batch: allotment.batch_no
+                    ? `Batch ${allotment.batch_no}`
+                    : "All",
+            };
 
-        // ── Map to API shape ───────────────────────────────────────────────
-        const apiTask = {
-            allotment_id: allotment.allotment_id,
-            title: newTask.title,
-            task_type: newTask.type,
-            assessment_type: newTask.assessmentType || null,
-            assessment_sub_type: newTask.assessmentSubType || null,
-            sub_id: newTask.subjectCode,
-            exp_no: newTask.experimentNumber || null,
-            max_marks: newTask.maxMarks,
-            start_time: newTask.startTime || null,
-            end_time: newTask.endTime || null,
-            mcq_questions: newTask.mcqQuestions || null,
-            sub_questions: newTask.subQuestions || null,
-            mapped_cos: newTask.mappedCOs.map((co) =>
-                parseInt(co.replace("CO", "")),
-            ),
-        };
+            // ── Map to API shape ───────────────────────────────────────────────
+            const apiTask = {
+                allotment_id: allotment.allotment_id,
+                title: newTask.title,
+                task_type: newTask.type,
+                assessment_type: newTask.assessmentType || null,
+                assessment_sub_type: newTask.assessmentSubType || null,
+                sub_id: newTask.subjectCode,
+                exp_no: newTask.experimentNumber || null,
+                max_marks: newTask.maxMarks,
+                start_time: newTask.startTime || null,
+                end_time: newTask.endTime || null,
+                mcq_questions: newTask.mcqQuestions || null,
+                sub_questions: newTask.subQuestions || null,
+                mapped_cos: newTask.mappedCOs.map((co) =>
+                    parseInt(co.replace("CO", "")),
+                ),
+            };
 
-        setSubmitting(true);
-        try {
-            await toast.promise(createTask(apiTask), {
-                loading: "Publishing task...",
-                success: "Task published successfully!",
-                error: (err) =>
-                    err instanceof Error
-                        ? err.message
-                        : "Failed to publish task",
-            });
-            router.push("/teacher/assignments/create");
-        } catch {
-            // toast handles error display
+            setSubmitting(true);
+            try {
+                await toast.promise(createTask(apiTask), {
+                    loading: "Publishing task...",
+                    success: "Task published successfully!",
+                    error: (err) =>
+                        err instanceof Error
+                            ? err.message
+                            : "Failed to publish task",
+                });
+                router.push("/teacher/assignments/create");
+            } catch {
+                // toast handles error display
+            } finally {
+                setSubmitting(false);
+            }
         } finally {
-            setSubmitting(false);
+            submitLockRef.current = false;
         }
     };
 
