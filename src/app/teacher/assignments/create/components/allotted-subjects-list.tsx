@@ -54,8 +54,8 @@ import { useTasks } from "@/hooks/use-api";
 import type { Semester, AllottedSubject } from "./create-assignment-content";
 import TasksListModal from "./tasks-list-modal";
 import { BatchMarksReportModal } from "./batch-marks-report-modal";
-import { ISEMSEReportModal } from "./ise-mse-report-modal";
-import { LabAttainmentModal } from "./lab-attainment-modal";
+import { ISEMSEReportModal } from "@/app/teacher/evaluations/reports/ise-mse-report-modal";
+import { LabAttainmentModal } from "@/app/teacher/evaluations/reports/lab-attainment-modal";
 
 // ---------------------------------------------------------------------------
 // Props

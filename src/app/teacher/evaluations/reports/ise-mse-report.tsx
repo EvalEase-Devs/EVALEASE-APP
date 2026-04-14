@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { exportISEMSEViaWorker } from '@/app/teacher/assignments/create/utils/excel-worker-client';
+import { exportISEMSEViaWorker } from '@/app/teacher/evaluations/reports/utils/excel-worker-client';
 import { SUBJECT_TARGETS, ATTAINMENT_CRITERIA } from '@/app/teacher/assignments/create/constants';
 
 interface ISETask {
@@ -62,9 +62,10 @@ interface ReportResponse {
 interface ISEMSEReportProps {
     allotmentId: number;
     onClose?: () => void;
+    mappings?: Record<string, Record<string, number>>;
 }
 
-export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose }) => {
+export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose, mappings }) => {
     const [loading, setLoading] = useState(true);
     const [reportData, setReportData] = useState<ReportResponse | null>(null);
     const [exporting, setExporting] = useState(false);
@@ -94,7 +95,7 @@ export const ISEMSEReport: React.FC<ISEMSEReportProps> = ({ allotmentId, onClose
         if (!reportData) return;
         setExporting(true);
         toast.promise(
-            exportISEMSEViaWorker(reportData),
+            exportISEMSEViaWorker(reportData, mappings),
             {
                 loading: 'Generating ISE-MSE report...',
                 success: 'Report downloaded successfully',

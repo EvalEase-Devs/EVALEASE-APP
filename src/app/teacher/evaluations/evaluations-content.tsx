@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IconChartBar, IconFileText, IconMicroscope } from "@tabler/icons-react";
-import { ISEMSEReportModal } from "@/components/teacher/evaluations/reports/ise-mse-report-modal";
-import { LabAttainmentModal } from "@/components/teacher/evaluations/reports/lab-attainment-modal";
+import { ISEMSEReportModal } from "@/app/teacher/evaluations/reports/ise-mse-report-modal";
+import { LabAttainmentModal } from "@/app/teacher/evaluations/reports/lab-attainment-modal";
 import { useAllotments } from "@/hooks/use-api";
 
 interface AllotmentData {

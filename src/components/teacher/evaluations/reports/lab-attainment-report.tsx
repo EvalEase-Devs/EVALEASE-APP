@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SUBJECT_TARGETS } from '@/app/teacher/assignments/create/constants';
-import { exportLabViaWorker } from '@/app/teacher/assignments/create/utils/excel-worker-client';
+import { exportLabViaWorker } from '@/components/teacher/evaluations/reports/utils/excel-worker-client';
 
 interface ExperimentData {
     exp_no: number;
