@@ -1258,13 +1258,14 @@ async function _buildISEMSEExcel(
     stampSummary(27, 2, 'Note: % Attainment is calculated by taking 40% Internal Evaluation and 60% End Semester Evaluation', { align: 'left' });
 
     // Section 1 - PO attainment (29-45)
-    stampSummary(29, 2, 'PO Attainment:-', { bold: true, align: 'left' });
-    stampSummary(30, 2, 'Course Outcomes', { bold: true, border: true, bg: C.summHdrBg });
+    wsSummary.mergeCells(30, 2, 31, 2);
+    stampSummary(30, 2, 'Course Outcomes', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
     wsSummary.mergeCells(30, 3, 30, 14);
     stampSummary(30, 3, 'Program Outcomes', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
 
+    stampSummary(31, 3, 'POs', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
     for (let i = 0; i < 11; i++) {
-        stampSummary(31, 3 + i, `PO${i + 1}`, { bold: true, border: true, bg: C.summHdrBg });
+        stampSummary(31, 4 + i, `PO${i + 1}`, { bold: true, border: true, bg: C.summHdrBg });
     }
 
     for (let co = 1; co <= 6; co++) {
@@ -1297,13 +1298,14 @@ async function _buildISEMSEExcel(
     stampSummary(45, 2, 'PO attainment Formula: CO attainment × mapping /3', { align: 'left' });
 
     // Section 1 - PSO attainment (47-62)
-    stampSummary(47, 2, 'PSO Attainment:-', { bold: true, align: 'left' });
-    stampSummary(48, 2, 'Course Outcomes', { bold: true, border: true, bg: C.summHdrBg });
-    wsSummary.mergeCells(48, 3, 48, 5);
+    wsSummary.mergeCells(48, 2, 49, 2);
+    stampSummary(48, 2, 'Course Outcomes', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    wsSummary.mergeCells(48, 3, 48, 6);
     stampSummary(48, 3, 'Program Specific Outcomes', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
 
+    stampSummary(49, 3, 'PSOs', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
     for (let i = 0; i < 3; i++) {
-        stampSummary(49, 3 + i, `PSO${i + 1}`, { bold: true, border: true, bg: C.summHdrBg });
+        stampSummary(49, 4 + i, `PSO${i + 1}`, { bold: true, border: true, bg: C.summHdrBg });
     }
 
     for (let co = 1; co <= 6; co++) {
@@ -1446,35 +1448,43 @@ async function _buildISEMSEExcel(
     stampSummary(85, 1, 3, { bold: true, border: true, bg: C.summHdrBg });
     stampSummary(85, 2, 'Summary:-', { bold: true, align: 'left' });
 
-    // Row 87: Subject code | Attainment (cols 3-6)
-    stampSummary(87, 2, 'Subject code', { bold: true, border: true, bg: C.summHdrBg });
+    // Table headers for summary
+    stampSummary(87, 2, 'Subject code', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    wsSummary.mergeCells(87, 2, 88, 2);
     wsSummary.mergeCells(87, 3, 87, 6);
     stampSummary(87, 3, 'Attainment', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
 
-    // Row 88: Direct Tools (cols 3-4) | Indirect Tools (cols 5-6)
+    // Internal sub-headers
     wsSummary.mergeCells(88, 3, 88, 4);
     stampSummary(88, 3, 'Direct Tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
     wsSummary.mergeCells(88, 5, 88, 6);
     stampSummary(88, 5, 'Indirect Tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
 
-    // Row 89: Avg (col 3) | CO feedback (col 6)
+    // Labels
+    wsSummary.mergeCells(89, 3, 89, 4);
     stampSummary(89, 3, 'Avg', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
-    stampSummary(89, 6, 'CO feedback', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    wsSummary.mergeCells(89, 5, 89, 6);
+    stampSummary(89, 5, 'CO feedback', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
 
-    // Row 90: subject code | direct avg formula | indirect avg ref
-    stampSummary(90, 2, allotment.sub_id, { bold: true, border: true });
+    // Data row
+    stampSummary(89, 2, allotment.sub_id, { bold: true, border: true, align: 'center' });
+    wsSummary.mergeCells(89, 2, 90, 2);
+    
+    wsSummary.mergeCells(90, 3, 90, 4);
     stampSummary(90, 3,
         { formula: '=IFERROR(AVERAGE(F21,F22,F23,F24,F25,F26),0)' } as ExcelJS.CellFormulaValue,
-        { border: true, numFmt: '0.00' });
-    stampSummary(90, 6,
+        { border: true, numFmt: '0.00', align: 'center' });
+    
+    wsSummary.mergeCells(90, 5, 90, 6);
+    stampSummary(90, 5,
         { formula: '=H73', result: avgIndirect } as ExcelJS.CellFormulaValue,
-        { border: true, numFmt: '0.00' });
+        { border: true, numFmt: '0.00', align: 'center' });
 
     // Row 91: Total Avg
     wsSummary.mergeCells(91, 3, 91, 5);
     stampSummary(91, 3, 'Total Avg =', { bold: true, border: true, align: 'right', bg: C.summAttBg });
     stampSummary(91, 6,
-        { formula: '=IFERROR(AVERAGE(C90,F90),0)' } as ExcelJS.CellFormulaValue,
+        { formula: '=IFERROR(AVERAGE(C90,E90),0)' } as ExcelJS.CellFormulaValue,
         { bold: true, border: true, numFmt: '0.00', bg: C.summAttBg });
 
 
@@ -1484,10 +1494,12 @@ async function _buildISEMSEExcel(
     //   Indirect avg → row 83, cols C-M  (PO1=C83 … PO11=M83)
     // ─────────────────────────────────────────────────────────────────────────
     // Row 93: title
-    stampSummary(93, 2, `Subject code : ${allotment.sub_id}`, { bold: true, border: true });
+    stampSummary(93, 2, `Subject code : ${allotment.sub_id}`, { bold: true, border: true, align: 'center' });
+    wsSummary.mergeCells(93, 2, 94, 2);
     wsSummary.mergeCells(93, 3, 93, 4);
     stampSummary(93, 3, 'PO Attainment', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
-    stampSummary(93, 5, 'Average of direct + indirect tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    wsSummary.mergeCells(93, 5, 95, 5);
+    stampSummary(93, 5, 'Average of direct + indirect tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center', wrap: true });
 
     // Row 94: Direct / Indirect sub-headers
     stampSummary(94, 3, 'Direct Tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
@@ -1522,10 +1534,12 @@ async function _buildISEMSEExcel(
     //   Indirect avg → row 83, cols O-Q  (PSO1=O83 … PSO3=Q83)
     // ─────────────────────────────────────────────────────────────────────────
     // Row 108: title
-    stampSummary(108, 2, `Subject code : ${allotment.sub_id}`, { bold: true, border: true });
+    stampSummary(108, 2, `Subject code : ${allotment.sub_id}`, { bold: true, border: true, align: 'center' });
+    wsSummary.mergeCells(108, 2, 109, 2);
     wsSummary.mergeCells(108, 3, 108, 4);
     stampSummary(108, 3, 'PSO Attainment', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
-    stampSummary(108, 5, 'Average of direct + indirect tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    wsSummary.mergeCells(108, 5, 110, 5);
+    stampSummary(108, 5, 'Average of direct + indirect tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center', wrap: true });
 
     // Row 109: Direct / Indirect sub-headers
     stampSummary(109, 3, 'Direct Tools', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
