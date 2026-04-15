@@ -1264,7 +1264,7 @@ async function _buildISEMSEExcel(
     stampSummary(30, 3, 'Program Outcomes', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
 
     for (let i = 0; i < 11; i++) {
-        stampSummary(31, 3 + i, `PO${i + 1}`, { bold: true, border: true, bg: C.summHdrBg });
+        stampSummary(31, 4 + i, `PO${i + 1}`, { bold: true, border: true, bg: C.summHdrBg });
     }
 
     for (let co = 1; co <= 6; co++) {
@@ -1299,11 +1299,11 @@ async function _buildISEMSEExcel(
     // Section 1 - PSO attainment (47-62)
     stampSummary(47, 2, 'PSO Attainment:-', { bold: true, align: 'left' });
     stampSummary(48, 2, 'Course Outcomes', { bold: true, border: true, bg: C.summHdrBg });
-    wsSummary.mergeCells(48, 3, 48, 5);
-    stampSummary(48, 3, 'Program Specific Outcomes', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
+    wsSummary.mergeCells(48, 4, 48, 6);
+    stampSummary(48, 4, 'Program Specific Outcomes', { bold: true, border: true, bg: C.summHdrBg, align: 'center' });
 
     for (let i = 0; i < 3; i++) {
-        stampSummary(49, 3 + i, `PSO${i + 1}`, { bold: true, border: true, bg: C.summHdrBg });
+        stampSummary(49, 4 + i, `PSO${i + 1}`, { bold: true, border: true, bg: C.summHdrBg });
     }
 
     for (let co = 1; co <= 6; co++) {
