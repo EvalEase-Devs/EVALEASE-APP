@@ -1404,9 +1404,9 @@ async function _buildISEMSEExcel(
             const mapColL = getColLetter(3 + p); // D=PO1, E=PO2, …, N=PO11
             const mapVal  = getTemplateMapping('po', co, `PO${p}`);
             const result  = typeof mapVal === 'number' && mapVal > 0
-                ? parseFloat(((coVal * mapVal) / 3).toFixed(2)) : 0;
+                ? parseFloat(((coVal * mapVal) / 3).toFixed(2)) : undefined;
             stampSummary(dataRow, col,
-                { formula: `=IF(${mapColL}${poMapRow}=0,0,(${indRef}*${mapColL}${poMapRow})/3)`, result } as ExcelJS.CellFormulaValue,
+                { formula: `=IF(${mapColL}${poMapRow}="","",(${indRef}*${mapColL}${poMapRow})/3)`, result } as ExcelJS.CellFormulaValue,
                 { border: true, numFmt: '0.00' });
         }
 
@@ -1416,9 +1416,9 @@ async function _buildISEMSEExcel(
             const mapColL = getColLetter(3 + p); // D=PSO1, E=PSO2, F=PSO3
             const mapVal  = getTemplateMapping('pso', co, `PSO${p}`);
             const result  = typeof mapVal === 'number' && mapVal > 0
-                ? parseFloat(((coVal * mapVal) / 3).toFixed(2)) : 0;
+                ? parseFloat(((coVal * mapVal) / 3).toFixed(2)) : undefined;
             stampSummary(dataRow, col,
-                { formula: `=IF(${mapColL}${psoMapRow}=0,0,(${indRef}*${mapColL}${psoMapRow})/3)`, result } as ExcelJS.CellFormulaValue,
+                { formula: `=IF(${mapColL}${psoMapRow}="","",(${indRef}*${mapColL}${psoMapRow})/3)`, result } as ExcelJS.CellFormulaValue,
                 { border: true, numFmt: '0.00' });
         }
     }
